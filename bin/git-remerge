@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+#require 'git::process'
+#puts Hola.hi(ARGV[0])
+puts "git remerge is active"
