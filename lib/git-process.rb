@@ -1,7 +1,14 @@
-require "git-process/version"
+require "rubygems"
+require "bundler/setup"
 
 module Git
+
   module Process
-    # Your code goes here...
+
+    def self.echo(msg)
+      msg
+    end
+
   end
+
 end
