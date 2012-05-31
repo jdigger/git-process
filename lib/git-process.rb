@@ -4,14 +4,23 @@ require 'rugged'
 
 module Git
 
-  module Process
+  class Process
+    attr_reader :repo
 
-    def self.echo(msg)
-      msg
+    def initialize(repo)
+      @repo = repo
     end
-    
-    def self.repo(dir)
-      Rugged::Repository.new(dir)
+        
+
+    def self.create(dir)
+      repo = Rugged::Repository.init_at(dir, false)
+      Git::Process.new(repo)
+    end
+
+
+    def self.use(dir)
+      repo = Rugged::Repository.new(dir, false)
+      Git::Process.new(repo)
     end
 
   end
