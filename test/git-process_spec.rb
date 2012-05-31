@@ -6,6 +6,7 @@ describe Git::Process do
 
     it "should hand over a valid repo" do
       repo = Git::Process.repo("#{File.dirname(__FILE__)}/..")
+      repo.empty?.should be_false
     end
     
   end
