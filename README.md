@@ -7,30 +7,27 @@ This provides an easy way to work with a sane git workflow process.
 Setup
 ======
 
-?? The program to run is `bin/tar2rpm`.  Running it with no options, or -h, will provide a description of the options.
-
 The tests are written for RSpec 2.
+
 # Git::Process
 
 TODO: Write a gem description
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem 'git-process'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
     $ gem install git-process
 
 ## Usage
 
-TODO: Write usage instructions here
+    git-sync
+
+# Notes
+
+http://git-scm.com/2010/03/08/rerere.html
+
+http://git.kernel.org/?p=git/git.git;a=blob;f=contrib/rerere-train.sh;hb=HEAD
+
+
 
 ## Contributing
 
