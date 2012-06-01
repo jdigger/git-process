@@ -74,18 +74,23 @@ module Git
 
     def handle_rebase_error(rebase_error_message)
       logger.warn("Handling rebase error")
-      puts git.status.pretty
 
       git.status.each do |status|
-        if (status.type)
-          puts "status: #{status.path} - '#{status.type}' - #{status.stage}"
-          if (status.type == 'M' and status.stage == '3')
-            add(status.path)
-          end
+        if remerged_file?(status, rebase_error_message)
+          add(status.path)
         end
       end
 
-      rebase_continue
+      if git.status.all? {|status| status.stage == '0'}
+        rebase_continue
+      end
+    end
+
+
+    def remerged_file?(status, rebase_error_message)
+      status.type == 'M' and
+      status.stage == '3' and
+      /Resolved '#{status.path}' using previous resolution./m =~ rebase_error_message
     end
 
   end
