@@ -1,53 +1,45 @@
 require "rubygems"
 require "bundler/setup"
 
-require 'rugged'
 require 'git'
 require 'logger'
 
 module Git
 
   class Process
-    @@logger = Logger.new(STDOUT)
-    @@logger.datetime_format = "%Y-%m-%d %H:%M:%S"
-    f = Logger::Formatter.new
-    @@logger.formatter = proc do |severity, datetime, progname, msg|
-      "#{severity[0..0]}: Git::Process #{datetime.strftime(@@logger.datetime_format)}: #{msg}\n"
-    end
+    attr_reader :logger, :git
 
-    attr_reader :rugged, :logger, :git
-
-    def initialize(rugged)
-      @rugged = rugged
-      @logger = @@logger
-      logger.level = Logger::INFO
-      @git = Git.open(rugged.workdir, :log => logger)
-    end
-
-
-    def self.create(dir)
-      rugged = Rugged::Repository.init_at(File.expand_path(dir), false)
-      Git::Process.new(rugged)
-    end
-
-
-    def self.use(dir)
-      rugged = Rugged::Repository.new(File.expand_path(dir), false)
-      Git::Process.new(rugged)
+    def initialize(dir, logger = nil)
+      if logger == nil
+        Logger.new(STDOUT)
+        logger.level = Logger::INFO
+      end
+      @logger = logger
+      workdir = File.expand_path(dir)
+      if File.directory?(File.join(dir, '.git'))
+        @git = Git.open(workdir, :log => logger)
+      else
+        @git = Git.init(workdir, :log => logger)
+      end
     end
 
 
     def workdir
-      rugged.workdir
+      git.dir.to_s
     end
 
 
     def add(file)
       git.add(file)
     end
-    
+
+
     def commit(msg)
       git.commit(msg)
+    end
+    end
+
+    
     end
 
   end
