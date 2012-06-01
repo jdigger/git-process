@@ -39,6 +39,18 @@ describe Git::Process do
       commit_count(gp).should == 3
     end
 
+    it "should should work for a rebase after a rerere merge" do
+      tgz_file = File.expand_path('../files/merge-conflict-rerere.tgz', __FILE__)
+      Dir.chdir(@tmpdir) { `tar xfz #{tgz_file}` }
+      gp = Git::Process.new(@tmpdir, @@logger)
+
+      commit_count(gp).should == 4
+
+      gp.rebase_to_master(false)
+
+      commit_count(gp).should == 4
+    end
+
   end
 
 

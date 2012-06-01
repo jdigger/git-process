@@ -49,17 +49,43 @@ module Git
       command('fetch', '-p') if remote
       rebase(if remote then "origin/master" else "master" end)
     end
-    
+
 
     def rebase(base)
-      command('rebase', base)
+      begin
+        command('rebase', base)
+      rescue => rebase_error_message
+        handle_rebase_error(rebase_error_message)
+      end
     end
-    
+
+
+    def rebase_continue
+      command('rebase', '--continue')
+    end
+
 
     private
-    
+
     def command(cmd, opts = [], chdir = true, redirect = '')
       git.lib.send(:command, cmd, opts, chdir, redirect)
+    end
+
+
+    def handle_rebase_error(rebase_error_message)
+      logger.warn("Handling rebase error")
+      puts git.status.pretty
+
+      git.status.each do |status|
+        if (status.type)
+          puts "status: #{status.path} - '#{status.type}' - #{status.stage}"
+          if (status.type == 'M' and status.stage == '3')
+            add(status.path)
+          end
+        end
+      end
+
+      rebase_continue
     end
 
   end
