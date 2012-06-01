@@ -2,6 +2,7 @@ require "rubygems"
 require "bundler/setup"
 
 require 'rugged'
+require 'git'
 require 'logger'
 
 module Git
@@ -14,25 +15,39 @@ module Git
       "#{severity[0..0]}: Git::Process #{datetime.strftime(@@logger.datetime_format)}: #{msg}\n"
     end
 
-    attr_reader :repo, :logger
+    attr_reader :rugged, :logger, :git
 
-    def initialize(repo)
-      @repo = repo
+    def initialize(rugged)
+      @rugged = rugged
       @logger = @@logger
-      @logger.debug {"working dir: #{repo.workdir}"}
+      logger.level = Logger::INFO
+      @git = Git.open(rugged.workdir, :log => logger)
     end
-        
+
 
     def self.create(dir)
-      @@logger.debug "git init"
-      repo = Rugged::Repository.init_at(dir, false)
-      Git::Process.new(repo)
+      rugged = Rugged::Repository.init_at(File.expand_path(dir), false)
+      Git::Process.new(rugged)
     end
 
 
     def self.use(dir)
-      repo = Rugged::Repository.new(dir, false)
-      Git::Process.new(repo)
+      rugged = Rugged::Repository.new(File.expand_path(dir), false)
+      Git::Process.new(rugged)
+    end
+
+
+    def workdir
+      rugged.workdir
+    end
+
+
+    def add(file)
+      git.add(file)
+    end
+    
+    def commit(msg)
+      git.commit(msg)
     end
 
   end

@@ -11,14 +11,20 @@ describe Git::Process do
     rm_rf(@tmpdir)
   end
 
+
   describe "when creating" do
 
     before(:each) do
       @gp = Git::Process.create(@tmpdir)
+      files = [File.join(@gp.workdir, 'a')]
+      FileUtils.touch files
+      files.each {|f| @gp.add(f)}
+      
+      @gp.commit("initial commit")
     end
 
     it "should hand over a valid repo" do
-      @gp.repo.empty?.should be_true
+      @gp.rugged.empty?.should be_false
     end
 
   end
