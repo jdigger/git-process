@@ -39,6 +39,11 @@ module Git
     end
 
 
+    def current_branch
+      git.current_branch
+    end
+
+
     def rebase(base)
       command('rebase', base)
     end

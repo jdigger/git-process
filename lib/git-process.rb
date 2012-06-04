@@ -20,6 +20,20 @@ module Git
     end
 
 
+    def sync_with_server
+      if !lib.clean_status?
+        raise UncommittedChangesError.new
+      end
+      lib.fetch
+      rebase("origin/master")
+      if lib.current_branch != 'master'
+        lib.push("origin", lib.current_branch)
+      else
+        logger.warn("Not pushing to the server because the current branch is the master branch.")
+      end
+    end
+
+
     def rebase(base)
       begin
         lib.rebase(base)
