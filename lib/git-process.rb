@@ -11,6 +11,9 @@ module Git
 
 
     def rebase_to_master(remote = true)
+      if !lib.clean_status?
+        raise UncommittedChangesError.new
+      end
       lib.fetch if remote
       rebase(if remote then "origin/master" else "master" end)
       lib.push("origin", "master") if remote
@@ -59,6 +62,17 @@ module Git
       status.type == 'M' and
       status.stage == '3' and
       /Resolved '#{status.path}' using previous resolution./m =~ rebase_error_message
+    end
+
+
+    class GitProcessError < RuntimeError
+    end
+
+
+    class UncommittedChangesError < GitProcessError
+      def initialize()
+        super("There are uncommitted changes.\nPlease either commit your changes, or use 'git stash' to set them aside.")
+      end
     end
 
   end

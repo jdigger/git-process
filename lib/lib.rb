@@ -60,7 +60,7 @@ module Git
 
 
     def clean_status?
-      git.status.all? {|status| status.stage == '0'}
+      git.status.all? {|status| !status.type }
     end
 
 
