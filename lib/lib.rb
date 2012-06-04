@@ -49,6 +49,11 @@ module Git
     end
 
 
+    def push(remote_name, remote_branch)
+      git.push(git.remote(remote_name), remote_branch)
+    end
+
+
     def rebase_continue
       command('rebase', '--continue')
     end

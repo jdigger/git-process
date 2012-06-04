@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require File.expand_path('../../lib/git-process', __FILE__)
+
+puts Git::Process.new('.').rebase_to_master

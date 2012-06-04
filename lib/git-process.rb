@@ -13,6 +13,7 @@ module Git
     def rebase_to_master(remote = true)
       lib.fetch if remote
       rebase(if remote then "origin/master" else "master" end)
+      lib.push("origin", "master") if remote
     end
 
 

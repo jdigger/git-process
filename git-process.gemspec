@@ -17,6 +17,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Git::Process::VERSION
   gem.platform      = Gem::Platform::RUBY
-  gem.executables   << 'git-remerge'
+  gem.executables   << 'git-sync'
+  gem.executables   << 'git-to-master'
   gem.required_ruby_version = '>= 1.8.1'
 end
