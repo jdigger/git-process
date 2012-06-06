@@ -61,6 +61,11 @@ module Git
     end
 
 
+    def merge(base)
+      git.merge(base, nil)
+    end
+
+
     def fetch
       command('fetch', '-p')
     end
@@ -76,6 +81,11 @@ module Git
     end
 
 
+    def checkout(branch, opts = {})
+      git.checkout(branch, opts)
+    end
+
+
     def clean_status?
       command('status', '-s') == ''
     end
@@ -86,7 +96,62 @@ module Git
     end
 
 
-    private
+    def remove(file, opts = {})
+      args = []
+      args << '-f' if opts[:force]
+      args << file
+      command('rm', args)
+    end
+
+
+    class Status
+      attr_reader :unmerged, :modified, :deleted, :added
+
+      def initialize(lib)
+        unmerged = []
+        modified = []
+        deleted = []
+        added = []
+
+        stats = lib.command('status', '--porcelain').split("\n")
+
+        stats.each do |s|
+          stat = s[0..1]
+          file = s[3..-1]
+          #puts "stat #{stat} - #{file}"
+          case stat
+          when 'U '
+            unmerged << file
+          when 'UU'
+            unmerged << file
+            modified << file
+          when 'M '
+            modified << file
+          when 'D '
+            deleted << file
+          when 'DU', 'UD'
+            deleted << file
+            unmerged << file
+          when 'A '
+            added << file
+          when 'AA'
+            added << file
+            unmerged << file
+          end
+        end
+
+        @unmerged = unmerged.sort.uniq
+        @modified = modified.sort.uniq
+        @deleted = deleted.sort.uniq
+        @added = added.sort.uniq
+      end
+    end
+
+
+    def status
+      Status.new(self)
+    end
+
 
     def command(cmd, opts = [], chdir = true, redirect = '')
       git.lib.send(:command, cmd, opts, chdir, redirect)
