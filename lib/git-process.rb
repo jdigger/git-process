@@ -1,12 +1,12 @@
-require File.expand_path('../lib', __FILE__)
+require File.expand_path('../git-lib', __FILE__)
 
 module Git
 
   class Process
     attr_reader :lib
 
-    def initialize(dir, logger = nil)
-      @lib = PLib.new(dir, logger)
+    def initialize(dir, options = {})
+      @lib = Git::GitLib.new(dir, options)
     end
 
 
