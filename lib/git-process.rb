@@ -11,7 +11,7 @@ module Git
 
 
     def rebase_to_master(remote = true)
-      if !lib.clean_status?
+      if !lib.status.clean?
         raise UncommittedChangesError.new
       end
       lib.fetch if remote
@@ -21,9 +21,10 @@ module Git
 
 
     def sync_with_server
-      if !lib.clean_status?
+      if !lib.status.clean?
         raise UncommittedChangesError.new
       end
+
       lib.fetch
       rebase("origin/master")
       if lib.current_branch != 'master'
@@ -65,7 +66,7 @@ module Git
         end
       end
 
-      if lib.clean_status?
+      if lib.status.clean?
         lib.rebase_continue
       end
 

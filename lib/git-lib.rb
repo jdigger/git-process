@@ -98,11 +98,6 @@ module Git
     end
 
 
-    def clean_status?
-      command('status', '-s') == ''
-    end
-
-
     def log_count
       command('log', '--oneline').split(/\n/).length
     end
@@ -157,6 +152,11 @@ module Git
         @deleted = deleted.sort.uniq
         @added = added.sort.uniq
       end
+      
+      def clean?
+        @unmerged.empty? and @modified.empty? and @deleted.empty? and @added.empty?
+      end
+
     end
 
 
