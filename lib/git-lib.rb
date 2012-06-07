@@ -10,20 +10,29 @@ module Git
     attr_reader :logger, :git
 
     def initialize(dir, options = {})
-      if options[:logger]
-        @logger = options[:logger]
+      initialize_logger(options[:logger], options[:log_level])
+      initialize_git(dir, options[:git])
+    end
+
+
+    def initialize_logger(logger, log_level)
+      if logger
+        @logger = logger
       else
         @logger = Logger.new(STDOUT)
-        @logger.level = options[:log_level] || Logger::WARN
+        @logger.level = log_level || Logger::WARN
         @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
         f = Logger::Formatter.new
         @logger.formatter = proc do |severity, datetime, progname, msg|
           "#{severity[0..0]}: #{datetime.strftime(@logger.datetime_format)}: #{msg}\n"
         end
       end
+    end
 
-      if options[:git]
-        @git = options[:git]
+
+    def initialize_git(dir, git)
+      if git
+        @git = git
       else
         workdir = File.expand_path(dir)
         logger.info { "Using '#{workdir}' as the working directory" }
@@ -34,6 +43,9 @@ module Git
         end
       end
     end
+
+
+    private :initialize_logger, :initialize_git
 
 
     def workdir
