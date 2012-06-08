@@ -1,15 +1,12 @@
-require File.expand_path('../../lib/git-process', __FILE__)
-require File.expand_path('../FileHelpers', __FILE__)
+require File.expand_path('../../../lib/git-process', __FILE__)
+require File.expand_path('../../FileHelpers', __FILE__)
 
 describe Git::Process do
 
   before(:each) do
     @tmpdir = Dir.mktmpdir
     @gp = Git::Process.new(@tmpdir, :log_level => Logger::ERROR)
-
-    gitignore = file('.gitignore')
-    FileUtils.touch gitignore
-    @gp.lib.add(gitignore)
+    create_files(['.gitignore'])
     @gp.lib.commit('initial')
   end
 
@@ -24,15 +21,24 @@ describe Git::Process do
   end
 
 
-  def file(filename)
-    File.join(@gp.lib.workdir, filename)
+
+  def create_files(file_names)
+    Dir.chdir(@gp.lib.workdir) do |dir|
+      file_names.each do |fn|
+        @gp.lib.logger.debug {"Creating #{dir}/#{fn}"}
+        FileUtils.touch fn
+      end
+    end
+    @gp.lib.add(file_names)
   end
 
 
+
   def change_file_and_commit(filename, contents)
-    fa = file(filename)
-    File.open(fa, 'w') {|f| f.puts contents}
-    @gp.lib.add(fa)
+    Dir.chdir(@gp.lib.workdir) do
+      File.open(filename, 'w') {|f| f.puts contents}
+    end
+    @gp.lib.add(filename)
     @gp.lib.commit("#{filename} - #{contents}")
   end
 
@@ -57,7 +63,7 @@ describe Git::Process do
 
 
     it "should work for a rebase after a rerere merge" do
-      tgz_file = File.expand_path('../files/merge-conflict-rerere.tgz', __FILE__)
+      tgz_file = File.expand_path('../../files/merge-conflict-rerere.tgz', __FILE__)
       Dir.chdir(@tmpdir) { `tar xfz #{tgz_file}` }
       gp = Git::Process.new(@tmpdir, :log_level => Logger::ERROR)
 

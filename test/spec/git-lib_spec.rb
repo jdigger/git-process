@@ -1,5 +1,5 @@
-require File.expand_path('../../lib/git-lib', __FILE__)
-require File.expand_path('../FileHelpers', __FILE__)
+require File.expand_path('../../../lib/git-lib', __FILE__)
+require File.expand_path('../../FileHelpers', __FILE__)
 
 describe Git::GitLib do
 
@@ -8,9 +8,7 @@ describe Git::GitLib do
     before(:each) do
       @tmpdir = Dir.mktmpdir
       @gl = Git::GitLib.new(@tmpdir, :log_level => Logger::ERROR)
-      gitignore = file('.gitignore')
-      FileUtils.touch gitignore
-      @gl.add(gitignore)
+      create_files(['.gitignore'])
       @gl.commit('initial')
     end
 
@@ -21,14 +19,13 @@ describe Git::GitLib do
 
 
     def create_files(file_names)
-      files = file_names.map {|fn| file(fn)}
-      FileUtils.touch files
-      @gl.add(files)
-    end
-
-
-    def file(filename)
-      File.join(@gl.workdir, filename)
+      Dir.chdir(@gl.workdir) do |dir|
+        file_names.each do |fn|
+          @gl.logger.debug {"Creating #{dir}/#{fn}"}
+          FileUtils.touch fn
+        end
+      end
+      @gl.add(file_names)
     end
 
 
@@ -89,7 +86,7 @@ describe Git::GitLib do
     end
 
 
-    it "should handle a merge deletion on fb" do
+    it "should handle a merge deletion on master" do
       change_file_and_commit('a', '')
 
       @gl.checkout('master', :new_branch => 'fb')
@@ -108,9 +105,10 @@ describe Git::GitLib do
 
 
     def change_file_and_commit(filename, contents)
-      fa = file(filename)
-      File.open(fa, 'w') {|f| f.puts contents}
-      @gl.add(fa)
+      Dir.chdir(@gl.workdir) do
+        File.open(filename, 'w') {|f| f.puts contents}
+      end
+      @gl.add(filename)
       @gl.commit("#{filename} - #{contents}")
     end
 
