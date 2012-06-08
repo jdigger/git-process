@@ -50,7 +50,7 @@ describe Git::Process do
 
       @gp.lib.checkout('fb')
 
-      @gp.rebase_to_master(false)
+      @gp.rebase_to_master
 
       commit_count(@gp).should == 3
     end
@@ -63,7 +63,7 @@ describe Git::Process do
 
       commit_count(gp).should == 4
 
-      gp.rebase_to_master(false)
+      gp.rebase_to_master
 
       commit_count(gp).should == 3  # the merge commit is removed
     end

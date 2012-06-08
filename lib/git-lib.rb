@@ -53,6 +53,14 @@ module Git
     end
 
 
+    def has_a_remote?
+      if @remote == nil
+        @remote = (command('remote') != '')
+      end
+      @remote
+    end
+
+
     def add(file)
       git.add(file)
     end

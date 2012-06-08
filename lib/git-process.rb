@@ -10,13 +10,15 @@ module Git
     end
 
 
-    def rebase_to_master(remote = true)
+    def rebase_to_master
       if !lib.status.clean?
         raise UncommittedChangesError.new
       end
-      lib.fetch if remote
-      rebase(if remote then "origin/master" else "master" end)
-      lib.push("origin", "master") if remote
+
+      lib.fetch if lib.has_a_remote?
+      rebase(lib.has_a_remote? ? "origin/master" : "master")
+
+      lib.push("origin", "master") if lib.has_a_remote?
     end
 
 
