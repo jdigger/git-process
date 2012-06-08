@@ -136,19 +136,19 @@ module Git
           file = s[3..-1]
           #puts "stat #{stat} - #{file}"
           case stat
-          when 'U '
+          when 'U ', ' U'
             unmerged << file
           when 'UU'
             unmerged << file
             modified << file
-          when 'M '
+          when 'M ', ' M'
             modified << file
-          when 'D '
+          when 'D ', ' D'
             deleted << file
           when 'DU', 'UD'
             deleted << file
             unmerged << file
-          when 'A '
+          when 'A ', ' A'
             added << file
           when 'AA'
             added << file
