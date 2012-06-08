@@ -35,10 +35,11 @@ module Git
         @git = git
       else
         workdir = File.expand_path(dir)
-        logger.info { "Using '#{workdir}' as the working directory" }
         @git = if File.directory?(File.join(workdir, '.git'))
+          logger.info { "Opening existing repository at #{workdir}" }
           Git.open(workdir, :log => logger)
         else
+          logger.info { "Initializing new repository at #{workdir}" }
           Git.init(workdir, :log => logger)
         end
       end
