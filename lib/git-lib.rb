@@ -92,8 +92,9 @@ module Git
     end
 
 
-    def push(remote_name, remote_branch)
-      git.push(git.remote(remote_name), remote_branch)
+    def push(remote_name, local_branch, remote_branch, opts = {})
+      branch = "#{opts[:force] ? '+' : ''}#{local_branch}:#{remote_branch}"
+      command('push', [remote_name, branch])
     end
 
 

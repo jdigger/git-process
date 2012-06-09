@@ -8,8 +8,26 @@ module Git
   class Process
     attr_reader :lib
 
+    @@server_name = 'origin'
+    @@master_branch = 'master'
+
     def initialize(dir, options = {})
       @lib = Git::GitLib.new(dir, options)
+    end
+
+
+    def Process.remote_master_branch
+      "#{@@server_name}/#{@@master_branch}"
+    end
+
+
+    def Process.server_name
+      @@server_name
+    end
+
+
+    def Process.master_branch
+      @@master_branch
     end
 
 
@@ -18,16 +36,18 @@ module Git
         raise UncommittedChangesError.new
       end
 
-      lib.fetch if lib.has_a_remote?
-
-      rebase(lib.has_a_remote? ? "origin/master" : "master")
-
-      lib.push("origin", "master") if lib.has_a_remote?
+      if lib.has_a_remote?
+        lib.fetch
+        rebase(Process::remote_master_branch)
+        lib.push(Process::server_name, lib.current_branch, Process::master_branch)
+      else
+        rebase("master")
+      end
     end
 
 
     def sync_with_server
-      if !lib.status.clean?
+      unless lib.status.clean?
         raise UncommittedChangesError.new
       end
 
@@ -47,11 +67,6 @@ module Git
       rescue Git::GitExecuteError => rebase_error
         raise RebaseError.new(rebase_error.message, lib)
       end
-    end
-
-
-    def git
-      lib.git
     end
 
 

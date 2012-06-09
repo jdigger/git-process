@@ -1,8 +1,12 @@
 #!/usr/bin/env ruby
 
+require "rubygems"
+require "bundler/setup"
+
+require 'logger'
 require File.expand_path('../../lib/git-process', __FILE__)
 
-gp = Git::Process.new('.')
+gp = Git::Process.new('.', :log_level => Logger::INFO)
 
 begin
   gp.rebase_to_master
