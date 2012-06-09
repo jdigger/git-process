@@ -52,9 +52,13 @@ module Git
       end
 
       lib.fetch
-      rebase("origin/master")
-      if lib.current_branch != 'master'
-        lib.push("origin", lib.current_branch)
+
+      current_branch = lib.current_branch
+      rebase("origin/#{current_branch}")
+      rebase(Process::remote_master_branch)
+
+      unless current_branch == Process::master_branch
+        lib.push(Process::server_name, current_branch, current_branch, :force => true)
       else
         logger.warn("Not pushing to the server because the current branch is the master branch.")
       end
