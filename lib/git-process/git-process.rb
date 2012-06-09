@@ -56,12 +56,20 @@ module Git
 
       current_branch = lib.current_branch
       remote_branch = "origin/#{current_branch}"
+      old_sha = lib.command('rev-parse', remote_branch)
 
-      if rebase
-        old_sha = lib.command('rev-parse', remote_branch)
+      rebase(remote_branch)
+      rebase(Process::remote_master_branch)
 
-        rebase(remote_branch)
-        rebase(Process::remote_master_branch)
+      unless current_branch == Process::master_branch
+        lib.fetch
+        new_sha = lib.command('rev-parse', remote_branch)
+        unless old_sha == new_sha
+          logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
+            " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+          sync_with_server
+        end
+        lib.push(Process::server_name, current_branch, current_branch, :force => true)
       else
         merge(remote_branch)
         merge(Process::remote_master_branch)
