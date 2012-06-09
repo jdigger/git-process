@@ -72,7 +72,8 @@ describe Git::Process do
       begin
         gp.rebase_to_master
       rescue Git::Process::RebaseError => exp
-        # expected
+        exp.resolved_files.should == ['a']
+        exp.unresolved_files.should == []
       end
 
       # commit_count(gp).should == 3  # the merge commit is removed

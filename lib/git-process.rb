@@ -12,7 +12,7 @@ module Git
 
 
     def rebase_to_master
-      if !lib.status.clean?
+      unless lib.status.clean?
         raise UncommittedChangesError.new
       end
 
@@ -43,7 +43,7 @@ module Git
       begin
         lib.rebase(base)
       rescue Git::GitExecuteError => rebase_error
-        handle_rebase_error(rebase_error.message)
+        raise RebaseError.new(rebase_error.message, lib)
       end
     end
 
@@ -61,70 +61,91 @@ module Git
     end
 
 
-    def handle_rebase_error(rebase_error_message)
-      raise RebaseError.new(rebase_error_message, lib)
-
-      # git.status.each do |status|
-      #   if remerged_file?(status, rebase_error_message)
-      #     lib.add(status.path)
-      #   end
-      # end
-
-      # if lib.status.clean?
-      #   lib.rebase_continue
-      # end
-
-    end
-
-
     class GitProcessError < RuntimeError
     end
 
 
     class RebaseError < GitProcessError
+      attr_reader :resolved_files, :unresolved_files, :commands
+
       def initialize(rebase_error_message, lib)
+        @lib = lib
         @status = lib.status
-        rerere_enabled = lib.git.config('rerere.enabled')
-        resolved_files = []
 
-        msg = 'There was a problem merging.'
-        @status.unmerged.each do |file|
-          resolved_file = (/Resolved '#{file}' using previous resolution./m =~ rebase_error_message)
+        @commands = []
 
-          if @status.modified.include? file
-            if (resolved_file)
-              resolved_files << file
-              msg += "\n'#{file}' was modified in both branches, and 'rerere' automatically resolved it."
-            else
-              msg += "\n'#{file}' was modified in both branches."
-            end
-          end
-        end
+        @resolved_files = find_resolved_files(rebase_error_message)
+        @unresolved_files = find_unresolved_files
 
-        resolved_files.sort!
-        if !rerere_enabled
-          msg += "\n\nConsider turning on 'rerere'."
-          msg += "\nSee http://git-scm.com/2010/03/08/rerere.html for more information."
-        else
-          resolved_files.each do |file|
-            msg += "\nVerify that 'rerere' did the right thing for '#{file}'."
-          end
-        end
-
-        if @status.unmerged.length != resolved_files.length
-          unresolved_files = @status.unmerged.find_all {|f| !resolved_files.include?(f)}
-          shell_escaped_files = unresolved_files.map{|f| f.shellescape}
-          msg += "'rerere' was not able to resolve some files. Run:\n\ngit mergetool #{shell_escaped_files.join(' ')}\n"
-        end
-
-        if lib.git.config('rerere.autoupdate')
-          msg += "\nIf everything looks good, simply run:\n\ngit rebase --continue"
-        else
-          shell_escaped_files = resolved_files.map{|f| f.shellescape}
-          msg += "\nIf everything looks good, run:\n\ngit add #{shell_escaped_files.join(' ')} && git rebase --continue"
-        end
+        msg = build_message
 
         super(msg)
+      end
+
+
+      def find_resolved_files(rebase_error_message)
+        resolved_files = []
+
+        unmerged.each do |file|
+          resolved_file = (/Resolved '#{file}' using previous resolution./m =~ rebase_error_message)
+          resolved_files << file if resolved_file
+        end
+
+        resolved_files.sort
+      end
+
+
+      def find_unresolved_files
+        if unmerged.length != resolved_files.length
+          unmerged.find_all {|f| !resolved_files.include?(f)}.sort
+        else
+          []
+        end
+      end
+
+
+      def build_message
+        msg = 'There was a problem merging.'
+
+        resolved_files.each do |file|
+          if modified.include? file
+            msg += "\n'#{file}' was modified in both branches, and 'rerere' automatically resolved it."
+          end
+        end
+
+        unless @lib.git.config('rerere.enabled')
+          msg << "\n\nConsider turning on 'rerere'.\nSee http://git-scm.com/2010/03/08/rerere.html for more information."
+        end
+
+        unresolved_files.each do |file|
+          if modified.include? file
+            msg += "\n'#{file}' was modified in both branches."
+          end
+        end
+
+        commands = build_commands
+        msg << "\n\nCommands:\n\n  #{commands.join("\n  ")}"
+      end
+
+
+      def build_commands
+        commands = []
+
+        commands << 'git config --global rerere.enabled true' unless @lib.git.config('rerere.enabled')
+
+        resolved_files.each do |file|
+          commands << "# Verify that 'rerere' did the right thing for '#{file}'."
+        end
+
+        unless unresolved_files.empty?
+          shell_escaped_files = unresolved_files.map{|f| f.shellescape}
+          commands << "git mergetool #{shell_escaped_files.join(' ')}"
+        end
+
+        commands << "git add -A" unless unresolved_files.empty?
+        commands << "git rebase --continue"
+
+        commands
       end
 
 
