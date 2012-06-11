@@ -175,6 +175,20 @@ module Git
     end
 
 
+    def rerere_enabled?
+      re = command('config', ['--get', 'rerere.enabled'])
+      re && re != ''
+    end
+
+
+    def rerere_enabled=(re, global = true)
+      args = []
+      args << '--global' if global
+      args << 'rerere.enabled' << re
+      command('config', args)
+    end
+
+
     def command(cmd, opts = [], chdir = true, redirect = '')
       git.lib.send(:command, cmd, opts, chdir, redirect)
     end
