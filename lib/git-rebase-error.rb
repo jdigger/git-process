@@ -78,12 +78,16 @@ module Git
           commands << "# Verify that 'rerere' did the right thing for '#{file}'."
         end
 
+        shell_escaped_files = []
         unless unresolved_files.empty?
           shell_escaped_files = unresolved_files.map{|f| f.shellescape}
           commands << "git mergetool #{shell_escaped_files.join(' ')}"
+          unresolved_files.each do |f|
+            commands << "# Verify '#{f}' merged correctly."
+          end
         end
 
-        commands << "git add -A" unless unresolved_files.empty?
+        commands << "git add #{shell_escaped_files.join(' ')}" unless unresolved_files.empty?
         commands << "git rebase --continue"
 
         commands
