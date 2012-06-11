@@ -67,40 +67,18 @@ describe Git::Process do
       Dir.chdir(@tmpdir) { `tar xfz #{tgz_file}` }
       gp = Git::Process.new(@tmpdir, :log_level => Logger::ERROR)
 
-      commit_count(gp).should == 4
-
       begin
         gp.rebase_to_master
       rescue Git::Process::RebaseError => exp
         exp.resolved_files.should == ['a']
         exp.unresolved_files.should == []
-      end
 
-      # commit_count(gp).should == 3  # the merge commit is removed
+        exp.commands.length.should == 2
+        exp.commands[0].should match /^# Verify/
+        exp.commands[1].should == 'git rebase --continue'
+      end
     end
 
   end
-
-
-  # describe "when creating" do
-  # 
-  #   before(:each) do
-  #     @gp = Git::Process.new(@tmpdir, @@logger)
-  #     files = [File.join(@gp.workdir, 'a')]
-  #     FileUtils.touch files
-  #     files.each {|f| @gp.add(f)}
-  #     
-  #     @gp.commit("initial commit")
-  #   end
-  # 
-  #   it "should be clonable" do
-  #     puts "clone_dir: #{@gp.clone(@gp.workdir, Dir.mktmpdir.to_s).workdir}"
-  #   end
-  # 
-  #   it "should rebase to master" do
-  #     @gp.rebase_to_master(false)
-  #   end
-  # 
-  # end
 
 end
