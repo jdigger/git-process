@@ -5,7 +5,7 @@ require 'shellwords'
 module Git
 
   #
-  # Assumes that there are two attributes defined: error_message, lib
+  # Assumes that there are two attributes defined: error_message, lib, continue_command
   #
   module AbstractMergeErrorBuilder
 
@@ -71,7 +71,7 @@ module Git
     def build_commands
       commands = []
 
-      commands << 'git config --global rerere.enabled true' unless lib.git.config('rerere.enabled')
+      commands << 'git config --global rerere.enabled true' unless lib.rerere_enabled?
 
       resolved_files.each do |file|
         commands << "# Verify that 'rerere' did the right thing for '#{file}'."
@@ -86,7 +86,7 @@ module Git
         commands << "git add #{escaped_files}"
       end
 
-      commands << "git rebase --continue"
+      commands << continue_command if continue_command
 
       commands
     end
@@ -98,23 +98,26 @@ module Git
     end
 
 
+    attr_writer :unmerged, :added, :deleted, :modified
+
+
     def unmerged
-      lib.status.unmerged
+      @unmerged ||= lib.status.unmerged
     end
 
 
     def added
-      lib.status.added
+      @added ||= lib.status.added
     end
 
 
     def deleted
-      lib.status.deleted
+      @deleted ||= lib.status.deleted
     end
 
 
     def modified
-      lib.status.modified
+      @modified ||= lib.status.modified
     end
 
   end

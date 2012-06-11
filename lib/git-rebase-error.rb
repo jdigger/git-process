@@ -19,6 +19,11 @@ module Git
         super(msg)
       end
 
+
+      def continue_command
+        'git rebase --continue'
+      end
+
     end
 
   end
