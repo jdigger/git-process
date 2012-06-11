@@ -73,9 +73,10 @@ describe Git::Process do
         exp.resolved_files.should == ['a']
         exp.unresolved_files.should == []
 
-        exp.commands.length.should == 2
+        exp.commands.length.should == 3
         exp.commands[0].should match /^# Verify/
-        exp.commands[1].should == 'git rebase --continue'
+        exp.commands[1].should == 'git add a'
+        exp.commands[2].should == 'git rebase --continue'
       end
     end
 

@@ -77,6 +77,11 @@ module Git
         commands << "# Verify that 'rerere' did the right thing for '#{file}'."
       end
 
+      unless lib.rerere_autoupdate?
+        escaped_files = shell_escaped_files(resolved_files)
+        commands << "git add #{escaped_files}"
+      end
+
       unless unresolved_files.empty?
         escaped_files = shell_escaped_files(unresolved_files)
         commands << "git mergetool #{escaped_files}"

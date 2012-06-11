@@ -189,6 +189,20 @@ module Git
     end
 
 
+    def rerere_autoupdate?
+      re = command('config', ['--get', 'rerere.autoupdate'])
+      re && re != ''
+    end
+
+
+    def rerere_autoupdate=(re, global = true)
+      args = []
+      args << '--global' if global
+      args << 'rerere.autoupdate' << re
+      command('config', args)
+    end
+
+
     def command(cmd, opts = [], chdir = true, redirect = '')
       git.lib.send(:command, cmd, opts, chdir, redirect)
     end
