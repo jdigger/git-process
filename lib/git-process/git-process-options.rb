@@ -30,9 +30,9 @@ module Git
       end
 
 
-      def parse(argv)
+      def parse(filename, argv)
         OptionParser.new do |opts|
-          opts.banner = "Usage: git-to-master [ options ]"
+          opts.banner = "Usage: #{filename} [ options ]"
 
           opts.on("-q", "--quiet", "Quiet") do |v|
             @quiet = true
@@ -48,6 +48,8 @@ module Git
             exit(-1)
           end
 
+          extend_opts(opts)
+
           begin
             begin
               opts.parse!(argv)
@@ -59,6 +61,10 @@ module Git
             exit(-1)
           end
         end
+      end
+
+      def extend_opts(opts)
+        # extension point - does nothing by default
       end
 
     end

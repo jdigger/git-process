@@ -9,8 +9,8 @@ module Git
     class ToMasterOptions
       include GitProcessOptions
 
-      def initialize(argv)
-        parse(argv)
+      def initialize(filename, argv)
+        parse(filename, argv)
       end
     end
 

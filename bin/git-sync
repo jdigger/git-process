@@ -8,7 +8,7 @@ require 'backports'
 require_relative '../lib/git-process/git-sync-options'
 require_relative '../lib/git-process/git-process'
 
-options = Git::Process::SyncOptions.new(ARGV)
+options = Git::Process::SyncOptions.new(File.basename(__FILE__), ARGV)
 
 gp = Git::Process.new('.', :log_level => options.log_level)
 
