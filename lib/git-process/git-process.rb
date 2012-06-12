@@ -2,7 +2,9 @@ require 'backports'
 require_relative 'git-lib'
 require_relative 'uncommitted-changes-error'
 require_relative 'git-rebase-error'
+require_relative 'pull-request'
 require 'shellwords'
+
 
 module Git
 
@@ -81,7 +83,7 @@ module Git
           new_sha = lib.command('rev-parse', remote_branch)
           unless old_sha == new_sha
             logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
-              " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+                        " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
             sync_with_server
           end
         end
@@ -107,6 +109,11 @@ module Git
       rescue Git::GitExecuteError => merge_error
         raise MergeError.new(merge_error.message, lib)
       end
+    end
+
+
+    def pull_request(repo, base, head, title, body, opts = {})
+      Git::PullRequest.new(lib, opts).pull_request(repo, base, head, title, body)
     end
 
 
