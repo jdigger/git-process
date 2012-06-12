@@ -47,7 +47,7 @@ module Git
     end
 
 
-    def sync_with_server
+    def sync_with_server(rebase)
       unless lib.status.clean?
         raise UncommittedChangesError.new
       end
@@ -57,11 +57,27 @@ module Git
       current_branch = lib.current_branch
       remote_branch = "origin/#{current_branch}"
 
-      merge(remote_branch)
-      merge(Process::remote_master_branch)
+      if rebase
+        old_sha = lib.command('rev-parse', remote_branch)
+
+        rebase(remote_branch)
+        rebase(Process::remote_master_branch)
+      else
+        merge(remote_branch)
+        merge(Process::remote_master_branch)
+      end
 
       unless current_branch == Process::master_branch
-        lib.push(Process::server_name, current_branch, current_branch, :force => false)
+        lib.fetch
+        if rebase
+          new_sha = lib.command('rev-parse', remote_branch)
+          unless old_sha == new_sha
+            logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
+              " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+            sync_with_server
+          end
+        end
+        lib.push(Process::server_name, current_branch, current_branch, :force => rebase)
       else
         logger.warn("Not pushing to the server because the current branch is the master branch.")
       end
