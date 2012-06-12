@@ -126,6 +126,47 @@ module Git
     end
 
 
+    def config_hash
+      @config_hash ||= {}
+    end
+
+
+    def config(key = nil, value = nil)
+      if key and value
+        command('config', [key, value])
+        config_hash[key] = value
+        value
+      elsif key
+        value = config_hash[key]
+        unless value
+          value = command('config', ['--get', key])
+          config_hash[key] = value
+        end
+        value
+      else
+        if config_hash.empty?
+          str = command('config', '--list')
+          lines = str.split("\n")
+          lines.each do |line|
+            (key, *values) = line.split('=')
+            config_hash[key] = values.join('=')
+          end
+        end
+        config_hash
+      end
+    end
+
+
+    def repo_name
+      unless @repo_name
+        origin_url = config['remote.origin.url']
+        raise Git::Process::GitProcessError.new("There is not origin url set up.") if origin_url.empty?
+        @repo_name = origin_url.sub(/^.*:(.*?)(.git)?$/, '\1')
+      end
+      @repo_name
+    end
+
+
     class Status
       attr_reader :unmerged, :modified, :deleted, :added
 
@@ -167,7 +208,7 @@ module Git
         @deleted = deleted.sort.uniq
         @added = added.sort.uniq
       end
-      
+
       def clean?
         @unmerged.empty? and @modified.empty? and @deleted.empty? and @added.empty?
       end

@@ -1,7 +1,11 @@
 require 'git-lib'
 require 'uncommitted-changes-error'
 require 'git-rebase-error'
+require 'git-merge-error'
+require 'pull-request'
 require 'shellwords'
+require 'highline/import'
+
 
 module Git
 
@@ -97,6 +101,28 @@ module Git
       rescue Git::GitExecuteError => merge_error
         raise MergeError.new(merge_error.message, lib)
       end
+    end
+
+
+    def pull_request(repo_name, base, head, title, body, opts = {})
+      repo_name ||= lib.repo_name
+      base ||= @@master_branch
+      head ||= lib.current_branch
+      title ||= ask_for_pull_title
+      body ||= ask_for_pull_body
+      Git::PullRequest.new(lib, opts).pull_request(repo_name, base, head, title, body)
+    end
+
+
+    def ask_for_pull_title
+      ask("What <%= color('title', [:bold]) %> do you want to give the pull request? ") do |q|
+        q.validate = /^\w+.*/
+      end
+    end
+
+
+    def ask_for_pull_body
+      ask("What <%= color('description', [:bold]) %> do you want to give the pull request? ")
     end
 
 
