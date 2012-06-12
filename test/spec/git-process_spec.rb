@@ -1,5 +1,6 @@
-require File.expand_path('../../../lib/git-process', __FILE__)
-require File.expand_path('../../FileHelpers', __FILE__)
+require 'backports'
+require_relative '../../lib/git-process'
+require_relative '../FileHelpers'
 
 describe Git::Process do
 

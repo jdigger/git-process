@@ -1,4 +1,5 @@
-require File.expand_path('../git-process-error', __FILE__)
+require 'backports'
+require_relative 'git-process-error'
 
 module Git
 

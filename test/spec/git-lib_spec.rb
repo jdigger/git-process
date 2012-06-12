@@ -1,5 +1,6 @@
-require File.expand_path('../../../lib/git-lib', __FILE__)
-require File.expand_path('../../FileHelpers', __FILE__)
+require 'backports'
+require_relative '../../lib/git-lib'
+require_relative '../FileHelpers'
 
 describe Git::GitLib do
 

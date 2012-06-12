@@ -1,6 +1,7 @@
-require File.expand_path('../git-lib', __FILE__)
-require File.expand_path('../uncommitted-changes-error', __FILE__)
-require File.expand_path('../git-rebase-error', __FILE__)
+require 'backports'
+require_relative 'git-lib'
+require_relative 'uncommitted-changes-error'
+require_relative 'git-rebase-error'
 require 'shellwords'
 
 module Git

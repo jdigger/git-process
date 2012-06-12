@@ -1,6 +1,6 @@
-require File.expand_path('../../../lib/git-abstract-merge-error-builder', __FILE__)
-require File.expand_path('../../../lib/git-lib', __FILE__)
-require File.expand_path('../../FileHelpers', __FILE__)
+require 'backports'
+require_relative '../../lib/git-abstract-merge-error-builder'
+require_relative '../../lib/git-lib'
 
 describe Git::AbstractMergeErrorBuilder do
 

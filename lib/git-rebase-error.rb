@@ -1,5 +1,6 @@
-require File.expand_path('../git-process-error', __FILE__)
-require File.expand_path('../git-abstract-merge-error-builder', __FILE__)
+require 'backports'
+require_relative 'git-process-error'
+require_relative 'git-abstract-merge-error-builder'
 
 module Git
 

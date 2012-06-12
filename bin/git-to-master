@@ -4,7 +4,8 @@ require "rubygems"
 require "bundler/setup"
 
 require 'logger'
-require File.expand_path('../../lib/git-process', __FILE__)
+require 'backports'
+require_relative '../lib/git-process'
 
 gp = Git::Process.new('.', :log_level => Logger::INFO)
 
