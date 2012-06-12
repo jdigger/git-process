@@ -20,7 +20,7 @@ module Git
 
 
     def unresolved_files
-      @unresolved_files ||= find_unresolved_files
+      @unresolved_files ||= (unmerged - resolved_files)
     end
 
 
@@ -33,15 +33,6 @@ module Git
       end
 
       resolved_files.sort
-    end
-
-
-    def find_unresolved_files
-      if unmerged.length != resolved_files.length
-        unmerged.find_all {|f| !resolved_files.include?(f)}.sort
-      else
-        []
-      end
     end
 
 
@@ -77,18 +68,21 @@ module Git
         commands << "# Verify that 'rerere' did the right thing for '#{file}'."
       end
 
-      unless lib.rerere_autoupdate?
+      unless resolved_files.empty? or lib.rerere_autoupdate?
         escaped_files = shell_escaped_files(resolved_files)
         commands << "git add #{escaped_files}"
       end
 
       unless unresolved_files.empty?
-        escaped_files = shell_escaped_files(unresolved_files)
-        commands << "git mergetool #{escaped_files}"
-        unresolved_files.each do |f|
+        mergeable = unresolved_files & modified
+        commands << "git mergetool #{shell_escaped_files(mergeable)}" unless mergeable.empty?
+        mergeable.each do |f|
           commands << "# Verify '#{f}' merged correctly."
         end
-        commands << "git add #{escaped_files}"
+        (unresolved_files & added).each do |f|
+          commands << "# '#{f}' was added in both branches; Fix the conflict."
+        end
+        commands << "git add #{shell_escaped_files(unresolved_files)}"
       end
 
       commands << continue_command if continue_command
