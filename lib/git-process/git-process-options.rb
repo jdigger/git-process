@@ -34,11 +34,11 @@ module Git
         OptionParser.new do |opts|
           opts.banner = "Usage: #{filename} [ options ]"
 
-          opts.on("-q", "--quiet", "Quiet") do |v|
+          opts.on("-q", "--quiet", "Quiet") do
             @quiet = true
           end
 
-          opts.on("-v", "--verbose", "Verbose") do |v|
+          opts.on("-v", "--verbose", "Verbose") do
             @verbose = true
             @quiet = false
           end
@@ -53,6 +53,8 @@ module Git
           begin
             begin
               opts.parse!(argv)
+
+              extend_args(argv)
             rescue OptionParser::ParseError => e
               raise "#{e.message}\n#{opts}"
             end
@@ -63,7 +65,13 @@ module Git
         end
       end
 
+
       def extend_opts(opts)
+        # extension point - does nothing by default
+      end
+
+
+      def extend_args(argv)
         # extension point - does nothing by default
       end
 
