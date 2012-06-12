@@ -5,9 +5,12 @@ require "bundler/setup"
 
 require 'logger'
 require 'backports'
+require_relative '../lib/git-process/git-sync-options'
 require_relative '../lib/git-process/git-process'
 
-gp = Git::Process.new('.', :log_level => Logger::INFO)
+options = Git::Process::SyncOptions.new(ARGV)
+
+gp = Git::Process.new('.', :log_level => options.log_level)
 
 begin
   gp.sync_with_server
