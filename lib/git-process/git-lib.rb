@@ -92,6 +92,11 @@ module Git
     end
 
 
+    def branch_sha(branch_name)
+      command('rev-parse', branch_name)
+    end
+
+
     def push(remote_name, local_branch, remote_branch, opts = {})
       branch = "#{opts[:force] ? '+' : ''}#{local_branch}:#{remote_branch}"
       command('push', [remote_name, branch])

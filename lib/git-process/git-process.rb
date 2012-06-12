@@ -56,20 +56,12 @@ module Git
 
       current_branch = lib.current_branch
       remote_branch = "origin/#{current_branch}"
-      old_sha = lib.command('rev-parse', remote_branch)
 
-      rebase(remote_branch)
-      rebase(Process::remote_master_branch)
+      merge(remote_branch)
+      merge(Process::remote_master_branch)
 
       unless current_branch == Process::master_branch
-        lib.fetch
-        new_sha = lib.command('rev-parse', remote_branch)
-        unless old_sha == new_sha
-          logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
-            " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
-          sync_with_server
-        end
-        lib.push(Process::server_name, current_branch, current_branch, :force => true)
+        lib.push(Process::server_name, current_branch, current_branch, :force => false)
       else
         logger.warn("Not pushing to the server because the current branch is the master branch.")
       end
@@ -81,6 +73,15 @@ module Git
         lib.rebase(base)
       rescue Git::GitExecuteError => rebase_error
         raise RebaseError.new(rebase_error.message, lib)
+      end
+    end
+
+
+    def merge(base)
+      begin
+        lib.merge(base)
+      rescue Git::GitExecuteError => merge_error
+        raise MergeError.new(merge_error.message, lib)
       end
     end
 
