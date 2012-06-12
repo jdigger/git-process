@@ -5,7 +5,7 @@ require "bundler/setup"
 
 require 'logger'
 require 'backports'
-require_relative '../lib/git-process'
+require_relative '../lib/git-process/git-process'
 
 gp = Git::Process.new('.', :log_level => Logger::INFO)
 

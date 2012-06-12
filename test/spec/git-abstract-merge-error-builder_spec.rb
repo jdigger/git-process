@@ -1,6 +1,6 @@
 require 'backports'
-require_relative '../../lib/git-abstract-merge-error-builder'
-require_relative '../../lib/git-lib'
+require_relative '../../lib/git-process/git-abstract-merge-error-builder'
+require_relative '../../lib/git-process/git-lib'
 
 describe Git::AbstractMergeErrorBuilder do
 
