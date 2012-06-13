@@ -27,6 +27,8 @@ http://git-scm.com/2010/03/08/rerere.html
 
 http://git.kernel.org/?p=git/git.git;a=blob;f=contrib/rerere-train.sh;hb=HEAD
 
+https://github.com/b4mboo/git-review
+
 
 
 ## Contributing
