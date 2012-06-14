@@ -157,6 +157,16 @@ module Git
     end
 
 
+    def repo_name
+      unless @repo_name
+        origin_url = config['remote.origin.url']
+        raise Git::Process::GitProcessError.new("There is not origin url set up.") if origin_url.empty?
+        @repo_name = origin_url.sub(/^.*:(.*?)(.git)?$/, '\1')
+      end
+      @repo_name
+    end
+
+
     class Status
       attr_reader :unmerged, :modified, :deleted, :added
 

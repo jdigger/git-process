@@ -4,6 +4,7 @@ require_relative 'uncommitted-changes-error'
 require_relative 'git-rebase-error'
 require_relative 'pull-request'
 require 'shellwords'
+require 'highline/import'
 
 
 module Git
@@ -112,8 +113,25 @@ module Git
     end
 
 
-    def pull_request(repo, base, head, title, body, opts = {})
-      Git::PullRequest.new(lib, opts).pull_request(repo, base, head, title, body)
+    def pull_request(repo_name, base, head, title, body, opts = {})
+      repo_name ||= lib.repo_name
+      base ||= @@master_branch
+      head ||= lib.current_branch
+      title ||= ask_for_pull_title
+      body ||= ask_for_pull_body
+      Git::PullRequest.new(lib, opts).pull_request(repo_name, base, head, title, body)
+    end
+
+
+    def ask_for_pull_title
+      ask("What <%= color('title', [:bold]) %> do you want to give the pull request? ") do |q|
+        q.validate = /^\w+.*/
+      end
+    end
+
+
+    def ask_for_pull_body
+      ask("What <%= color('description', [:bold]) %> do you want to give the pull request? ")
     end
 
 
