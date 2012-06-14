@@ -34,11 +34,11 @@ module Git
         OptionParser.new do |opts|
           opts.banner = "Usage: #{filename} [ options ]"
 
-          opts.on("-q", "--quiet", "Quiet") do |v|
+          opts.on("-q", "--quiet", "Quiet") do
             @quiet = true
           end
 
-          opts.on("-v", "--verbose", "Verbose") do |v|
+          opts.on("-v", "--verbose", "Verbose") do
             @verbose = true
             @quiet = false
           end
