@@ -1,6 +1,5 @@
-require 'backports'
-require_relative 'git-process-error'
-require_relative 'git-abstract-merge-error-builder'
+require 'git-process-error'
+require 'git-abstract-merge-error-builder'
 
 module Git
 

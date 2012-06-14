@@ -1,6 +1,5 @@
-require 'backports'
-require_relative '../../lib/git-process/git-process'
-require_relative '../FileHelpers'
+require 'git-process'
+require 'FileHelpers'
 
 describe Git::Process do
 
@@ -64,7 +63,7 @@ describe Git::Process do
 
 
     it "should work for a rebase after a rerere merge" do
-      tgz_file = File.expand_path('../../files/merge-conflict-rerere.tgz', __FILE__)
+      tgz_file = File.expand_path('../files/merge-conflict-rerere.tgz', __FILE__)
       Dir.chdir(@tmpdir) { `tar xfz #{tgz_file}` }
       gp = Git::Process.new(@tmpdir, :log_level => Logger::ERROR)
 

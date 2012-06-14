@@ -1,5 +1,4 @@
-require 'backports'
-require_relative 'git-process-error'
+require 'git-process-error'
 
 module Git
 

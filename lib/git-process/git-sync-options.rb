@@ -1,6 +1,5 @@
 require 'optparse'
-require 'backports'
-require_relative 'git-process-options'
+require 'git-process-options'
 
 module Git
 

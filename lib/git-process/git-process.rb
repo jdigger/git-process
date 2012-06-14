@@ -1,7 +1,6 @@
-require 'backports'
-require_relative 'git-lib'
-require_relative 'uncommitted-changes-error'
-require_relative 'git-rebase-error'
+require 'git-lib'
+require 'uncommitted-changes-error'
+require 'git-rebase-error'
 require 'shellwords'
 
 module Git

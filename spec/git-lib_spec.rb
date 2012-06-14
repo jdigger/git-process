@@ -1,6 +1,5 @@
-require 'backports'
-require_relative '../../lib/git-process/git-lib'
-require_relative '../FileHelpers'
+require 'git-lib'
+require 'FileHelpers'
 
 describe Git::GitLib do
 

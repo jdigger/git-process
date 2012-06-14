@@ -4,9 +4,10 @@ require "rubygems"
 require "bundler/setup"
 
 require 'logger'
-require 'backports'
-require_relative '../lib/git-process/git-sync-options'
-require_relative '../lib/git-process/git-process'
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib/git-process')
+require 'git-sync-options'
+require 'git-process'
 
 options = Git::Process::SyncOptions.new(File.basename(__FILE__), ARGV)
 
@@ -16,5 +17,5 @@ begin
   gp.sync_with_server(options.rebase)
 rescue Git::Process::GitProcessError => exp
   puts exp.message
-  exit -1
+  exit(-1)
 end

@@ -1,6 +1,5 @@
-require 'backports'
-require_relative 'git-lib'
-require_relative 'git-process-error'
+require 'git-lib'
+require 'git-process-error'
 require 'shellwords'
 
 module Git
