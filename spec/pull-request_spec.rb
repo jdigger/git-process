@@ -2,6 +2,8 @@ require 'pull-request'
 require 'webmock/rspec'
 require 'json'
 require 'octokit'
+require 'tempfile'
+
 
 describe Git::PullRequest do
 
@@ -138,17 +140,77 @@ describe Git::PullRequest do
 
     before(:each) do
       @pr = Git::PullRequest.new(lib, :user => 'tu', :password => 'dfsdf', :site => 'http://myco.com')
-      lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
     end
 
 
     it "should return an auth_token for a good request" do
+      lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
       lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
 
       stub_request(:post, /myco.com\/api\/v3\/authorizations/).
         to_return(:status => 200, :body => JSON({:token => test_token}))
 
       @pr.create_authorization().should == test_token
+    end
+
+
+    it "site should work for git@... ssh address" do
+      lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
+
+      @pr.site.should == 'http://myco.com'
+    end
+
+
+    it "site should work for https address" do
+      lib.stub(:config).with('remote.origin.url').and_return('https://myco.com/jdigger/git-process.git')
+
+      @pr.site.should == 'https://myco.com'
+    end
+
+
+    it "site should work for http address" do
+      lib.stub(:config).with('remote.origin.url').and_return('http://jdigger@myco.com/jdigger/git-process.git')
+
+      @pr.site.should == 'http://myco.com'
+    end
+
+
+    it "site should work for git://myco.com/ address" do
+      lib.stub(:config).with('remote.origin.url').and_return('git://myco.com/jdigger/git-process.git')
+
+      @pr.site.should == 'http://myco.com'
+    end
+
+
+    it "site should raise an error if remote.origin.url not set" do
+      lib.stub(:config).with('remote.origin.url').and_return('')
+
+      lambda {@pr.site}.should raise_error Git::PullRequest::NoRemoteRepository
+    end
+
+
+    it "site should not work for a garbase url address" do
+      lib.stub(:config).with('remote.origin.url').and_return('garbage')
+
+      lambda {@pr.site}.should raise_error URI::InvalidURIError
+    end
+
+
+    it "site should work for an ssh-configged url address" do
+      lib.stub(:config).with('remote.origin.url').and_return('mygithub:jdigger/git-process.git')
+
+      config_file = Tempfile.new('ssh_config')
+      config_file.puts "\nHost mygithub\n"+
+        "  User git\n"+
+        "  HostName github.myco.com\n"
+      config_file.flush
+
+      begin
+        @pr.site(:ssh_config_file => config_file.path).should == 'http://github.myco.com'
+      ensure
+        config_file.close
+        config_file.unlink
+      end
     end
 
   end

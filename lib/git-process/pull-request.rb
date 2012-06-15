@@ -31,8 +31,8 @@ module Git
     end
 
 
-    def site
-      @site ||= compute_site
+    def site(opts = {})
+      @site ||= compute_site(opts)
     end
 
 
@@ -40,26 +40,58 @@ module Git
     end
 
 
-    def compute_site
+    def compute_site(opts = {})
       origin_url = lib.config('remote.origin.url')
-      
+
       raise NoRemoteRepository.new("There is no value set for 'remote.origin.url'") if origin_url.empty?
 
-      begin
+      if /^git\@/ =~ origin_url
+        host = origin_url.sub(/^git\@(.*?):.*$/, '\1')
+        site = host_to_site(host, false)
+      else
         uri = URI.parse(origin_url)
         host = uri.host
-      rescue URI::InvalidURIError => uri_error
-        host = origin_url.sub(/^git\@(.*?):.*$/, '\1')
+        scheme = uri.scheme
+
+        raise URI::InvalidURIError.new("Need a scheme in URI: '#{origin_url}'") unless scheme
+
+        unless host
+          # assume that the 'scheme' is the named configuration in ~/.ssh/config
+          host = hostname_from_ssh_config(scheme, opts[:ssh_config_file] ||= "#{ENV['HOME']}/.ssh/config")
+        end
+
+        site = host_to_site(host, scheme == 'https')
       end
-      site = host_to_site(host)
+      site
     end
 
 
-    def host_to_site(host)
+    def hostname_from_ssh_config(host_alias, config_file)
+      config_lines = File.new(config_file).readlines
+
+      in_host_section = false
+      host_name = nil
+
+      sections = config_lines.each do |line|
+        line.chop!
+        if /^\s*Host\s+#{host_alias}\s*$/ =~ line
+            in_host_section = true
+          next
+        end
+        if in_host_section and (/^\s*HostName\s+\S+\s*$/ =~ line)
+          host_name = line.sub(/^\s*HostName\s+(\S+)\s*$/, '\1')
+          break
+        end
+      end
+      host_name
+    end
+
+
+    def host_to_site(host, ssl)
       if /github.com$/ =~ host
         'https://api.github.com'
       else
-        "http://#{host}"
+        "http#{ssl ? 's' : ''}://#{host}"
       end
     end
 
