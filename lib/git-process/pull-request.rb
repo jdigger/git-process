@@ -1,8 +1,10 @@
 require 'git-lib'
 require 'uncommitted-changes-error'
 require 'git-rebase-error'
+require 'git-process-error'
 require 'highline/import'
 require 'github-client'
+require 'uri'
 
 
 module Git
@@ -14,7 +16,7 @@ module Git
       @lib = lib
       @user = opts[:user]
       @password = opts[:password]
-      @site = opts[:site]
+      # @site = opts[:site]
     end
 
 
@@ -27,6 +29,42 @@ module Git
       end
       @client
     end
+
+
+    def site
+      @site ||= compute_site
+    end
+
+
+    class NoRemoteRepository < Git::Process::GitProcessError
+    end
+
+
+    def compute_site
+      origin_url = lib.config('remote.origin.url')
+      
+      raise NoRemoteRepository.new("There is no value set for 'remote.origin.url'") if origin_url.empty?
+
+      begin
+        uri = URI.parse(origin_url)
+        host = uri.host
+      rescue URI::InvalidURIError => uri_error
+        host = origin_url.sub(/^git\@(.*?):.*$/, '\1')
+      end
+      site = host_to_site(host)
+    end
+
+
+    def host_to_site(host)
+      if /github.com$/ =~ host
+        'https://api.github.com'
+      else
+        "http://#{host}"
+      end
+    end
+
+
+    private :host_to_site, :compute_site
 
 
     def pw_client

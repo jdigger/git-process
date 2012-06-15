@@ -26,6 +26,7 @@ describe Git::PullRequest do
 
     before(:each) do
       @pr = Git::PullRequest.new(lib, :user => 'tu', :password => 'dfsdf')
+      lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
     end
 
 
@@ -54,6 +55,7 @@ describe Git::PullRequest do
     before(:each) do
       @pr = Git::PullRequest.new(lib, :user => 'test_user')
       lib.stub(:config).with('gitProcess.github.authToken').and_return(test_token)
+      lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
     end
 
 
@@ -84,6 +86,7 @@ describe Git::PullRequest do
 
     before(:each) do
       lib.stub(:config).with('github.user').and_return('test_user')
+      lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
     end
 
 
@@ -135,6 +138,7 @@ describe Git::PullRequest do
 
     before(:each) do
       @pr = Git::PullRequest.new(lib, :user => 'tu', :password => 'dfsdf', :site => 'http://myco.com')
+      lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
     end
 
 
