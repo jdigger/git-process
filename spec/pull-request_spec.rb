@@ -130,4 +130,23 @@ describe Git::PullRequest do
 
   end
 
+
+  describe "using GHE instead of GitHub.com" do
+
+    before(:each) do
+      @pr = Git::PullRequest.new(lib, :user => 'tu', :password => 'dfsdf', :site => 'http://myco.com')
+    end
+
+
+    it "should return an auth_token for a good request" do
+      lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
+
+      stub_request(:post, /myco.com\/api\/v3\/authorizations/).
+        to_return(:status => 200, :body => JSON({:token => test_token}))
+
+      @pr.create_authorization().should == test_token
+    end
+
+  end
+
 end

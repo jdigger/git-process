@@ -1,19 +1,20 @@
 require 'git-lib'
 require 'uncommitted-changes-error'
 require 'git-rebase-error'
-require 'octokit'
 require 'highline/import'
+require 'github-client'
 
 
 module Git
 
   class PullRequest
-    attr_reader :lib
+    attr_reader :lib, :site
 
     def initialize(lib, opts = {})
       @lib = lib
       @user = opts[:user]
       @password = opts[:password]
+      @site = opts[:site]
     end
 
 
@@ -21,7 +22,8 @@ module Git
       unless @client
         auth_token
         logger.debug { "Creating GitHub client for user #{user} using token '#{auth_token}'" }
-        @client = Octokit::Client.new(:login => user, :oauth_token=> auth_token)
+        @client = GitHubClient.new(:login => user, :oauth_token=> auth_token)
+        @client.site = site
       end
       @client
     end
@@ -30,7 +32,8 @@ module Git
     def pw_client
       unless @pw_client
         logger.debug { "Creating GitHub client for user #{user} using password #{password}" }
-        @pw_client = Octokit::Client.new(:login => user, :password => password)
+        @pw_client = GitHubClient.new(:login => user, :password => password)
+        @pw_client.site = site
       end
       @pw_client
     end

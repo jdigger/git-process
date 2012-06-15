@@ -14,7 +14,7 @@ options = Git::Process::PullRequestOptions.new(File.basename(__FILE__), ARGV)
 gp = Git::Process.new('.', :log_level => options.log_level)
 
 begin
-  gp.pull_request(nil, nil, nil, options.title, options.description, :user => options.user, :password => options.password)
+  gp.pull_request(nil, nil, nil, options.title, options.description, :user => options.user, :password => options.password, :site => 'http://http://myco.com')
 rescue Git::Process::GitProcessError => exp
   puts exp.message
   exit -1
