@@ -1,74 +1,46 @@
 require 'git-process'
-require 'FileHelpers'
+require 'GitRepoHelper'
 
 describe Git::Process do
+  include GitRepoHelper
 
   before(:each) do
-    @tmpdir = Dir.mktmpdir
-    @gp = Git::Process.new(@tmpdir, :log_level => Logger::ERROR)
     create_files(['.gitignore'])
-    @gp.lib.commit('initial')
+    gitlib.commit('initial')
   end
 
 
   after(:each) do
-    rm_rf(@tmpdir)
-  end
-
-
-  def commit_count(gp)
-    gp.lib.log_count
-  end
-
-
-
-  def create_files(file_names)
-    Dir.chdir(@gp.lib.workdir) do |dir|
-      file_names.each do |fn|
-        @gp.lib.logger.debug {"Creating #{dir}/#{fn}"}
-        FileUtils.touch fn
-      end
-    end
-    @gp.lib.add(file_names)
-  end
-
-
-
-  def change_file_and_commit(filename, contents)
-    Dir.chdir(@gp.lib.workdir) do
-      File.open(filename, 'w') {|f| f.puts contents}
-    end
-    @gp.lib.add(filename)
-    @gp.lib.commit("#{filename} - #{contents}")
+    rm_rf(tmpdir)
   end
 
 
   describe "rebase to master" do
 
     it "should work easily for a simple rebase" do
-      @gp.lib.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('master', :new_branch => 'fb')
       change_file_and_commit('a', '')
 
-      commit_count(@gp).should == 2
+      commit_count.should == 2
 
-      @gp.lib.checkout('master')
+      gitlib.checkout('master')
       change_file_and_commit('b', '')
 
-      @gp.lib.checkout('fb')
+      gitlib.checkout('fb')
 
-      @gp.rebase_to_master
+      gitprocess.rebase_to_master
 
-      commit_count(@gp).should == 3
+      commit_count.should == 3
     end
 
 
     it "should work for a rebase after a rerere merge" do
       tgz_file = File.expand_path('../files/merge-conflict-rerere.tgz', __FILE__)
-      Dir.chdir(@tmpdir) { `tar xfz #{tgz_file}` }
-      gp = Git::Process.new(@tmpdir, :log_level => Logger::ERROR)
+      Dir.chdir(tmpdir) { `tar xfz #{tgz_file}` }
 
       begin
-        gp.rebase_to_master
+        gitprocess.rebase_to_master
+        raise "Should have raised RebaseError"
       rescue Git::Process::RebaseError => exp
         exp.resolved_files.should == ['a']
         exp.unresolved_files.should == []

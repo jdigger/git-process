@@ -1,15 +1,14 @@
 require 'git-lib'
-require 'FileHelpers'
+require 'GitRepoHelper'
 
 describe Git::GitLib do
 
   describe "status" do
+    include GitRepoHelper
 
     before(:each) do
-      @tmpdir = Dir.mktmpdir
-      @gl = Git::GitLib.new(@tmpdir, :log_level => Logger::ERROR)
       create_files(['.gitignore'])
-      @gl.commit('initial')
+      gitlib.commit('initial')
     end
 
 
@@ -18,51 +17,40 @@ describe Git::GitLib do
     end
 
 
-    def create_files(file_names)
-      Dir.chdir(@gl.workdir) do |dir|
-        file_names.each do |fn|
-          @gl.logger.debug {"Creating #{dir}/#{fn}"}
-          FileUtils.touch fn
-        end
-      end
-      @gl.add(file_names)
-    end
-
-
     it "should handle added files" do
       create_files(['a', 'b', 'c'])
 
-      @gl.status.added.should == ['a', 'b', 'c']
+      gitlib.status.added.should == ['a', 'b', 'c']
     end
 
 
     it "should handle a modification on both sides" do
       change_file_and_commit('a', '')
 
-      @gl.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('master', :new_branch => 'fb')
       change_file_and_commit('a', 'hello')
 
-      @gl.checkout('master')
+      gitlib.checkout('master')
       change_file_and_commit('a', 'goodbye')
 
-      @gl.merge('fb') rescue
+      gitlib.merge('fb') rescue
 
-      status = @gl.status
+      status = gitlib.status
       status.unmerged.should == ['a']
       status.modified.should == ['a']
     end
 
 
     it "should handle an addition on both sides" do
-      @gl.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('master', :new_branch => 'fb')
       change_file_and_commit('a', 'hello')
 
-      @gl.checkout('master')
+      gitlib.checkout('master')
       change_file_and_commit('a', 'goodbye')
 
-      @gl.merge('fb') rescue
+      gitlib.merge('fb') rescue
 
-      status = @gl.status
+      status = gitlib.status
       status.unmerged.should == ['a']
       status.added.should == ['a']
     end
@@ -71,16 +59,16 @@ describe Git::GitLib do
     it "should handle a merge deletion on fb" do
       change_file_and_commit('a', '')
 
-      @gl.checkout('master', :new_branch => 'fb')
-      @gl.remove('a', :force => true)
-      @gl.commit('removed a')
+      gitlib.checkout('master', :new_branch => 'fb')
+      gitlib.remove('a', :force => true)
+      gitlib.commit('removed a')
 
-      @gl.checkout('master')
+      gitlib.checkout('master')
       change_file_and_commit('a', 'goodbye')
 
-      @gl.merge('fb') rescue
+      gitlib.merge('fb') rescue
 
-      status = @gl.status
+      status = gitlib.status
       status.unmerged.should == ['a']
       status.deleted.should == ['a']
     end
@@ -89,35 +77,26 @@ describe Git::GitLib do
     it "should handle a merge deletion on master" do
       change_file_and_commit('a', '')
 
-      @gl.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('master', :new_branch => 'fb')
       change_file_and_commit('a', 'hello')
 
-      @gl.checkout('master')
-      @gl.remove('a', :force => true)
-      @gl.commit('removed a')
+      gitlib.checkout('master')
+      gitlib.remove('a', :force => true)
+      gitlib.commit('removed a')
 
-      @gl.merge('fb') rescue
+      gitlib.merge('fb') rescue
 
-      status = @gl.status
+      status = gitlib.status
       status.unmerged.should == ['a']
       status.deleted.should == ['a']
     end
 
 
-    def change_file_and_commit(filename, contents)
-      Dir.chdir(@gl.workdir) do
-        File.open(filename, 'w') {|f| f.puts contents}
-      end
-      @gl.add(filename)
-      @gl.commit("#{filename} - #{contents}")
-    end
-
-
     it "should return an empty result" do
-      @gl.status.added.should == []
-      @gl.status.deleted.should == []
-      @gl.status.modified.should == []
-      @gl.status.unmerged.should == []
+      gitlib.status.added.should == []
+      gitlib.status.deleted.should == []
+      gitlib.status.modified.should == []
+      gitlib.status.unmerged.should == []
     end
 
   end

@@ -11,11 +11,11 @@ require 'git-process'
 
 options = Git::Process::PullRequestOptions.new(File.basename(__FILE__), ARGV)
 
-gp = Git::Process.new('.', :log_level => options.log_level)
+gp = Git::Process.new('.', nil, :log_level => options.log_level)
 
 begin
-  gp.pull_request(nil, nil, nil, options.title, options.description, :user => options.user, :password => options.password, :site => 'http://http://myco.com')
+  gp.create(nil, nil, nil, options.title, options.description, :user => options.user, :password => options.password)
 rescue Git::Process::GitProcessError => exp
   puts exp.message
-  exit -1
+  exit(-1)
 end

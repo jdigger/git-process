@@ -11,7 +11,7 @@ require 'git-process'
 
 options = Git::Process::ToMasterOptions.new(File.basename(__FILE__), ARGV)
 
-gp = Git::Process.new('.', :log_level => options.log_level)
+gp = Git::Process.new('.', nil, :log_level => options.log_level)
 
 begin
   gp.rebase_to_master

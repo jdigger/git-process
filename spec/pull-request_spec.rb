@@ -3,19 +3,18 @@ require 'webmock/rspec'
 require 'json'
 require 'octokit'
 require 'tempfile'
+require 'GitRepoHelper'
 
 
-describe Git::PullRequest do
+describe GitHub::PullRequest do
+  include GitRepoHelper
 
-  attr_reader :logger, :lib
-
-  before(:each) do
-    @logger = double('logger')
-    @logger.stub(:debug)
-    @logger.stub(:info)
-
-    @lib = double('lib')
-    @lib.stub(:logger).and_return(logger)
+  def lib
+    unless @lib
+      @lib = double('lib')
+      @lib.stub(:logger).and_return(logger)
+    end
+    @lib
   end
 
 
@@ -24,35 +23,35 @@ describe Git::PullRequest do
   end
 
 
-  describe "pull_request" do
-
-    before(:each) do
-      @pr = Git::PullRequest.new(lib, :user => 'test_user')
-      lib.stub(:config).with('gitProcess.github.authToken').and_return(test_token)
-      lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
-    end
+  def pull_request
+    @pr ||= GitHub::PullRequest.new(lib, 'test_repo', :user => 'test_user')
+  end
 
 
-    it "should return a pull request for a good request" do
-      stub_request(:post, "https://api.github.com/repos/test_repo/pulls?access_token=#{test_token}").
-        to_return(:status => 200, :body => JSON({:number => 1, :state => 'open'}))
-
-      @pr.pull_request('test_repo', 'test_base', 'test_head', 'test title', 'test body')[:state].should == 'open'
-    end
+  before(:each) do
+    lib.stub(:config).with('gitProcess.github.authToken').and_return(test_token)
+    lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
+  end
 
 
-    it "should handle asking for a duplicate pull request" do
-      stub_request(:post, "https://api.github.com/repos/test_repo/pulls?access_token=#{test_token}").
-        to_return(:status => 422)
+  it "should return a pull request for a good request" do
+    stub_request(:post, "https://api.github.com/repos/test_repo/pulls?access_token=#{test_token}").
+      to_return(:status => 200, :body => JSON({:number => 1, :state => 'open'}))
 
-      stub_request(:get, /test_repo\/pulls\?access_token=/).
-        to_return(:status => 200, :body => JSON([{:html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}]))
+    pull_request.create('test_base', 'test_head', 'test title', 'test body')[:state].should == 'open'
+  end
 
-      @logger.should_receive(:warn).once
 
-      @pr.pull_request('test_repo', 'test_base', 'test_head', 'test title', 'test body')[:html_url].should == 'test_url'
-    end
+  it "should handle asking for a duplicate pull request" do
+    # trying to create the request should return "HTTP 422: Unprocessable Entity" because it already exists
+    stub_request(:post, "https://api.github.com/repos/test_repo/pulls?access_token=#{test_token}").
+      to_return(:status => 422)
 
+    # listing all existing pull requests should contain the current branch
+    stub_request(:get, /test_repo\/pulls\?access_token=/).
+      to_return(:status => 200, :body => JSON([{:html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}]))
+
+    pull_request.create('test_base', 'test_head', 'test title', 'test body')[:html_url].should == 'test_url'
   end
 
 end

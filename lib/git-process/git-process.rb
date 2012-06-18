@@ -15,8 +15,8 @@ module Git
     @@server_name = 'origin'
     @@master_branch = 'master'
 
-    def initialize(dir, options = {})
-      @lib = Git::GitLib.new(dir, options)
+    def initialize(dir = nil, gitlib = nil, options = {})
+      @lib = gitlib || Git::GitLib.new(dir, options)
     end
 
 
@@ -110,7 +110,7 @@ module Git
       head ||= lib.current_branch
       title ||= ask_for_pull_title
       body ||= ask_for_pull_body
-      Git::PullRequest.new(lib, opts).pull_request(repo_name, base, head, title, body)
+      GitHub::PullRequest.new(lib, repo_name, opts).pull_request(base, head, title, body)
     end
 
 
