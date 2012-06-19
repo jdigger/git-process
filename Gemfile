@@ -7,6 +7,7 @@ gem "launchy", "~> 2.1.0" # web browser interaction
 gem "octokit", "~> 1.4.0" # GitHub API
 gem "json", "~> 1.7.3"
 gem "highline", "~> 1.6.12" # user CLI interaction
+gem "termios", "~> 0.9.4"  # used by highline to make things a little nicer
 gem "system_timer", "~> 1.2.4" # Needed by faraday via octokit
 
 group :test do

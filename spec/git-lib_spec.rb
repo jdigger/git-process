@@ -101,4 +101,22 @@ describe Git::GitLib do
 
   end
 
+
+  describe "branches" do
+    include GitRepoHelper
+
+    it "list all the branches" do
+      create_files(['.gitignore'])
+      gitlib.commit('initial')
+
+      gitlib.create_branch('ba', 'master')
+      gitlib.create_branch('bb', 'master')
+      gitlib.create_branch('origin/master', 'master')
+
+      gitlib.branches.names.should == ['ba', 'bb', 'master', 'origin/master']
+    end
+
+  end
+
+
 end

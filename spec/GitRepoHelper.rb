@@ -5,7 +5,7 @@ module GitRepoHelper
 
 
   def gitlib
-    @gitlib ||= Git::GitLib.new(tmpdir, :log_level => Logger::ERROR)
+    @gitlib ||= Git::GitLib.new(tmpdir, :log_level => log_level)
   end
 
 
@@ -24,17 +24,13 @@ module GitRepoHelper
   end
 
 
+  def log_level
+    Logger::ERROR
+  end
+
+
   def logger
-    unless @logger
-      @logger = Logger.new(STDOUT)
-      @logger.level = Logger::ERROR
-      @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
-      f = Logger::Formatter.new
-      @logger.formatter = proc do |severity, datetime, progname, msg|
-        "#{severity[0..0]}: #{datetime.strftime(@logger.datetime_format)}: #{msg}\n"
-      end
-    end
-    @logger
+    gitlib.logger
   end
 
 

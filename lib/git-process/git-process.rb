@@ -2,6 +2,7 @@ require 'git-lib'
 require 'uncommitted-changes-error'
 require 'git-rebase-error'
 require 'git-merge-error'
+require 'parked-changes-error'
 require 'pull-request'
 require 'shellwords'
 require 'highline/import'
@@ -36,14 +37,13 @@ module Git
 
 
     def rebase_to_master
-      unless lib.status.clean?
-        raise UncommittedChangesError.new
-      end
+      raise UncommittedChangesError.new unless lib.status.clean?
+      raise ParkedChangesError.new(lib) if is_parked?
 
       if lib.has_a_remote?
         lib.fetch
         rebase(Process::remote_master_branch)
-        lib.push(Process::server_name, lib.current_branch, Process::master_branch)
+        lib.push(Process::server_name, lib.branches.current, Process::master_branch)
       else
         rebase("master")
       end
@@ -51,12 +51,11 @@ module Git
 
 
     def sync_with_server(rebase)
-      unless lib.status.clean?
-        raise UncommittedChangesError.new
-      end
+      raise UncommittedChangesError.new unless lib.status.clean?
+      raise ParkedChangesError.new(lib) if is_parked?
 
-      current_branch = lib.current_branch
-      remote_branch = "origin/#{current_branch}"
+      current_branch = lib.branches.current
+      remote_branch = "#{Process::server_name}/#{current_branch}"
 
       lib.fetch
 
@@ -86,6 +85,52 @@ module Git
     end
 
 
+    def bad_parking_branch_msg
+      hl = HighLine.new
+      hl.color("\n***********************************************************************************************\n\n"+
+               "There is an old '_parking_' branch with unacounted changes in it.\n"+
+               "It has been renamed to '_parking_OLD_'.\n"+
+               "Please rename the branch to what the changes are about (`git branch -m _parking_OLD_ my_fb_name`),\n"+
+               " or remove it altogher (`git branch -D _parking_OLD_`).\n\n"+
+               "***********************************************************************************************\n", :red, :bold)
+    end
+
+
+    def remove_feature_branch
+      branches = lib.branches
+
+      remote_master = branches[Process::remote_master_branch]
+      current_branch = branches.current
+
+      unless remote_master.contains_all_of(current_branch.name)
+        raise GitProcessError.new("Branch '#{current_branch.name}' has not been merged into '#{Process::remote_master_branch}'")
+      end
+
+      parking_branch = branches['_parking_']
+      if parking_branch
+        if (parking_branch.is_ahead_of(remote_master.name) and
+            !current_branch.contains_all_of(parking_branch.name))
+
+          parking_branch.rename('_parking_OLD_')
+
+          logger.warn {bad_parking_branch_msg}
+        else
+          parking_branch.delete
+        end
+      end
+      remote_master.checkout_to_new('_parking_', :no_track => true)
+
+      current_branch.delete
+      lib.command(:push, [Process.server_name, ":#{current_branch.name}"]) if lib.has_a_remote?
+    end
+
+
+    def is_parked?
+      branches = lib.branches
+      branches.parking == branches.current
+    end
+
+
     def rebase(base)
       begin
         lib.rebase(base)
@@ -107,7 +152,7 @@ module Git
     def pull_request(repo_name, base, head, title, body, opts = {})
       repo_name ||= lib.repo_name
       base ||= @@master_branch
-      head ||= lib.current_branch
+      head ||= lib.branches.current
       title ||= ask_for_pull_title
       body ||= ask_for_pull_body
       GitHub::PullRequest.new(lib, repo_name, opts).pull_request(base, head, title, body)

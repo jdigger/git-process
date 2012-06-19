@@ -3,6 +3,7 @@ require "bundler/setup"
 
 require 'git'
 require 'logger'
+require 'set'
 
 module Git
 
@@ -24,7 +25,8 @@ module Git
         @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
         f = Logger::Formatter.new
         @logger.formatter = proc do |severity, datetime, progname, msg|
-          "#{severity[0..0]}: #{datetime.strftime(@logger.datetime_format)}: #{msg}\n"
+          "#{msg}\n"
+          # "#{severity[0..0]}: #{datetime.strftime(@logger.datetime_format)}: #{msg}\n"
         end
       end
     end
@@ -72,11 +74,6 @@ module Git
     end
 
 
-    def current_branch
-      git.current_branch
-    end
-
-
     def rebase(base)
       command('rebase', base)
     end
@@ -94,6 +91,21 @@ module Git
 
     def branch_sha(branch_name)
       command('rev-parse', branch_name)
+    end
+
+
+    def branches
+      GitBranches.new(self)
+    end
+
+
+    def branch_names
+      branches.map { |b| b.name }
+    end
+
+
+    def create_branch(branch_name, base = 'origin/master')
+      command(:branch, [branch_name, base])
     end
 
 
@@ -251,6 +263,127 @@ module Git
 
     def command(cmd, opts = [], chdir = true, redirect = '')
       git.lib.send(:command, cmd, opts, chdir, redirect)
+    end
+
+  end
+
+
+  class GitBranch
+    include Comparable
+
+    attr_reader :name
+
+    def initialize(name, current, lib)
+      if (/^remotes\// =~ name)
+        @name = name[8..-1]
+        @remote = true
+      else
+        @name = name
+        @remote = false
+      end
+      @current = current
+      @lib = lib
+    end
+
+
+    def current?
+      @current
+    end
+
+
+    def remote?
+      @remote
+    end
+
+
+    def local?
+      !@remote
+    end
+
+
+    def to_s
+      name
+    end
+
+
+    def sha
+      command('rev-parse', name)
+    end
+
+
+    def <=>(other)
+      self.name <=> other.name
+    end
+
+
+    def is_ahead_of(base_branch_name)
+      @lib.command('rev-list', ['-1', '--oneline', "#{base_branch_name}..#{@name}"]) != ''
+    end
+
+
+    def delete
+      @lib.command(:branch, ['-d', @name])
+    end
+
+
+    def rename(new_name)
+      @lib.command(:branch, ['-m', @name, new_name])
+    end
+
+
+    def contains_all_of(branch_name)
+      @lib.command('rev-list', ['-1', '--oneline', branch_name, "^#{@name}"]) == ''
+    end
+
+
+    def checkout_to_new(new_branch, opts = {})
+      args = opts[:no_track] ? ['--no-track'] : []
+      args << '-b' << new_branch << @name
+      @lib.command(:checkout, args)
+    end
+
+  end
+
+
+  class GitBranches
+    include Enumerable
+
+    def initialize(lib)
+      branch_lines = lib.command(:branch, ['-a', '--no-color']).split("\n")
+      @items = SortedSet.new
+      branch_lines.each do |bl|
+        @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)
+      end
+    end
+
+
+    def each(&block)
+      @items.each {|b| block.call(b)}
+    end
+
+
+    def names
+      @items.map {|b| b.name}
+    end
+
+
+    def current
+      @items.find {|b| b.current? }
+    end
+
+
+    def parking
+      @items.find {|b| b.name == '_parking_' }
+    end
+
+
+    def include?(branch_name)
+      @items.find {|b| b.name == branch_name} != nil
+    end
+
+
+    def [](branch_name)
+      @items.find {|b| b.name == branch_name}
     end
 
   end
