@@ -44,6 +44,7 @@ module Git
         lib.fetch
         rebase(Process::remote_master_branch)
         lib.push(Process::server_name, lib.branches.current, Process::master_branch)
+        remove_feature_branch
       else
         rebase("master")
       end
