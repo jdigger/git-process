@@ -1,5 +1,6 @@
 source "http://rubygems.org"
 
+gem "rake", "~> 0.9.2", :group => :development
 gem "git", "~> 1.2.5"
 #gem "rugged"  # "git" bindings for libgit2
 gem "launchy", "~> 2.1.0" # web browser interaction
