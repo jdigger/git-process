@@ -1,18 +1,15 @@
 require 'git-lib'
+require 'abstract-error-builder'
 require 'git-process-error'
 require 'shellwords'
 
 module Git
 
   #
-  # Assumes that there are two attributes defined: error_message, lib, continue_command
+  # Assumes that there are three attributes defined: error_message, lib, continue_command
   #
   module AbstractMergeErrorBuilder
-
-    def commands
-      @commands ||= build_commands
-    end
-
+    include AbstractErrorBuilder
 
     def resolved_files
       @resolved_files ||= find_resolved_files
@@ -36,12 +33,12 @@ module Git
     end
 
 
-    def build_message
+    def human_message
       msg = 'There was a problem merging.'
 
       resolved_files.each do |file|
         if modified.include? file
-          msg += "\n'#{file}' was modified in both branches, and 'rerere' automatically resolved it."
+          msg << "\n'#{file}' was modified in both branches, and 'rerere' automatically resolved it."
         end
       end
 
@@ -51,11 +48,11 @@ module Git
 
       unresolved_files.each do |file|
         if modified.include? file
-          msg += "\n'#{file}' was modified in both branches."
+          msg << "\n'#{file}' was modified in both branches."
         end
       end
 
-      msg << "\n\nCommands:\n\n  #{commands.join("\n  ")}"
+      msg
     end
 
 
@@ -88,12 +85,6 @@ module Git
       commands << continue_command if continue_command
 
       commands
-    end
-
-
-    def shell_escaped_files(files)
-      shell_escaped_files = files.map{|f| f.shellescape}
-      shell_escaped_files.join(' ')
     end
 
 
