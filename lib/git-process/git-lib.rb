@@ -3,7 +3,8 @@ require "bundler/setup"
 
 require 'git'
 require 'logger'
-require 'set'
+require 'git-branch'
+require 'git-branches'
 
 module Git
 
@@ -121,7 +122,12 @@ module Git
 
 
     def checkout(branch, opts = {})
-      git.checkout(branch, opts)
+      args = []
+      args << '-b' if opts[:new_branch]
+      args << branch
+      args << opts[:new_branch] if opts[:new_branch]
+      command(:checkout, args)
+      GitBranch.new(branch, opts[:new_branch] != nil, self)
     end
 
 
@@ -187,6 +193,7 @@ module Git
         modified = []
         deleted = []
         added = []
+        unknown = []
 
         stats = lib.command('status', '--porcelain').split("\n")
 
@@ -212,6 +219,10 @@ module Git
           when 'AA'
             added << file
             unmerged << file
+          when '??'
+            unknown << file
+          else
+            raise "Do not know what to do with status #{stat} - #{file}"
           end
         end
 
@@ -219,10 +230,11 @@ module Git
         @modified = modified.sort.uniq
         @deleted = deleted.sort.uniq
         @added = added.sort.uniq
+        @unknown = unknown.sort.uniq
       end
 
       def clean?
-        @unmerged.empty? and @modified.empty? and @deleted.empty? and @added.empty?
+        @unmerged.empty? and @modified.empty? and @deleted.empty? and @added.empty? and @unknown.empty?
       end
 
     end
@@ -263,127 +275,6 @@ module Git
 
     def command(cmd, opts = [], chdir = true, redirect = '')
       git.lib.send(:command, cmd, opts, chdir, redirect)
-    end
-
-  end
-
-
-  class GitBranch
-    include Comparable
-
-    attr_reader :name
-
-    def initialize(name, current, lib)
-      if (/^remotes\// =~ name)
-        @name = name[8..-1]
-        @remote = true
-      else
-        @name = name
-        @remote = false
-      end
-      @current = current
-      @lib = lib
-    end
-
-
-    def current?
-      @current
-    end
-
-
-    def remote?
-      @remote
-    end
-
-
-    def local?
-      !@remote
-    end
-
-
-    def to_s
-      name
-    end
-
-
-    def sha
-      command('rev-parse', name)
-    end
-
-
-    def <=>(other)
-      self.name <=> other.name
-    end
-
-
-    def is_ahead_of(base_branch_name)
-      @lib.command('rev-list', ['-1', '--oneline', "#{base_branch_name}..#{@name}"]) != ''
-    end
-
-
-    def delete
-      @lib.command(:branch, ['-d', @name])
-    end
-
-
-    def rename(new_name)
-      @lib.command(:branch, ['-m', @name, new_name])
-    end
-
-
-    def contains_all_of(branch_name)
-      @lib.command('rev-list', ['-1', '--oneline', branch_name, "^#{@name}"]) == ''
-    end
-
-
-    def checkout_to_new(new_branch, opts = {})
-      args = opts[:no_track] ? ['--no-track'] : []
-      args << '-b' << new_branch << @name
-      @lib.command(:checkout, args)
-    end
-
-  end
-
-
-  class GitBranches
-    include Enumerable
-
-    def initialize(lib)
-      branch_lines = lib.command(:branch, ['-a', '--no-color']).split("\n")
-      @items = SortedSet.new
-      branch_lines.each do |bl|
-        @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)
-      end
-    end
-
-
-    def each(&block)
-      @items.each {|b| block.call(b)}
-    end
-
-
-    def names
-      @items.map {|b| b.name}
-    end
-
-
-    def current
-      @items.find {|b| b.current? }
-    end
-
-
-    def parking
-      @items.find {|b| b.name == '_parking_' }
-    end
-
-
-    def include?(branch_name)
-      @items.find {|b| b.name == branch_name} != nil
-    end
-
-
-    def [](branch_name)
-      @items.find {|b| b.name == branch_name}
     end
 
   end

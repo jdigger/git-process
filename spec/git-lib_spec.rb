@@ -27,7 +27,7 @@ describe Git::GitLib do
     it "should handle a modification on both sides" do
       change_file_and_commit('a', '')
 
-      gitlib.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('fb', :new_branch => 'master')
       change_file_and_commit('a', 'hello')
 
       gitlib.checkout('master')
@@ -42,7 +42,7 @@ describe Git::GitLib do
 
 
     it "should handle an addition on both sides" do
-      gitlib.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('fb', :new_branch => 'master')
       change_file_and_commit('a', 'hello')
 
       gitlib.checkout('master')
@@ -59,7 +59,7 @@ describe Git::GitLib do
     it "should handle a merge deletion on fb" do
       change_file_and_commit('a', '')
 
-      gitlib.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('fb', :new_branch => 'master')
       gitlib.remove('a', :force => true)
       gitlib.commit('removed a')
 
@@ -77,7 +77,7 @@ describe Git::GitLib do
     it "should handle a merge deletion on master" do
       change_file_and_commit('a', '')
 
-      gitlib.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('fb', :new_branch => 'master')
       change_file_and_commit('a', 'hello')
 
       gitlib.checkout('master')

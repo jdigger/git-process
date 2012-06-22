@@ -18,7 +18,7 @@ describe Git::Process do
   describe "rebase to master" do
 
     it "should work easily for a simple rebase" do
-      gitlib.checkout('master', :new_branch => 'fb')
+      gitlib.checkout('fb', :new_branch => 'master')
       change_file_and_commit('a', '')
 
       commit_count.should == 2
@@ -183,7 +183,7 @@ describe Git::Process do
     describe "when used while on _parking_" do
 
       it 'should fail #rebase_to_master' do
-        gitlib.checkout('master', :new_branch => '_parking_')
+        gitlib.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
         expect {gitprocess.rebase_to_master}.should raise_error Git::Process::ParkedChangesError
@@ -191,12 +191,60 @@ describe Git::Process do
 
 
       it 'should fail #sync_with_server' do
-        gitlib.checkout('master', :new_branch => '_parking_')
+        gitlib.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
         expect {gitprocess.sync_with_server(false)}.should raise_error Git::Process::ParkedChangesError
       end
 
+    end
+
+  end
+
+
+  describe "#new_feature_branch" do
+
+    def log_level
+      Logger::ERROR
+    end
+
+
+    it "should create the named branch against origin/master" do
+      gitlib.command(:branch, ['origin/master', 'master'])
+
+      new_branch = gitprocess.new_feature_branch('test_branch')
+
+      new_branch.name.should == 'test_branch'
+      new_branch.sha.should == gitlib.branches['origin/master'].sha
+    end
+
+
+    it "should fail if the working dir is dirty" do
+      Dir.chdir(gitlib.workdir) do |dir|
+        FileUtils.touch 'a_file.txt'
+      end
+      gitlib.command(:branch, ['origin/master', 'master'])
+
+      expect {gitprocess.new_feature_branch('test_branch')}.should raise_error Git::Process::UncommittedChangesError
+    end
+
+
+    it "should bring changes on _parking_ over to the new branch" do
+      gitlib.command(:branch, ['origin/master', 'master'])
+      gitlib.checkout('_parking_', :new_branch => 'master')
+      change_file_and_commit('a', '')
+      change_file_and_commit('b', '')
+
+      new_branch = gitprocess.new_feature_branch('test_branch')
+
+      new_branch.name.should == 'test_branch'
+      Dir.chdir(gitlib.workdir) do |dir|
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
+      end
+
+      branches = gitlib.branches
+      branches.parking.sha.should == branches['origin/master'].sha
     end
 
   end

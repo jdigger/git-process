@@ -86,6 +86,23 @@ module Git
     end
 
 
+    def new_feature_branch(branch_name)
+      raise UncommittedChangesError.new unless lib.status.clean?
+
+      branches = lib.branches
+      on_parking = (branches.parking == branches.current)
+
+      if on_parking
+        lib.checkout(branch_name, :new_branch => '_parking_')
+        lib.checkout('_parking_')
+        lib.command(:reset, ['--hard', 'origin/master'])
+        lib.checkout(branch_name)
+      else
+        lib.checkout(branch_name, :new_branch => 'origin/master')
+      end
+    end
+
+
     def bad_parking_branch_msg
       hl = HighLine.new
       hl.color("\n***********************************************************************************************\n\n"+
