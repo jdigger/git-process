@@ -35,8 +35,31 @@ describe Git::Process do
 
 
     it "should work for a rebase after a rerere merge" do
-      tgz_file = File.expand_path('../files/merge-conflict-rerere.tgz', __FILE__)
-      Dir.chdir(tmpdir) { `tar xfz #{tgz_file}` }
+      # Make sure rerere is enabled
+      gitlib.command(:config, ['rerere.enabled', '1'])
+
+      # Create the file to conflict on
+      change_file_and_commit('a', '')
+
+      # In the new branch, give it a new value
+      gitlib.checkout('fb', :new_branch => 'master')
+      change_file_and_commit('a', 'hello')
+
+      # Change the value as well in the origional branch
+      gitlib.checkout('master')
+      change_file_and_commit('a', 'goodbye')
+
+      # Merge in the new branch; don't error-out because will auto-fix.
+      gitlib.checkout('fb')
+      gitlib.command(:merge, 'master') rescue
+      change_file_and_commit('a', 'merged')
+
+      # Make another change on master
+      gitlib.checkout('master')
+      change_file_and_commit('b', '')
+
+      # Go back to the branch and try to rebase
+      gitlib.checkout('fb')
 
       begin
         gitprocess.rebase_to_master
