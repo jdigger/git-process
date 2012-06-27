@@ -229,17 +229,7 @@ describe Git::Process do
     end
 
 
-    it "should fail if the working dir is dirty" do
-      Dir.chdir(gitlib.workdir) do |dir|
-        FileUtils.touch 'a_file.txt'
-      end
-      gitlib.command(:branch, ['origin/master', 'master'])
-
-      expect {gitprocess.new_feature_branch('test_branch')}.should raise_error Git::Process::UncommittedChangesError
-    end
-
-
-    it "should bring changes on _parking_ over to the new branch" do
+    it "should bring committed changes on _parking_ over to the new branch" do
       gitlib.command(:branch, ['origin/master', 'master'])
       gitlib.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '')
@@ -251,6 +241,28 @@ describe Git::Process do
       Dir.chdir(gitlib.workdir) do |dir|
         File.exists?('a').should be_true
         File.exists?('b').should be_true
+      end
+
+      branches = gitlib.branches
+      branches.parking.sha.should == branches['origin/master'].sha
+    end
+
+    it "should bring new/uncommitted changes on _parking_ over to the new branch" do
+      gitlib.command(:branch, ['origin/master', 'master'])
+      gitlib.checkout('_parking_', :new_branch => 'master')
+      change_file_and_commit('a', '')
+      Dir.chdir(gitlib.workdir) do |dir|
+        FileUtils.touch('b')
+        FileUtils.touch('c')
+      end
+
+      new_branch = gitprocess.new_feature_branch('test_branch')
+
+      new_branch.name.should == 'test_branch'
+      Dir.chdir(gitlib.workdir) do |dir|
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
+        File.exists?('c').should be_true
       end
 
       branches = gitlib.branches

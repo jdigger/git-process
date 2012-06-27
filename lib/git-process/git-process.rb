@@ -62,20 +62,19 @@ module Git
 
       if rebase
         rebase(Process::remote_master_branch)
-        old_sha = lib.command('rev-parse', remote_branch) rescue ''
       else
         merge(Process::remote_master_branch)
       end
 
+      old_sha = lib.command('rev-parse', remote_branch) rescue ''
+
       unless current_branch == Process::master_branch
         lib.fetch
-        if rebase
-          new_sha = lib.command('rev-parse', remote_branch) rescue ''
-          unless old_sha == new_sha
-            logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
-                        " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
-            sync_with_server(rebase, force)
-          end
+        new_sha = lib.command('rev-parse', remote_branch) rescue ''
+        unless old_sha == new_sha
+          logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
+                      " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+          sync_with_server(rebase, force)
         end
         lib.push(Process::server_name, current_branch, current_branch, :force => rebase || force)
       else
@@ -85,8 +84,6 @@ module Git
 
 
     def new_feature_branch(branch_name)
-      raise UncommittedChangesError.new unless lib.status.clean?
-
       branches = lib.branches
       on_parking = (branches.parking == branches.current)
 
