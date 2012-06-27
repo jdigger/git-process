@@ -46,12 +46,32 @@ module GitRepoHelper
 
 
 
-  def change_file_and_commit(filename, contents)
-    Dir.chdir(gitlib.workdir) do
+  def change_file_and_commit(filename, contents, lib = gitlib)
+    Dir.chdir(lib.workdir) do
       File.open(filename, 'w') {|f| f.puts contents}
     end
-    gitlib.add(filename)
-    gitlib.commit("#{filename} - #{contents}")
+    lib.add(filename)
+    lib.commit("#{filename} - #{contents}")
+  end
+
+
+  def clone(branch='master', &block)
+    td = Dir.mktmpdir
+    gl = Git::GitLib.new(td, :log_level => log_level)
+    gl.command(:remote, ['add', 'origin', "file://#{tmpdir}"])
+    gl.fetch
+    gl.checkout(branch, :new_branch => "origin/#{branch}")
+    if block_given?
+      begin
+        block.arity < 1 ? gl.instance_eval(&block) : block.call(gl)
+      rescue => exp
+        rm_rf(gl.workdir)
+        raise exp
+      end
+      nil
+    else
+      gl
+    end
   end
 
 end

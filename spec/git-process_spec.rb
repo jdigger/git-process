@@ -17,6 +17,11 @@ describe Git::Process do
 
   describe "rebase to master" do
 
+    def log_level
+      Logger::ERROR
+    end
+
+
     it "should work easily for a simple rebase" do
       gitlib.checkout('fb', :new_branch => 'master')
       change_file_and_commit('a', '')
@@ -36,27 +41,32 @@ describe Git::Process do
 
     it "should work for a rebase after a rerere merge" do
       # Make sure rerere is enabled
-      gitlib.command(:config, ['rerere.enabled', '1'])
+      gitlib.command(:config, ['rerere.enabled', 'true'])
+      gitlib.command(:config, ['rerere.autoupdate', 'false'])
 
       # Create the file to conflict on
       change_file_and_commit('a', '')
 
       # In the new branch, give it a new value
-      gitlib.checkout('fb', :new_branch => 'master')
-      change_file_and_commit('a', 'hello')
+      gitlib.checkout('fb', :new_branch => 'master') do
+        change_file_and_commit('a', 'hello')
+      end
 
       # Change the value as well in the origional branch
-      gitlib.checkout('master')
-      change_file_and_commit('a', 'goodbye')
+      gitlib.checkout('master') do
+        change_file_and_commit('a', 'goodbye')
+      end
 
       # Merge in the new branch; don't error-out because will auto-fix.
-      gitlib.checkout('fb')
-      gitlib.command(:merge, 'master') rescue
-      change_file_and_commit('a', 'merged')
+      gitlib.checkout('fb') do
+        gitlib.merge('master') rescue
+        change_file_and_commit('a', 'merged')
+      end
 
       # Make another change on master
-      gitlib.checkout('master')
-      change_file_and_commit('b', '')
+      gitlib.checkout('master') do
+        change_file_and_commit('b', '')
+      end
 
       # Go back to the branch and try to rebase
       gitlib.checkout('fb')
@@ -100,20 +110,28 @@ describe Git::Process do
         gitlib.command(:branch, ['_parking_', 'origin/master'])
         change_file_and_commit('a', '')  # still on 'master'
 
-        gitlib.command(:checkout, ['-b', 'fb', 'origin/master'])
+        gitlib.checkout('fb', :new_branch => 'origin/master')
+
         gitprocess.remove_feature_branch
+
         gitlib.branches.current.name.should == '_parking_'
       end
 
 
       it "should move it to the new origin/master if it already exists and changes are part of the current branch" do
         gitlib.command(:branch, ['origin/master', 'master'])
-        gitlib.command(:checkout, ['-b', '_parking_', 'origin/master'])
-        change_file_and_commit('a', '')
-        gitlib.command(:checkout, ['-b', 'fb', '_parking_'])
-        gitlib.command(:checkout, 'origin/master')
-        gitlib.command(:merge, 'fb')
-        gitlib.command(:checkout, 'fb')
+
+        gitlib.checkout('_parking_', :new_branch => 'origin/master') do
+          change_file_and_commit('a', '')
+        end
+
+        gitlib.create_branch('fb', '_parking_')
+
+        gitlib.checkout('origin/master') do
+          gitlib.merge('fb')
+        end
+
+        gitlib.checkout('fb')
 
         gitprocess.remove_feature_branch
         gitlib.branches.current.name.should == '_parking_'
@@ -162,20 +180,12 @@ describe Git::Process do
 
       gitlib.command(:branch, ['fb', 'master'])
 
-      td = Dir.mktmpdir
-      gl = Git::GitLib.new(td, :log_level => log_level)
-      gl.command(:remote, ['add', 'origin', "file://#{tmpdir}"])
-      gl.fetch
-      gl.checkout('fb')
-
-      begin
+      clone('fb') do |gl|
         gl.branches.include?('origin/fb').should be_true
         Git::Process.new(nil, gl).remove_feature_branch
         gl.branches.include?('origin/fb').should be_false
         gitlib.branches.include?('fb').should be_false
         gl.branches.current.name.should == '_parking_'
-      ensure
-        rm_rf(td)
       end
     end
 
@@ -194,7 +204,7 @@ describe Git::Process do
         gitlib.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
-        expect {gitprocess.sync_with_server(false)}.should raise_error Git::Process::ParkedChangesError
+        expect {gitprocess.sync_with_server(false, false)}.should raise_error Git::Process::ParkedChangesError
       end
 
     end
@@ -245,6 +255,60 @@ describe Git::Process do
 
       branches = gitlib.branches
       branches.parking.sha.should == branches['origin/master'].sha
+    end
+
+  end
+
+
+  describe "#sync_with_server" do
+
+    def log_level
+      Logger::ERROR
+    end
+
+
+    it "should work when pushing with fast-forward" do
+      change_file_and_commit('a', '')
+
+      gitlib.create_branch('fb', 'master')
+
+      clone('fb') do |gl|
+        change_file_and_commit('a', 'hello', gl)
+        gl.branches.include?('origin/fb').should be_true
+        Git::Process.new(nil, gl).sync_with_server(false, false)
+        gl.branches.include?('origin/fb').should be_true
+        gitlib.branches.include?('fb').should be_true
+      end
+    end
+
+
+    it "should fail when pushing with non-fast-forward and no force" do
+      change_file_and_commit('a', '')
+
+      gitlib.create_branch('fb', 'master')
+
+      clone('fb') do |gl|
+        gitlib.checkout('fb') do
+          change_file_and_commit('a', 'hello', gitlib)
+        end
+
+        expect {Git::Process.new(nil, gl).sync_with_server(false, false)}.should raise_error Git::GitExecuteError
+      end
+    end
+
+
+    it "should work when pushing with non-fast-forward and force" do
+      change_file_and_commit('a', '')
+
+      gitlib.create_branch('fb', 'master')
+
+      clone('fb') do |gl|
+        gitlib.checkout('fb') do
+          change_file_and_commit('a', 'hello', gitlib)
+        end
+
+        expect {Git::Process.new(nil, gl).sync_with_server(false, true)}.should_not raise_error Git::GitExecuteError
+      end
     end
 
   end

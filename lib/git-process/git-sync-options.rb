@@ -8,11 +8,12 @@ module Git
     class SyncOptions
       include GitProcessOptions
 
-      attr_reader :rebase
+      attr_reader :rebase, :force
 
 
       def initialize(filename, argv)
         @rebase = false
+        @force = false
         parse(filename, argv)
       end
 
@@ -20,6 +21,10 @@ module Git
       def extend_opts(opts)
         opts.on("-r", "--rebase", "Rebase instead of merge") do |v|
           @rebase = true
+        end
+
+        opts.on("-f", "--force", "Force the push") do |v|
+          @force = true
         end
       end
     end

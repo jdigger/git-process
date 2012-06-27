@@ -51,7 +51,7 @@ module Git
     end
 
 
-    def sync_with_server(rebase)
+    def sync_with_server(rebase, force)
       raise UncommittedChangesError.new unless lib.status.clean?
       raise ParkedChangesError.new(lib) if is_parked?
 
@@ -61,11 +61,9 @@ module Git
       lib.fetch
 
       if rebase
-        # rebase(remote_branch)
         rebase(Process::remote_master_branch)
         old_sha = lib.command('rev-parse', remote_branch) rescue ''
       else
-        # merge(remote_branch)
         merge(Process::remote_master_branch)
       end
 
@@ -76,10 +74,10 @@ module Git
           unless old_sha == new_sha
             logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
                         " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
-            sync_with_server(rebase)
+            sync_with_server(rebase, force)
           end
         end
-        lib.push(Process::server_name, current_branch, current_branch, :force => rebase)
+        lib.push(Process::server_name, current_branch, current_branch, :force => rebase || force)
       else
         logger.warn("Not pushing to the server because the current branch is the master branch.")
       end
@@ -138,7 +136,7 @@ module Git
       end
       remote_master.checkout_to_new('_parking_', :no_track => true)
 
-      current_branch.delete
+      current_branch.delete(true)
       lib.command(:push, [Process.server_name, ":#{current_branch.name}"]) if lib.has_a_remote?
     end
 

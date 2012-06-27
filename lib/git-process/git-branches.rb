@@ -14,6 +14,11 @@ module Git
     end
 
 
+    def <<(item)
+      @items << item
+    end
+
+
     def each(&block)
       @items.each {|b| block.call(b)}
     end

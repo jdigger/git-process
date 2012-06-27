@@ -6,6 +6,18 @@ require 'logger'
 require 'git-branch'
 require 'git-branches'
 
+
+class String
+
+  def to_boolean
+    return false if self == false || self.nil? || self =~ (/(false|f|no|n|0)$/i)
+    return true if self == true || self =~ (/(true|t|yes|y|1)$/i)
+    raise ArgumentError.new("invalid value for Boolean: \"#{self}\"")
+  end
+
+end
+
+
 module Git
 
   class GitLib
@@ -121,13 +133,23 @@ module Git
     end
 
 
-    def checkout(branch, opts = {})
+    def checkout(branch_name, opts = {}, &block)
       args = []
       args << '-b' if opts[:new_branch]
-      args << branch
+      args << branch_name
       args << opts[:new_branch] if opts[:new_branch]
+      branches = branches()
       command(:checkout, args)
-      GitBranch.new(branch, opts[:new_branch] != nil, self)
+
+      branches << GitBranch.new(branch_name, opts[:new_branch] != nil, self)
+
+      if block_given?
+        yield
+        command(:checkout, branches.current.name)
+        branches.current
+      else
+        branches[branch_name]
+      end
     end
 
 
@@ -247,7 +269,7 @@ module Git
 
     def rerere_enabled?
       re = command('config', ['--get', 'rerere.enabled'])
-      re && re != ''
+      re && re.to_boolean
     end
 
 
@@ -261,7 +283,7 @@ module Git
 
     def rerere_autoupdate?
       re = command('config', ['--get', 'rerere.autoupdate'])
-      re && re != ''
+      re && re.to_boolean
     end
 
 

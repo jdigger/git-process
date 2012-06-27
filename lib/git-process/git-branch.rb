@@ -53,8 +53,8 @@ module Git
     end
 
 
-    def delete
-      @lib.command(:branch, ['-d', @name])
+    def delete(force = false)
+      @lib.command(:branch, [force ? '-D' : '-d', @name])
     end
 
 

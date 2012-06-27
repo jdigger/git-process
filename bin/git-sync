@@ -14,7 +14,7 @@ options = Git::Process::SyncOptions.new(File.basename(__FILE__), ARGV)
 gp = Git::Process.new('.', nil, :log_level => options.log_level)
 
 begin
-  gp.sync_with_server(options.rebase)
+  gp.sync_with_server(options.rebase, options.force)
 rescue Git::Process::GitProcessError => exp
   puts exp.message
   exit(-1)
