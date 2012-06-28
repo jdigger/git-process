@@ -54,7 +54,11 @@ module Git
 
 
     def delete(force = false)
-      @lib.command(:branch, [force ? '-D' : '-d', @name])
+      if local?
+        @lib.branch(@name, :force => force, :delete => true)
+      else
+        @lib.push('origin', '', @name)
+      end
     end
 
 

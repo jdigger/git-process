@@ -122,6 +122,16 @@ module Git
     end
 
 
+    def branch(branch_name, opts = {})
+      args = []
+      args << '-D' if opts[:delete] and opts[:force]
+      args << '-d' if opts[:delete] and !opts[:force]
+      args << branch_name
+      args << (opts[:base_branch] ? opts[:base_branch] : 'master') unless opts[:delete]
+      command(:branch, args)
+    end
+
+
     def push(remote_name, local_branch, remote_branch, opts = {})
       branch = "#{opts[:force] ? '+' : ''}#{local_branch}:#{remote_branch}"
       command('push', [remote_name, branch])

@@ -119,4 +119,38 @@ describe Git::GitLib do
   end
 
 
+  describe "branch" do
+    attr_reader :lib
+
+    before(:each) do
+      @lib = Git::GitLib.new(nil, :git => double('git'))
+    end
+
+
+    it "should create a branch with default base" do
+      lib.stub(:command).with(:branch, ['test_branch', 'master'])
+      lib.branch('test_branch')
+    end
+
+
+    it "should create a branch with explicit base" do
+      lib.stub(:command).with(:branch, ['test_branch', 'other_branch'])
+      lib.branch('test_branch', :base_branch => 'other_branch')
+    end
+
+
+    it "should delete a branch without force" do
+      lib.stub(:command).with(:branch, ['-d', 'test_branch'])
+      lib.branch('test_branch', :delete => true)
+    end
+
+
+    it "should delete a branch with force" do
+      lib.stub(:command).with(:branch, ['-D', 'test_branch'])
+      lib.branch('test_branch', :delete => true, :force => true)
+    end
+
+  end
+
+
 end
