@@ -134,7 +134,9 @@ module Git
       remote_master.checkout_to_new('_parking_', :no_track => true)
 
       current_branch.delete(true)
-      lib.command(:push, [Process.server_name, ":#{current_branch.name}"]) if branches["origin/#{current_branch.name}"]
+      if branches["#{Process.server_name}/#{current_branch.name}"]
+        lib.push(Process.server_name, nil, nil, :delete => current_branch.name)
+      end
     end
 
 
