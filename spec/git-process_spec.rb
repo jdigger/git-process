@@ -98,10 +98,12 @@ describe Git::Process do
     describe "when handling the parking branch" do
 
       it "should create it based on origin/master" do
-        gitlib.command(:branch, 'origin/master')
-
-        gitprocess.remove_feature_branch
-        gitlib.branches.current.name.should == '_parking_'
+        gitlib.branch('fb', :base_branch => 'master')
+        clone('fb') do |gl|
+          gp = Git::Process.new(nil, gl)
+          gp.remove_feature_branch
+          gl.branches.current.name.should == '_parking_'
+        end
       end
 
 
