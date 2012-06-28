@@ -132,14 +132,43 @@ module Git
     end
 
 
+    #
+    # Pushes the given branch to the server.
+    #
+    #   remote_name - the repository name; nil -> 'origin'
+    #   local_branch - the local branch to push; nil -> the current branch
+    #   remote_branch - the name of the branch to push to; nil -> same as local_branch
+    #
+    # options:
+    #   :delete - delete the remote branch
+    #   :force - force the update, even if not a fast-forward
+    #
     def push(remote_name, local_branch, remote_branch, opts = {})
-      branch = "#{opts[:force] ? '+' : ''}#{local_branch}:#{remote_branch}"
-      command('push', [remote_name, branch])
+      remote_name ||= 'origin'
+
+      args = [remote_name]
+
+      if opts[:delete]
+        if remote_branch
+          opts[:delete] = remote_branch
+        elsif local_branch
+          opts[:delete] = local_branch
+        else
+          raise ArgumentError.new("Need a branch name to delete.") if opts[:delete].is_a? TrueClass
+        end
+        args << '--delete' << opts[:delete]
+      else
+        local_branch ||= branches.current
+        remote_branch ||= local_branch
+        args << '-f' if opts[:force]
+        args << "#{local_branch}:#{remote_branch}"
+      end
+      command(:push, args)
     end
 
 
     def rebase_continue
-      command('rebase', '--continue')
+      command(:rebase, '--continue')
     end
 
 
