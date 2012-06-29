@@ -5,6 +5,7 @@ require 'git'
 require 'logger'
 require 'git-branch'
 require 'git-branches'
+require 'git-status'
 
 
 class String
@@ -258,63 +259,12 @@ module Git
     end
 
 
-    class Status
-      attr_reader :unmerged, :modified, :deleted, :added
-
-      def initialize(lib)
-        unmerged = []
-        modified = []
-        deleted = []
-        added = []
-        unknown = []
-
-        stats = lib.command('status', '--porcelain').split("\n")
-
-        stats.each do |s|
-          stat = s[0..1]
-          file = s[3..-1]
-          #puts "stat #{stat} - #{file}"
-          case stat
-          when 'U ', ' U'
-            unmerged << file
-          when 'UU'
-            unmerged << file
-            modified << file
-          when 'M ', ' M'
-            modified << file
-          when 'D ', ' D'
-            deleted << file
-          when 'DU', 'UD'
-            deleted << file
-            unmerged << file
-          when 'A ', ' A'
-            added << file
-          when 'AA'
-            added << file
-            unmerged << file
-          when '??'
-            unknown << file
-          else
-            raise "Do not know what to do with status #{stat} - #{file}"
-          end
-        end
-
-        @unmerged = unmerged.sort.uniq
-        @modified = modified.sort.uniq
-        @deleted = deleted.sort.uniq
-        @added = added.sort.uniq
-        @unknown = unknown.sort.uniq
-      end
-
-      def clean?
-        @unmerged.empty? and @modified.empty? and @deleted.empty? and @added.empty? and @unknown.empty?
-      end
-
-    end
-
-
+    #
+    # Returns the status of the git repository.
+    #
+    # @return [Status]
     def status
-      Status.new(self)
+      GitStatus.new(self)
     end
 
 
