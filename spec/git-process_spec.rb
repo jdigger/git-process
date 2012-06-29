@@ -127,7 +127,7 @@ describe Git::Process do
           change_file_and_commit('a', '')
         end
 
-        gitlib.create_branch('fb', '_parking_')
+        gitlib.branch('fb', :base_branch => '_parking_')
 
         gitlib.checkout('origin/master') do
           gitlib.merge('fb')
@@ -284,7 +284,7 @@ describe Git::Process do
     it "should work when pushing with fast-forward" do
       change_file_and_commit('a', '')
 
-      gitlib.create_branch('fb', 'master')
+      gitlib.branch('fb', :base_branch => 'master')
 
       clone('fb') do |gl|
         change_file_and_commit('a', 'hello', gl)
@@ -299,7 +299,7 @@ describe Git::Process do
     it "should fail when pushing with non-fast-forward and no force" do
       change_file_and_commit('a', '')
 
-      gitlib.create_branch('fb', 'master')
+      gitlib.branch('fb', :base_branch => 'master')
 
       clone('fb') do |gl|
         gitlib.checkout('fb') do
@@ -314,7 +314,7 @@ describe Git::Process do
     it "should work when pushing with non-fast-forward and force" do
       change_file_and_commit('a', '')
 
-      gitlib.create_branch('fb', 'master')
+      gitlib.branch('fb', :base_branch => 'master')
 
       clone('fb') do |gl|
         gitlib.checkout('fb') do

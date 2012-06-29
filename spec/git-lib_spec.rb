@@ -109,9 +109,9 @@ describe Git::GitLib do
       create_files(['.gitignore'])
       gitlib.commit('initial')
 
-      gitlib.create_branch('ba', 'master')
-      gitlib.create_branch('bb', 'master')
-      gitlib.create_branch('origin/master', 'master')
+      gitlib.branch('ba', :base_branch => 'master')
+      gitlib.branch('bb', :base_branch => 'master')
+      gitlib.branch('origin/master', :base_branch => 'master')
 
       gitlib.branches.names.should == ['ba', 'bb', 'master', 'origin/master']
     end

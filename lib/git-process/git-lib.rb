@@ -121,11 +121,6 @@ module Git
     end
 
 
-    def create_branch(branch_name, base = 'origin/master')
-      command(:branch, [branch_name, base])
-    end
-
-
     #
     # Does branch manipulation.
     #
@@ -133,6 +128,8 @@ module Git
     #
     # @option opts [Boolean] :delete delete the remote branch
     # @option opts [Boolean] :force force the update, even if not a fast-forward
+    # @option opts [String] :base_branch the branch to base the new branch off of;
+    #   defaults to 'master'
     #
     # @return [void]
     def branch(branch_name, opts = {})
