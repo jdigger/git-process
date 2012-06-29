@@ -20,6 +20,10 @@ end
 
 module Git
 
+  # @!attribute [r] logger
+  #   @return [Logger] a logger
+  # @!attribute [r] git
+  #   @return [Git] an instance of the Git library
   class GitLib
     attr_reader :logger, :git
 
@@ -135,14 +139,16 @@ module Git
     #
     # Pushes the given branch to the server.
     #
-    #   remote_name - the repository name; nil -> 'origin'
-    #   local_branch - the local branch to push; nil -> the current branch
-    #   remote_branch - the name of the branch to push to; nil -> same as local_branch
+    # @param [String] remote_name the repository name; nil -> 'origin'
+    # @param [String] local_branch the local branch to push; nil -> the current branch
+    # @param [String] remote_branch the name of the branch to push to; nil -> same as local_branch
     #
-    # options:
-    #   :delete - delete the remote branch
-    #   :force - force the update, even if not a fast-forward
+    # @option opts [Boolean, String] :delete delete the remote branch
+    # @option opts [Boolean] :force force the update, even if not a fast-forward
     #
+    # @return [void]
+    #
+    # @raise [ArgumentError] if :delete is true, but no branch name is given
     def push(remote_name, local_branch, remote_branch, opts = {})
       remote_name ||= 'origin'
 
