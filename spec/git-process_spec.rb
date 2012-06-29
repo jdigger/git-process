@@ -321,7 +321,8 @@ describe Git::Process do
           change_file_and_commit('a', 'hello', gitlib)
         end
 
-        expect {Git::Process.new(nil, gl).sync_with_server(false, true)}.should_not raise_error Git::GitExecuteError
+        # expect {Git::Process.new(nil, gl).sync_with_server(false, true)}.should_not raise_error Git::GitExecuteError
+        Git::Process.new(nil, gl).sync_with_server(false, true)
       end
     end
 

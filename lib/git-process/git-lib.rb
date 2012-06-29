@@ -1,7 +1,6 @@
 require "rubygems"
 require "bundler/setup"
 
-require 'git'
 require 'logger'
 require 'git-branch'
 require 'git-branches'
@@ -21,16 +20,20 @@ end
 
 module Git
 
+  class GitExecuteError < StandardError
+  end
+
+
   # @!attribute [r] logger
   #   @return [Logger] a logger
   # @!attribute [r] git
   #   @return [Git] an instance of the Git library
   class GitLib
-    attr_reader :logger, :git
+    attr_reader :logger
 
     def initialize(dir, options = {})
       initialize_logger(options[:logger], options[:log_level])
-      initialize_git(dir, options[:git])
+      initialize_git(dir)
     end
 
 
@@ -50,17 +53,14 @@ module Git
     end
 
 
-    def initialize_git(dir, git)
-      if git
-        @git = git
-      else
-        workdir = File.expand_path(dir)
-        @git = if File.directory?(File.join(workdir, '.git'))
-          logger.info { "Opening existing repository at #{workdir}" }
-          Git.open(workdir, :log => logger)
-        else
+    def initialize_git(dir, git = nil)
+      if dir
+        @workdir = File.expand_path(dir)
+        unless File.directory?(File.join(workdir, '.git'))
           logger.info { "Initializing new repository at #{workdir}" }
-          Git.init(workdir, :log => logger)
+          command(:init)
+        else
+          logger.info { "Opening existing repository at #{workdir}" }
         end
       end
     end
@@ -70,7 +70,7 @@ module Git
 
 
     def workdir
-      git.dir.to_s
+      @workdir
     end
 
 
@@ -83,12 +83,12 @@ module Git
 
 
     def add(file)
-      git.add(file)
+      command(:add, ['--', file])
     end
 
 
     def commit(msg)
-      git.commit(msg)
+      command(:commit, ['-m', msg])
     end
 
 
@@ -98,12 +98,12 @@ module Git
 
 
     def merge(base)
-      git.merge(base, nil)
+      command(:merge, [base])
     end
 
 
     def fetch
-      command(:fetch, '-p')
+      command(:fetch, ['-p', Process.server_name])
     end
 
 
@@ -356,8 +356,49 @@ module Git
     private
 
 
-    def command(cmd, opts = [], chdir = true, redirect = '')
-      git.lib.send(:command, cmd, opts, chdir, redirect)
+    def command(cmd, opts = [], chdir = true, redirect = '', &block)
+      ENV['GIT_DIR'] = File.join(workdir, '.git')
+      ENV['GIT_INDEX_FILE'] = File.join(workdir, '.git', 'index')
+      ENV['GIT_WORK_TREE'] = workdir
+      path = workdir
+
+      opts = [opts].flatten.map {|s| escape(s) }.join(' ')
+      git_cmd = "git #{cmd} #{opts} #{redirect} 2>&1"
+
+      out = nil
+      if chdir and (Dir.getwd != path)
+        Dir.chdir(path) { out = run_command(git_cmd, &block) } 
+      else
+        out = run_command(git_cmd, &block)
+      end
+      
+      if logger
+        logger.info(git_cmd)
+        logger.debug(out)
+      end
+            
+      if $?.exitstatus > 0
+        if $?.exitstatus == 1 && out == ''
+          return ''
+        end
+        raise Git::GitExecuteError.new(git_cmd + ':' + out.to_s) 
+      end
+      out
+    end
+    
+
+    def run_command(git_cmd, &block)
+      if block_given?
+        IO.popen(git_cmd, &block)
+      else
+        `#{git_cmd}`.chomp
+      end
+    end
+
+
+    def escape(s)
+      escaped = s.to_s.gsub('\'', '\'\\\'\'')
+      %Q{"#{escaped}"}
     end
 
   end

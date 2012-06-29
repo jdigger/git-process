@@ -8,7 +8,6 @@ GEM
       multipart-post (~> 1.1)
     faraday_middleware (0.8.7)
       faraday (>= 0.7.4, < 0.9)
-    git (1.2.5)
     hashie (1.2.0)
     highline (1.6.12)
     json (1.7.3)
@@ -43,7 +42,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  git (~> 1.2.5)
   highline (~> 1.6.12)
   json (~> 1.7.3)
   launchy (~> 2.1.0)

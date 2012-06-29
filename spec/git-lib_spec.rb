@@ -24,7 +24,7 @@ describe Git::GitLib do
     attr_reader :lib
 
     before(:each) do
-      @lib = Git::GitLib.new(nil, :git => double('git'))
+      @lib = Git::GitLib.new(nil)
     end
 
 

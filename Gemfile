@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
-gem "git", "~> 1.2.5"
-#gem "rugged"  # "git" bindings for libgit2
+# gem "git", "~> 1.2.5"
+# gem "rugged"  # "git" bindings for libgit2
 gem "launchy", "~> 2.1.0" # web browser interaction
 gem "octokit", "~> 1.4.0" # GitHub API
 gem "json", "~> 1.7.3"

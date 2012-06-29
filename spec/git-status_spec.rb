@@ -1,7 +1,7 @@
 require 'git-status'
 require 'GitRepoHelper'
 
-describe Git::Status do
+describe Git::GitStatus do
 
   include GitRepoHelper
 
