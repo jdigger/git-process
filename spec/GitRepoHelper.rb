@@ -58,7 +58,7 @@ module GitRepoHelper
   def clone(branch='master', &block)
     td = Dir.mktmpdir
     gl = Git::GitLib.new(td, :log_level => log_level)
-    gl.command(:remote, ['add', 'origin', "file://#{tmpdir}"])
+    gl.add_remote('origin', "file://#{tmpdir}")
     gl.fetch
     gl.checkout(branch, :new_branch => "origin/#{branch}")
     if block_given?

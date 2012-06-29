@@ -42,7 +42,7 @@ module Git
         end
       end
 
-      unless lib.git.config('rerere.enabled')
+      unless lib.rerere_enabled?
         msg << "\n\nConsider turning on 'rerere'.\nSee http://git-scm.com/2010/03/08/rerere.html for more information."
       end
 

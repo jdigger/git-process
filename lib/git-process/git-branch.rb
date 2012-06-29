@@ -38,8 +38,13 @@ module Git
     end
 
 
+    def logger
+      @lib.logger
+    end
+
+
     def sha
-      @sha ||= @lib.command('rev-parse', name)
+      @sha ||= @lib.sha(name)
     end
 
 
@@ -49,7 +54,7 @@ module Git
 
 
     def is_ahead_of(base_branch_name)
-      @lib.command('rev-list', ['-1', '--oneline', "#{base_branch_name}..#{@name}"]) != ''
+      @lib.rev_list(base_branch_name, @name, :oneline => true, :num_revs => 1) != ''
     end
 
 
@@ -57,25 +62,23 @@ module Git
       if local?
         @lib.branch(@name, :force => force, :delete => true)
       else
-        @lib.push('origin', '', @name)
+        @lib.push(Process.server_name, nil, nil, :delete => @name)
       end
     end
 
 
     def rename(new_name)
-      @lib.command(:branch, ['-m', @name, new_name])
+      @lib.branch(@name, :rename => new_name)
     end
 
 
     def contains_all_of(branch_name)
-      @lib.command('rev-list', ['-1', '--oneline', branch_name, "^#{@name}"]) == ''
+      @lib.rev_list(@name, branch_name, :oneline => true, :num_revs => 1) == ''
     end
 
 
     def checkout_to_new(new_branch, opts = {})
-      args = opts[:no_track] ? ['--no-track'] : []
-      args << '-b' << new_branch << @name
-      @lib.command(:checkout, args)
+      @lib.checkout(new_branch, :new_branch => @name, :no_track => opts[:no_track])
     end
 
   end

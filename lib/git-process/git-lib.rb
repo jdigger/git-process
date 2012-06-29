@@ -103,22 +103,12 @@ module Git
 
 
     def fetch
-      command('fetch', '-p')
-    end
-
-
-    def branch_sha(branch_name)
-      command('rev-parse', branch_name)
+      command(:fetch, '-p')
     end
 
 
     def branches
       GitBranches.new(self)
-    end
-
-
-    def branch_names
-      branches.map { |b| b.name }
     end
 
 
@@ -129,16 +119,33 @@ module Git
     #
     # @option opts [Boolean] :delete delete the remote branch
     # @option opts [Boolean] :force force the update, even if not a fast-forward
-    # @option opts [String] :base_branch the branch to base the new branch off of;
+    # @option opts [Boolean] :all list all branches, local and remote
+    # @option opts [Boolean] :no_color force not using any ANSI color codes
+    # @option opts [String]  :rename the new name for the branch
+    # @option opts [String]  :base_branch the branch to base the new branch off of;
     #   defaults to 'master'
     #
-    # @return [void]
+    # @return [String] the output of running the git command
     def branch(branch_name, opts = {})
       args = []
-      args << '-D' if opts[:delete] and opts[:force]
-      args << '-d' if opts[:delete] and !opts[:force]
-      args << branch_name
-      args << (opts[:base_branch] ? opts[:base_branch] : 'master') unless opts[:delete]
+      if opts[:delete]
+        logger.info { "Deleting local branch '#{branch_name}'."}
+
+        args << (opts[:force] ? '-D' : '-d')
+        args << branch_name
+      elsif opts[:rename]
+        logger.info { "Renaming branch '#{branch_name}' to '#{opts[:rename]}'."}
+
+        args << '-m' << branch_name << opts[:rename]
+      elsif branch_name
+        logger.info { "Creating new branch '#{branch_name}' based on '#{opts[:base_branch]}'."}
+
+        args << branch_name
+        args << (opts[:base_branch] ? opts[:base_branch] : 'master')
+      else
+        args << '-a' if opts[:all]
+        args << '--no-color' if opts[:no_color]
+      end
       command(:branch, args)
     end
 
@@ -169,11 +176,21 @@ module Git
         else
           raise ArgumentError.new("Need a branch name to delete.") if opts[:delete].is_a? TrueClass
         end
+        logger.info { "Deleting remote branch '#{opts[:delete]}' on '#{remote_name}'."}
         args << '--delete' << opts[:delete]
       else
         local_branch ||= branches.current
         remote_branch ||= local_branch
         args << '-f' if opts[:force]
+
+        logger.info do
+          if local_branch == remote_branch
+            "Pushing to '#{remote_branch}' on '#{remote_name}'."
+          else
+            "Pushing #{local_branch} to '#{remote_branch}' on '#{remote_name}'."
+          end
+        end
+
         args << "#{local_branch}:#{remote_branch}"
       end
       command(:push, args)
@@ -187,6 +204,7 @@ module Git
 
     def checkout(branch_name, opts = {}, &block)
       args = []
+      args << '--no-track' if opts[:no_track]
       args << '-b' if opts[:new_branch]
       args << branch_name
       args << opts[:new_branch] if opts[:new_branch]
@@ -206,7 +224,7 @@ module Git
 
 
     def log_count
-      command('log', '--oneline').split(/\n/).length
+      command(:log, '--oneline').split(/\n/).length
     end
 
 
@@ -268,17 +286,34 @@ module Git
     end
 
 
+    # @return [String] the raw porcelain status string
+    def porcelain_status
+      command(:status, '--porcelain')
+    end
+
+
+    def reset(rev_name, opts = {})
+      args = []
+      args << '--hard' if opts[:hard]
+      args << rev_name
+
+      logger.info { "Resetting #{opts[:hard] ? '(hard)' : ''} to #{rev_name}" }
+
+      command(:reset, args)
+    end
+
+
     def rerere_enabled?
       re = command('config', ['--get', 'rerere.enabled'])
       re && re.to_boolean
     end
 
 
-    def rerere_enabled=(re, global = true)
+    def rerere_enabled(re, global = true)
       args = []
       args << '--global' if global
       args << 'rerere.enabled' << re
-      command('config', args)
+      command(:config, args)
     end
 
 
@@ -288,12 +323,37 @@ module Git
     end
 
 
-    def rerere_autoupdate=(re, global = true)
+    def rerere_autoupdate(re, global = true)
       args = []
       args << '--global' if global
       args << 'rerere.autoupdate' << re
-      command('config', args)
+      command(:config, args)
     end
+
+
+    def rev_list(start_revision, end_revision, opts ={})
+      args = []
+      args << "-#{opts[:num_revs]}" if opts[:num_revs]
+      args << '--oneline' if opts[:oneline]
+      args << "#{start_revision}..#{end_revision}"
+      command('rev-list', args)
+    end
+
+
+    def rev_parse(name)
+      command('rev-parse', name)
+    end
+
+
+    alias sha rev_parse
+
+
+    def add_remote(remote_name, url)
+      command(:remote, ['add', remote_name, url])
+    end
+
+
+    private
 
 
     def command(cmd, opts = [], chdir = true, redirect = '')

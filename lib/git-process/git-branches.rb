@@ -6,7 +6,7 @@ module Git
     include Enumerable
 
     def initialize(lib)
-      branch_lines = lib.command(:branch, ['-a', '--no-color']).split("\n")
+      branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
       @items = SortedSet.new
       branch_lines.each do |bl|
         @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)

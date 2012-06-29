@@ -23,7 +23,7 @@ module Git
       added = []
       unknown = []
 
-      stats = lib.command('status', '--porcelain').split("\n")
+      stats = lib.porcelain_status.split("\n")
 
       stats.each do |s|
         stat = s[0..1]

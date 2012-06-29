@@ -90,7 +90,7 @@ module Git
       if on_parking
         lib.checkout(branch_name, :new_branch => '_parking_')
         lib.checkout('_parking_')
-        lib.command(:reset, ['--hard', 'origin/master'])
+        lib.reset('origin/master', :hard => true)
         lib.checkout(branch_name)
       else
         lib.checkout(branch_name, :new_branch => 'origin/master')

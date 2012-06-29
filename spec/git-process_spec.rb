@@ -41,8 +41,8 @@ describe Git::Process do
 
     it "should work for a rebase after a rerere merge" do
       # Make sure rerere is enabled
-      gitlib.command(:config, ['rerere.enabled', 'true'])
-      gitlib.command(:config, ['rerere.autoupdate', 'false'])
+      gitlib.rerere_enabled(true, false)
+      gitlib.rerere_autoupdate(false, false)
 
       # Create the file to conflict on
       change_file_and_commit('a', '')
@@ -108,8 +108,8 @@ describe Git::Process do
 
 
       it "should move it to the new origin/master if it already exists and is clean" do
-        gitlib.command(:branch, ['origin/master', 'master'])
-        gitlib.command(:branch, ['_parking_', 'origin/master'])
+        gitlib.branch('origin/master', :base_branch => 'master')
+        gitlib.branch('_parking_', :base_branch => 'origin/master')
         change_file_and_commit('a', '')  # still on 'master'
 
         gitlib.checkout('fb', :new_branch => 'origin/master')
@@ -121,7 +121,7 @@ describe Git::Process do
 
 
       it "should move it to the new origin/master if it already exists and changes are part of the current branch" do
-        gitlib.command(:branch, ['origin/master', 'master'])
+        gitlib.branch('origin/master', :base_branch => 'master')
 
         gitlib.checkout('_parking_', :new_branch => 'origin/master') do
           change_file_and_commit('a', '')
@@ -141,10 +141,10 @@ describe Git::Process do
 
 
       it "should move it out of the way if it has unaccounted changes on it" do
-        gitlib.command(:branch, ['origin/master', 'master'])
-        gitlib.command(:checkout, ['-b', '_parking_', 'origin/master'])
+        gitlib.branch('origin/master', :base_branch => 'master')
+        gitlib.checkout('_parking_', :new_branch => 'origin/master')
         change_file_and_commit('a', '')
-        gitlib.command(:checkout, ['-b', 'fb', 'origin/master'])
+        gitlib.checkout('fb', :new_branch => 'origin/master')
 
         gitlib.branches.include?('_parking_OLD_').should be_false
         gitprocess.remove_feature_branch
@@ -156,10 +156,10 @@ describe Git::Process do
 
 
     it "should delete the old local branch when it has been merged into origin/master" do
-      gitlib.command(:branch, ['origin/master', 'master'])
+      gitlib.branch('origin/master', :base_branch => 'master')
       change_file_and_commit('a', '')  # still on 'master'
 
-      gitlib.command(:checkout, ['-b', 'fb', 'origin/master'])
+      gitlib.checkout('fb', :new_branch => 'origin/master')
       gitlib.branches.include?('fb').should be_true
       gitprocess.remove_feature_branch
       gitlib.branches.include?('fb').should be_false
@@ -168,8 +168,8 @@ describe Git::Process do
 
 
     it "should raise an error when the local branch has not been merged into origin/master" do
-      gitlib.command(:branch, ['origin/master', 'master'])
-      gitlib.command(:checkout, ['-b', 'fb', 'origin/master'])
+      gitlib.branch('origin/master', :base_branch => 'master')
+      gitlib.checkout('fb', :new_branch => 'origin/master')
       change_file_and_commit('a', '')  # on 'fb'
 
       gitlib.branches.include?('fb').should be_true
@@ -180,7 +180,7 @@ describe Git::Process do
     it "should delete the old remote branch" do
       change_file_and_commit('a', '')
 
-      gitlib.command(:branch, ['fb', 'master'])
+      gitlib.branch('fb', :base_branch => 'master')
 
       clone('fb') do |gl|
         gl.branches.include?('origin/fb').should be_true
@@ -222,7 +222,7 @@ describe Git::Process do
 
 
     it "should create the named branch against origin/master" do
-      gitlib.command(:branch, ['origin/master', 'master'])
+      gitlib.branch('origin/master', :base_branch => 'master')
 
       new_branch = gitprocess.new_feature_branch('test_branch')
 
@@ -232,7 +232,7 @@ describe Git::Process do
 
 
     it "should bring committed changes on _parking_ over to the new branch" do
-      gitlib.command(:branch, ['origin/master', 'master'])
+      gitlib.branch('origin/master', :base_branch => 'master')
       gitlib.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '')
       change_file_and_commit('b', '')
@@ -250,7 +250,7 @@ describe Git::Process do
     end
 
     it "should bring new/uncommitted changes on _parking_ over to the new branch" do
-      gitlib.command(:branch, ['origin/master', 'master'])
+      gitlib.branch('origin/master', :base_branch => 'master')
       gitlib.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '')
       Dir.chdir(gitlib.workdir) do |dir|
