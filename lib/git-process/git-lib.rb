@@ -126,6 +126,15 @@ module Git
     end
 
 
+    #
+    # Does branch manipulation.
+    #
+    # @param [String] branch_name the name of the branch
+    #
+    # @option opts [Boolean] :delete delete the remote branch
+    # @option opts [Boolean] :force force the update, even if not a fast-forward
+    #
+    # @return [void]
     def branch(branch_name, opts = {})
       args = []
       args << '-D' if opts[:delete] and opts[:force]
