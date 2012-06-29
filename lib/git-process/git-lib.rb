@@ -373,7 +373,7 @@ module Git
       end
       
       if logger
-        logger.info(git_cmd)
+        logger.debug(git_cmd)
         logger.debug(out)
       end
             
