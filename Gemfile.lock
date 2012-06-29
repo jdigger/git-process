@@ -23,6 +23,7 @@ GEM
       hashie (~> 1.2)
       multi_json (~> 1.3)
     rake (0.9.2)
+    redcarpet (2.1.1)
     rspec (2.10.0)
       rspec-core (~> 2.10.0)
       rspec-expectations (~> 2.10.0)
@@ -36,6 +37,7 @@ GEM
     webmock (1.8.7)
       addressable (>= 2.2.7)
       crack (>= 0.1.7)
+    yard (0.8.2.1)
 
 PLATFORMS
   ruby
@@ -47,8 +49,10 @@ DEPENDENCIES
   launchy (~> 2.1.0)
   octokit (~> 1.4.0)
   rake (~> 0.9.2)
+  redcarpet (~> 2.1.1)
   rspec (~> 2.10.0)
   rspec-mocks (~> 2.10.0)
   system_timer (~> 1.2.4)
   termios (~> 0.9.4)
   webmock (~> 1.8.7)
+  yard (~> 0.8.2.1)

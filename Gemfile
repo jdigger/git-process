@@ -1,6 +1,5 @@
 source "http://rubygems.org"
 
-gem "rake", "~> 0.9.2", :group => :development
 gem "git", "~> 1.2.5"
 #gem "rugged"  # "git" bindings for libgit2
 gem "launchy", "~> 2.1.0" # web browser interaction
@@ -14,4 +13,10 @@ group :test do
   gem "rspec", "~> 2.10.0", :group => :test
   gem "rspec-mocks", "~> 2.10.0", :group => :test
   gem "webmock", "~> 1.8.7", :group => :test # network mocking
+end
+
+group :development do
+  gem "rake", "~> 0.9.2"
+  gem "yard", "~> 0.8.2.1"
+  gem "redcarpet", "~> 2.1.1"
 end
