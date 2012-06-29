@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/jdigger/git-process.png)](http://travis-ci.org/jdigger/git-process)
+
 Purpose
 =======
 
