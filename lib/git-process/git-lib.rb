@@ -118,7 +118,7 @@ module Git
     # @param [String] branch_name the name of the branch
     #
     # @option opts [Boolean] :delete delete the remote branch
-    # @option opts [Boolean] :force force the update, even if not a fast-forward
+    # @option opts [Boolean] :force force the update
     # @option opts [Boolean] :all list all branches, local and remote
     # @option opts [Boolean] :no_color force not using any ANSI color codes
     # @option opts [String]  :rename the new name for the branch
@@ -138,10 +138,17 @@ module Git
 
         args << '-m' << branch_name << opts[:rename]
       elsif branch_name
-        logger.info { "Creating new branch '#{branch_name}' based on '#{opts[:base_branch]}'."}
+        if opts[:force]
+          raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless opts[:base_branch]
+          logger.info { "Changing branch '#{branch_name}' to point to '#{opts[:base_branch]}'."}
 
-        args << branch_name
-        args << (opts[:base_branch] ? opts[:base_branch] : 'master')
+          args << '-f' << branch_name << opts[:base_branch]
+        else
+          logger.info { "Creating new branch '#{branch_name}' based on '#{opts[:base_branch]}'."}
+
+          args << branch_name
+          args << (opts[:base_branch] ? opts[:base_branch] : 'master')
+        end
       else
         args << '-a' if opts[:all]
         args << '--no-color' if opts[:no_color]

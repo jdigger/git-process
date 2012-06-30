@@ -249,14 +249,13 @@ describe Git::Process do
       branches.parking.sha.should == branches['origin/master'].sha
     end
 
+
     it "should bring new/uncommitted changes on _parking_ over to the new branch" do
       gitlib.branch('origin/master', :base_branch => 'master')
       gitlib.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '')
-      Dir.chdir(gitlib.workdir) do |dir|
-        FileUtils.touch('b')
-        FileUtils.touch('c')
-      end
+      change_file_and_add('b', '')
+      change_file('c', '')
 
       new_branch = gitprocess.new_feature_branch('test_branch')
 

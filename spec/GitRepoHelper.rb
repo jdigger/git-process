@@ -45,12 +45,21 @@ module GitRepoHelper
   end
 
 
-
-  def change_file_and_commit(filename, contents, lib = gitlib)
+  def change_file(filename, contents, lib = gitlib)
     Dir.chdir(lib.workdir) do
       File.open(filename, 'w') {|f| f.puts contents}
     end
+  end
+
+
+  def change_file_and_add(filename, contents, lib = gitlib)
+    change_file(filename, contents, lib)
     lib.add(filename)
+  end
+
+
+  def change_file_and_commit(filename, contents, lib = gitlib)
+    change_file_and_add(filename, contents, lib)
     lib.commit("#{filename} - #{contents}")
   end
 

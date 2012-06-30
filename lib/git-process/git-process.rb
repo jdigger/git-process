@@ -88,10 +88,9 @@ module Git
       on_parking = (branches.parking == branches.current)
 
       if on_parking
-        lib.checkout(branch_name, :new_branch => '_parking_')
-        lib.checkout('_parking_')
-        lib.reset('origin/master', :hard => true)
-        lib.checkout(branch_name)
+        new_branch = lib.checkout(branch_name, :new_branch => '_parking_')
+        lib.branch('_parking_', :force => true, :base_branch => 'origin/master')
+        new_branch
       else
         lib.checkout(branch_name, :new_branch => 'origin/master')
       end
