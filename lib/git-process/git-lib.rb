@@ -60,7 +60,7 @@ module Git
           logger.info { "Initializing new repository at #{workdir}" }
           command(:init)
         else
-          logger.info { "Opening existing repository at #{workdir}" }
+          logger.debug { "Opening existing repository at #{workdir}" }
         end
       end
     end
