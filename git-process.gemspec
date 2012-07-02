@@ -6,7 +6,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["moore.jim@gmail.com"]
   gem.description   = %q{A set of scripts to make working with git easier and more consistent}
   gem.summary       = %q{A set of scripts for a good git process}
-  gem.homepage      = ""
+  gem.homepage      = "http://jdigger.github.com/git-process/"
 
   gem.add_development_dependency "rspec"
 
@@ -15,9 +15,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "git-process"
   gem.require_paths = ["lib"]
-  gem.version       = Git::Process::VERSION
+  gem.version       = Git::Process::Version::STRING
   gem.platform      = Gem::Platform::RUBY
-  gem.executables   << 'git-sync'
-  gem.executables   << 'git-to-master'
-  gem.required_ruby_version = '>= 1.8.1'
+  gem.required_ruby_version = '>= 1.8.7'
 end
