@@ -245,8 +245,7 @@ describe Git::Process do
         File.exists?('b').should be_true
       end
 
-      branches = gitlib.branches
-      branches.parking.sha.should == branches['origin/master'].sha
+      gitlib.branches.parking.should be_nil
     end
 
 
@@ -266,8 +265,7 @@ describe Git::Process do
         File.exists?('c').should be_true
       end
 
-      branches = gitlib.branches
-      branches.parking.sha.should == branches['origin/master'].sha
+      gitlib.branches.parking.should be_nil
     end
 
   end
