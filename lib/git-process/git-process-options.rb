@@ -1,4 +1,5 @@
 require 'optparse'
+require 'version'
 
 module Git
 
@@ -32,7 +33,8 @@ module Git
 
       def parse(filename, argv)
         OptionParser.new do |opts|
-          opts.banner = "Usage: #{filename} [ options ]"
+          banner = "Usage: #{filename} [ options ]"
+          opts.banner = banner
 
           opts.on("-q", "--quiet", "Quiet") do
             @quiet = true
@@ -46,6 +48,11 @@ module Git
           opts.on("-h", "--help", "Show this message") do
             puts opts
             exit(-1)
+          end
+
+          opts.on(nil, "--version", "Print the version") do
+            puts "#{filename} version #{Git::Process::Version::STRING}"
+            exit(0)
           end
 
           extend_opts(opts)

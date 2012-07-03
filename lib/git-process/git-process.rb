@@ -13,26 +13,25 @@ module Git
   class Process
     attr_reader :lib
 
-    @@server_name = 'origin'
-    @@master_branch = 'master'
-
-    def initialize(dir = nil, gitlib = nil, options = {})
-      @lib = gitlib || Git::GitLib.new(dir, options)
+    def initialize(dir = nil, gitlib = nil, opts = {})
+      @lib = gitlib || Git::GitLib.new(dir, opts)
+      @server_name = opts[:server_name] || lib.remote_name
+      @master_branch = opts[:master_branch] || lib.config('gitProcess.integrationBranch') || 'master'
     end
 
 
-    def Process.remote_master_branch
-      "#{@@server_name}/#{@@master_branch}"
+    def remote_master_branch
+      "#{server_name}/#{master_branch}"
     end
 
 
-    def Process.server_name
-      @@server_name
+    def server_name
+      @server_name
     end
 
 
-    def Process.master_branch
-      @@master_branch
+    def master_branch
+      @master_branch
     end
 
 
@@ -41,12 +40,12 @@ module Git
       raise ParkedChangesError.new(lib) if is_parked?
 
       if lib.has_a_remote?
-        lib.fetch
-        rebase(Process::remote_master_branch)
-        lib.push(Process::server_name, lib.branches.current, Process::master_branch)
+        lib.fetch(server_name)
+        rebase(remote_master_branch)
+        lib.push(server_name, lib.branches.current, master_branch)
         remove_feature_branch
       else
-        rebase("master")
+        rebase(master_branch)
       end
     end
 
@@ -56,27 +55,27 @@ module Git
       raise ParkedChangesError.new(lib) if is_parked?
 
       current_branch = lib.branches.current
-      remote_branch = "#{Process::server_name}/#{current_branch}"
+      remote_branch = "#{server_name}/#{current_branch}"
 
       lib.fetch
 
       if rebase
-        rebase(Process::remote_master_branch)
+        rebase(remote_master_branch)
       else
-        merge(Process::remote_master_branch)
+        merge(remote_master_branch)
       end
 
       old_sha = lib.command('rev-parse', remote_branch) rescue ''
 
-      unless current_branch == Process::master_branch
+      unless current_branch == master_branch
         lib.fetch
         new_sha = lib.command('rev-parse', remote_branch) rescue ''
         unless old_sha == new_sha
-          logger.warn("'#{current_branch}' changed on '#{Process::server_name}'"+
+          logger.warn("'#{current_branch}' changed on '#{server_name}'"+
                       " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
           sync_with_server(rebase, force)
         end
-        lib.push(Process::server_name, current_branch, current_branch, :force => rebase || force)
+        lib.push(server_name, current_branch, current_branch, :force => rebase || force)
       else
         logger.warn("Not pushing to the server because the current branch is the master branch.")
       end
@@ -92,7 +91,7 @@ module Git
         branches.parking.delete
         new_branch
       else
-        lib.checkout(branch_name, :new_branch => 'origin/master')
+        lib.checkout(branch_name, :new_branch => remote_master_branch)
       end
     end
 
@@ -111,11 +110,11 @@ module Git
     def remove_feature_branch
       branches = lib.branches
 
-      remote_master = branches[Process::remote_master_branch]
+      remote_master = branches[remote_master_branch]
       current_branch = branches.current
 
       unless remote_master.contains_all_of(current_branch.name)
-        raise GitProcessError.new("Branch '#{current_branch.name}' has not been merged into '#{Process::remote_master_branch}'")
+        raise GitProcessError.new("Branch '#{current_branch.name}' has not been merged into '#{remote_master_branch}'")
       end
 
       parking_branch = branches['_parking_']
@@ -133,8 +132,8 @@ module Git
       remote_master.checkout_to_new('_parking_', :no_track => true)
 
       current_branch.delete(true)
-      if branches["#{Process.server_name}/#{current_branch.name}"]
-        lib.push(Process.server_name, nil, nil, :delete => current_branch.name)
+      if branches["#{server_name}/#{current_branch.name}"]
+        lib.push(server_name, nil, nil, :delete => current_branch.name)
       end
     end
 
@@ -165,7 +164,7 @@ module Git
 
     def pull_request(repo_name, base, head, title, body, opts = {})
       repo_name ||= lib.repo_name
-      base ||= @@master_branch
+      base ||= master_branch
       head ||= lib.branches.current
       title ||= ask_for_pull_title
       body ||= ask_for_pull_body

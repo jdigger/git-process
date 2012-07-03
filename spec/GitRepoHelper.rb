@@ -64,12 +64,17 @@ module GitRepoHelper
   end
 
 
-  def clone(branch='master', &block)
+  def clone(branch='master', remote_name = 'origin', &block)
     td = Dir.mktmpdir
+    logger.debug {"Cloning '#{tmpdir}' to '#{td}'"}
     gl = Git::GitLib.new(td, :log_level => log_level)
-    gl.add_remote('origin', "file://#{tmpdir}")
-    gl.fetch
-    gl.checkout(branch, :new_branch => "origin/#{branch}")
+    gl.add_remote(remote_name, "file://#{tmpdir}")
+    gl.fetch(remote_name)
+    if branch == 'master'
+      gl.reset("#{remote_name}/#{branch}", :hard => true)
+    else
+      gl.checkout(branch, :new_branch => "#{remote_name}/#{branch}")
+    end
     if block_given?
       begin
         block.arity < 1 ? gl.instance_eval(&block) : block.call(gl)

@@ -6,6 +6,7 @@ module Git
     include Enumerable
 
     def initialize(lib)
+      @lib = lib
       branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
       @items = SortedSet.new
       branch_lines.each do |bl|
@@ -45,7 +46,12 @@ module Git
 
 
     def [](branch_name)
-      @items.find {|b| b.name == branch_name}
+      branch_name = current.name if branch_name == 'HEAD'
+      br = @items.find {|b| b.name == branch_name}
+      unless br
+        @lib.logger.warn {"Could not find '#{branch_name}' in #{@items.map{|i|i.name}.join(',')}"}
+      end
+      br
     end
 
   end

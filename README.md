@@ -59,6 +59,9 @@ _The following assumes that the integration branch is "origin/master"._
 * The first time you use a GitHub feature (e.g., "`git pull-request`"), this will ask for your
   username and password. It does not store them, but instead uses them to get an OAuth2 token,
   which is stored in "`git config gitProcess.github.authToken`".
+* If you want to use a different integration branch other than "`master`", set the
+  "`gitProcess.integrationBranch`" configuration value. (e.g.,
+  "`git config gitProcess.integrationBranch my-integ-branch`")
 
 ## Misc ##
 

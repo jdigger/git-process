@@ -95,23 +95,35 @@ describe Git::GitLib do
       lib.push('remote', nil, nil, :delete => 'my_branch')
     end
 
-
-    # it "should create a branch with explicit base" do
-    #   lib.stub(:command).with(:branch, ['test_branch', 'other_branch'])
-    #   lib.branch('test_branch', :base_branch => 'other_branch')
-    # end
+  end
 
 
-    # it "should delete a branch without force" do
-    #   lib.stub(:command).with(:branch, ['-d', 'test_branch'])
-    #   lib.branch('test_branch', :delete => true)
-    # end
+  describe "#remote_name" do
+    include GitRepoHelper
+
+    def log_level
+      Logger::ERROR
+    end
 
 
-    # it "should delete a branch with force" do
-    #   lib.stub(:command).with(:branch, ['-D', 'test_branch'])
-    #   lib.branch('test_branch', :delete => true, :force => true)
-    # end
+    it "should work with origin" do
+      change_file_and_commit('a', '')
+
+      clone('master', 'origin') do |gl|
+        gl.remote_name.should == 'origin'
+        gl.branches.include?('origin/master').should be_true
+      end
+    end
+
+
+    it "should work with a different remote name" do
+      change_file_and_commit('a', '')
+
+      clone('master', 'a_remote') do |gl|
+        gl.remote_name.should == 'a_remote'
+        gl.branches.include?('a_remote/master').should be_true
+      end
+    end
 
   end
 

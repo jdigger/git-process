@@ -1,5 +1,5 @@
 module Git
-  module Process
+  class Process
     module Version
       MAJOR = 0
       MINOR = 9

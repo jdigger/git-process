@@ -88,6 +88,46 @@ describe Git::Process do
   end
 
 
+  describe "custom integration branch" do
+
+    def log_level
+      Logger::ERROR
+    end
+
+
+    it "should use the 'gitProcess.integrationBranch' configuration" do
+      gitlib.checkout('int-br', :new_branch => 'master') do
+        change_file_and_commit('a', '')
+      end
+      gitlib.checkout('fb', :new_branch => 'master') do
+        change_file_and_commit('b', '')
+      end
+      gitlib.branches['master'].delete
+
+      clone('int-br') do |gl|
+        gl.config('gitProcess.integrationBranch', 'int-br')
+
+        gl.checkout('ab', :new_branch => 'origin/int-br')
+
+        branches = gl.branches
+        branches.include?('origin/master').should be_false
+        branches['ab'].sha.should == branches['origin/int-br'].sha
+
+        change_file_and_commit('c', '', gl)
+
+        branches = gl.branches
+        branches['ab'].sha.should_not == branches['origin/int-br'].sha
+
+        Git::Process.new(nil, gl).rebase_to_master
+
+        branches = gl.branches
+        branches['HEAD'].sha.should == branches['origin/int-br'].sha
+      end
+    end
+
+  end
+
+
   describe "remove current feature branch" do
 
     def log_level
@@ -108,72 +148,82 @@ describe Git::Process do
 
 
       it "should move it to the new origin/master if it already exists and is clean" do
-        gitlib.branch('origin/master', :base_branch => 'master')
-        gitlib.branch('_parking_', :base_branch => 'origin/master')
-        change_file_and_commit('a', '')  # still on 'master'
+        clone do |gl|
+          gl.branch('_parking_', :base_branch => 'origin/master')
+          change_file_and_commit('a', '', gl)
 
-        gitlib.checkout('fb', :new_branch => 'origin/master')
+          gl.checkout('fb', :new_branch => 'origin/master')
 
-        gitprocess.remove_feature_branch
+          gp = Git::Process.new(nil, gl)
+          gp.remove_feature_branch
 
-        gitlib.branches.current.name.should == '_parking_'
+          gl.branches.current.name.should == '_parking_'
+        end
       end
 
 
       it "should move it to the new origin/master if it already exists and changes are part of the current branch" do
-        gitlib.branch('origin/master', :base_branch => 'master')
+        gitlib.checkout('afb', :new_branch => 'master')
+        clone do |gl|
+          gl.checkout('_parking_', :new_branch => 'origin/master') do
+            change_file_and_commit('a', '', gl)
+          end
 
-        gitlib.checkout('_parking_', :new_branch => 'origin/master') do
-          change_file_and_commit('a', '')
+          gl.checkout('fb', :new_branch => '_parking_')
+          gl.push('origin', 'fb', 'master')
+
+          gp = Git::Process.new(nil, gl)
+          gp.remove_feature_branch
+          gl.branches.current.name.should == '_parking_'
         end
-
-        gitlib.branch('fb', :base_branch => '_parking_')
-
-        gitlib.checkout('origin/master') do
-          gitlib.merge('fb')
-        end
-
-        gitlib.checkout('fb')
-
-        gitprocess.remove_feature_branch
-        gitlib.branches.current.name.should == '_parking_'
       end
 
 
       it "should move it out of the way if it has unaccounted changes on it" do
-        gitlib.branch('origin/master', :base_branch => 'master')
-        gitlib.checkout('_parking_', :new_branch => 'origin/master')
-        change_file_and_commit('a', '')
-        gitlib.checkout('fb', :new_branch => 'origin/master')
+        clone do |gl|
+          gl.checkout('_parking_', :new_branch => 'origin/master')
+          change_file_and_commit('a', '', gl)
+          gl.checkout('fb', :new_branch => 'origin/master')
 
-        gitlib.branches.include?('_parking_OLD_').should be_false
-        gitprocess.remove_feature_branch
-        gitlib.branches.include?('_parking_OLD_').should be_true
-        gitlib.branches.current.name.should == '_parking_'
+          gl.branches.include?('_parking_OLD_').should be_false
+
+          gp = Git::Process.new(nil, gl)
+          gp.remove_feature_branch
+
+          gl.branches.include?('_parking_OLD_').should be_true
+          gl.branches.current.name.should == '_parking_'
+        end
       end
 
     end
 
 
     it "should delete the old local branch when it has been merged into origin/master" do
-      gitlib.branch('origin/master', :base_branch => 'master')
-      change_file_and_commit('a', '')  # still on 'master'
+      clone do |gl|
+        change_file_and_commit('a', '', gl)
 
-      gitlib.checkout('fb', :new_branch => 'origin/master')
-      gitlib.branches.include?('fb').should be_true
-      gitprocess.remove_feature_branch
-      gitlib.branches.include?('fb').should be_false
-      gitlib.branches.current.name.should == '_parking_'
+        gl.checkout('fb', :new_branch => 'origin/master')
+        gl.branches.include?('fb').should be_true
+
+        gp = Git::Process.new(nil, gl)
+        gp.remove_feature_branch
+
+        gl.branches.include?('fb').should be_false
+        gl.branches.current.name.should == '_parking_'
+      end
     end
 
 
     it "should raise an error when the local branch has not been merged into origin/master" do
-      gitlib.branch('origin/master', :base_branch => 'master')
-      gitlib.checkout('fb', :new_branch => 'origin/master')
-      change_file_and_commit('a', '')  # on 'fb'
+      clone do |gl|
+        gl.checkout('fb', :new_branch => 'origin/master')
+        change_file_and_commit('a', '', gl)
 
-      gitlib.branches.include?('fb').should be_true
-      expect {gitprocess.remove_feature_branch}.should raise_error Git::Process::GitProcessError
+        gl.branches.include?('fb').should be_true
+
+        gp = Git::Process.new(nil, gl)
+        expect {gp.remove_feature_branch}.should raise_error Git::Process::GitProcessError
+      end
     end
 
 
@@ -222,12 +272,12 @@ describe Git::Process do
 
 
     it "should create the named branch against origin/master" do
-      gitlib.branch('origin/master', :base_branch => 'master')
+      clone do |gl|
+        new_branch = Git::Process.new(nil, gl).new_feature_branch('test_branch')
 
-      new_branch = gitprocess.new_feature_branch('test_branch')
-
-      new_branch.name.should == 'test_branch'
-      new_branch.sha.should == gitlib.branches['origin/master'].sha
+        new_branch.name.should == 'test_branch'
+        new_branch.sha.should == gl.branches['origin/master'].sha
+      end
     end
 
 
@@ -293,6 +343,21 @@ describe Git::Process do
     end
 
 
+    it "should work with a different remote server name" do
+      change_file_and_commit('a', '')
+
+      gitlib.branch('fb', :base_branch => 'master')
+
+      clone('fb', 'a_remote') do |gl|
+        change_file_and_commit('a', 'hello', gl)
+        gl.branches.include?('a_remote/fb').should be_true
+        Git::Process.new(nil, gl).sync_with_server(false, false)
+        gl.branches.include?('a_remote/fb').should be_true
+        gitlib.branches.include?('fb').should be_true
+      end
+    end
+
+
     it "should fail when pushing with non-fast-forward and no force" do
       change_file_and_commit('a', '')
 
@@ -320,6 +385,35 @@ describe Git::Process do
 
         # expect {Git::Process.new(nil, gl).sync_with_server(false, true)}.should_not raise_error Git::GitExecuteError
         Git::Process.new(nil, gl).sync_with_server(false, true)
+      end
+    end
+
+  end
+
+
+  describe "sync_with_server with different remote name" do
+
+    def log_level
+      Logger::ERROR
+    end
+
+
+    def gitprocess
+      @gitprocess ||= Git::Process.new(nil, gitlib, :server_name => 'a_remote')
+    end
+
+
+    it "should work with a different remote server name" do
+      change_file_and_commit('a', '')
+
+      gitlib.branch('fb', :base_branch => 'master')
+
+      clone('fb', 'a_remote') do |gl|
+        change_file_and_commit('a', 'hello', gl)
+        gl.branches.include?('a_remote/fb').should be_true
+        Git::Process.new(nil, gl).sync_with_server(false, false)
+        gl.branches.include?('a_remote/fb').should be_true
+        gitlib.branches.include?('fb').should be_true
       end
     end
 

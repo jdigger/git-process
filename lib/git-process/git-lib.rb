@@ -24,16 +24,11 @@ module Git
   end
 
 
-  # @!attribute [r] logger
-  #   @return [Logger] a logger
-  # @!attribute [r] git
-  #   @return [Git] an instance of the Git library
   class GitLib
-    attr_reader :logger
 
     def initialize(dir, options = {})
       initialize_logger(options[:logger], options[:log_level])
-      initialize_git(dir)
+      initialize_workdir(dir) if dir
     end
 
 
@@ -53,32 +48,38 @@ module Git
     end
 
 
-    def initialize_git(dir, git = nil)
-      if dir
-        @workdir = File.expand_path(dir)
-        unless File.directory?(File.join(workdir, '.git'))
-          logger.info { "Initializing new repository at #{workdir}" }
-          command(:init)
-        else
-          logger.debug { "Opening existing repository at #{workdir}" }
-        end
+    def initialize_workdir(dir)
+      @workdir = File.expand_path(dir)
+      unless File.directory?(File.join(workdir, '.git'))
+        logger.info { "Initializing new repository at #{workdir}" }
+        command(:init)
+      else
+        logger.debug { "Opening existing repository at #{workdir}" }
       end
     end
 
 
-    private :initialize_logger, :initialize_git
+    private :initialize_logger, :initialize_workdir
 
 
+    # @return [Logger] a logger
+    def logger
+      @logger
+    end
+
+
+    # @return [String] the git working directory
     def workdir
       @workdir
     end
 
 
+    # @return [Boolean] does this have a remote defined?
     def has_a_remote?
-      if @remote == nil
-        @remote = (command('remote') != '')
+      if @has_remote == nil
+        @has_remote = (command(:remote) != '')
       end
-      @remote
+      @has_remote
     end
 
 
@@ -102,8 +103,8 @@ module Git
     end
 
 
-    def fetch
-      command(:fetch, ['-p', Process.server_name])
+    def fetch(name = remote_name)
+      command(:fetch, ['-p', name])
     end
 
 
@@ -239,7 +240,7 @@ module Git
       args = []
       args << '-f' if opts[:force]
       args << file
-      command('rm', args)
+      command(:rm, args)
     end
 
 
@@ -248,21 +249,24 @@ module Git
     end
 
 
-    def config(key = nil, value = nil)
+    def config(key = nil, value = nil, global = false)
       if key and value
-        command('config', [key, value])
-        config_hash[key] = value
+        args = global ? ['--global'] : []
+        args << key << value
+        command(:config, args)
+        config_hash[key] = value unless config_hash.empty?
         value
       elsif key
         value = config_hash[key]
         unless value
           value = command('config', ['--get', key])
-          config_hash[key] = value
+          value = nil if value.empty?
+          config_hash[key] = value unless config_hash.empty?
         end
         value
       else
         if config_hash.empty?
-          str = command('config', '--list')
+          str = command(:config, '--list')
           lines = str.split("\n")
           lines.each do |line|
             (key, *values) = line.split('=')
@@ -276,11 +280,24 @@ module Git
 
     def repo_name
       unless @repo_name
-        origin_url = config['remote.origin.url']
-        raise Git::Process::GitProcessError.new("There is not origin url set up.") if origin_url.empty?
+        origin_url = config("remote.#{remote_name}.url")
+        raise Git::Process::GitProcessError.new("There is no #{remote_name} url set up.") if origin_url.empty?
         @repo_name = origin_url.sub(/^.*:(.*?)(.git)?$/, '\1')
       end
       @repo_name
+    end
+
+
+    def remote_name
+      unless @remote_name
+        remote_str = command(:remote)
+        unless remote_str == nil or remote_str.empty?
+          @remote_name = remote_str.split(/\n/)[0]
+          raise "!@remote_name.is_a? String" unless @remote_name.is_a? String
+        end
+        logger.debug {"Using remote name of '#{@remote_name}'"}
+      end
+      @remote_name
     end
 
 
@@ -311,30 +328,24 @@ module Git
 
 
     def rerere_enabled?
-      re = command('config', ['--get', 'rerere.enabled'])
+      re = config('rerere.enabled')
       re && re.to_boolean
     end
 
 
     def rerere_enabled(re, global = true)
-      args = []
-      args << '--global' if global
-      args << 'rerere.enabled' << re
-      command(:config, args)
+      config('rerere.enabled', re, global)
     end
 
 
     def rerere_autoupdate?
-      re = command('config', ['--get', 'rerere.autoupdate'])
+      re = config('rerere.autoupdate')
       re && re.to_boolean
     end
 
 
     def rerere_autoupdate(re, global = true)
-      args = []
-      args << '--global' if global
-      args << 'rerere.autoupdate' << re
-      command(:config, args)
+      config('rerere.autoupdate', re, global)
     end
 
 
