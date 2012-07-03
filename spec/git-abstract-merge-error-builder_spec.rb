@@ -1,11 +1,11 @@
-require 'git-abstract-merge-error-builder'
+require 'git-process/git-abstract-merge-error-builder'
 
-describe Git::AbstractMergeErrorBuilder do
+describe GitProc::AbstractMergeErrorBuilder do
 
   def builder
     unless @builder
       @builder = Object.new
-      @builder.extend(Git::AbstractMergeErrorBuilder)
+      @builder.extend(GitProc::AbstractMergeErrorBuilder)
       @builder.stub(:lib).and_return(lib)
       @builder.stub(:continue_command).and_return(nil)
       @builder.stub(:error_message).and_return('')

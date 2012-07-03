@@ -1,9 +1,9 @@
-require 'pull-request'
+require 'git-process/pull_request'
+require 'GitRepoHelper'
 require 'webmock/rspec'
 require 'json'
 require 'octokit'
 require 'tempfile'
-require 'GitRepoHelper'
 
 
 describe GitHub::PullRequest do

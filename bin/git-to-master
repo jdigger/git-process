@@ -1,21 +1,15 @@
 #!/usr/bin/env ruby
 
-require "rubygems"
-require "bundler/setup"
+require 'git-process/options/git_to_master_options'
+require 'git-process/rebase_to_master'
 
-require 'logger'
+options = GitProc::ToMasterOptions.new(File.basename(__FILE__), ARGV)
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib/git-process')
-require 'git-to-master-options'
-require 'git-process'
-
-options = Git::Process::ToMasterOptions.new(File.basename(__FILE__), ARGV)
-
-gp = Git::Process.new('.', nil, :log_level => options.log_level)
+gp = GitProc::RebaseToMaster.new('.', options.log_level)
 
 begin
   gp.rebase_to_master
-rescue Git::Process::GitProcessError => exp
+rescue GitProc::GitProcessError => exp
   puts exp.message
   exit(-1)
 end

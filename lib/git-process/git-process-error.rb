@@ -1,10 +1,6 @@
-module Git
+module GitProc
 
-  class Process
-
-    class GitProcessError < RuntimeError
-    end
-
+  class GitProcessError < RuntimeError
   end
 
 end

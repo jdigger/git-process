@@ -1,6 +1,6 @@
-require 'git-branch'
+require 'git-process/git-branch'
 
-module Git
+module GitProc
 
   class GitBranches
     include Enumerable

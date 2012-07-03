@@ -1,21 +1,15 @@
 #!/usr/bin/env ruby
 
-require "rubygems"
-require "bundler/setup"
+require 'git-process/options/git_pull_request_options'
+require 'git-process/pull_request'
 
-require 'logger'
+options = GitProc::PullRequestOptions.new(File.basename(__FILE__), ARGV)
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib/git-process')
-require 'git-pull-request-options'
-require 'git-process'
-
-options = Git::Process::PullRequestOptions.new(File.basename(__FILE__), ARGV)
-
-gp = Git::Process.new('.', nil, :log_level => options.log_level)
+gp = GitProc::PullRequest.new('.', options.log_level)
 
 begin
   gp.create(nil, nil, nil, options.title, options.description, :user => options.user, :password => options.password)
-rescue Git::Process::GitProcessError => exp
+rescue GitProc::GitProcessError => exp
   puts exp.message
   exit(-1)
 end

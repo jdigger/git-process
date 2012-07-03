@@ -1,12 +1,10 @@
-module Git
-  class Process
-    module Version
-      MAJOR = 0
-      MINOR = 9
-      PATCH = 1
-      BUILD = 'pre3'
+module GitProc
+  module Version
+    MAJOR = 0
+    MINOR = 9
+    PATCH = 1
+    BUILD = 'pre3'
 
-      STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
-    end
+    STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
   end
 end
