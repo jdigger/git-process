@@ -1,4 +1,4 @@
-module Git
+module GitProc
 
   #
   # The status of the Git repository.

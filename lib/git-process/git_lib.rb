@@ -1,10 +1,8 @@
-require "rubygems"
-require "bundler/setup"
-
 require 'logger'
-require 'git-branch'
-require 'git-branches'
-require 'git-status'
+require 'git-process/git_branch'
+require 'git-process/git_branches'
+require 'git-process/git_status'
+require 'git-process/git_process_error'
 
 
 class String
@@ -18,59 +16,42 @@ class String
 end
 
 
-module Git
+module GitProc
 
   class GitExecuteError < StandardError
   end
 
 
-  class GitLib
+  #
+  # Provides Git commands
+  #
+  # = Assumes =
+  # log_level
+  # workdir
+  #
+  module GitLib
 
-    def initialize(dir, options = {})
-      initialize_logger(options[:logger], options[:log_level])
-      initialize_workdir(dir) if dir
-    end
-
-
-    def initialize_logger(logger, log_level)
-      if logger
-        @logger = logger
-      else
+    def logger
+      unless @logger
         @logger = Logger.new(STDOUT)
         @logger.level = log_level || Logger::WARN
         @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
         f = Logger::Formatter.new
         @logger.formatter = proc do |severity, datetime, progname, msg|
           "#{msg}\n"
-          # "#{severity[0..0]}: #{datetime.strftime(@logger.datetime_format)}: #{msg}\n"
         end
       end
-    end
-
-
-    def initialize_workdir(dir)
-      @workdir = File.expand_path(dir)
-      unless File.directory?(File.join(workdir, '.git'))
-        logger.info { "Initializing new repository at #{workdir}" }
-        command(:init)
-      else
-        logger.debug { "Opening existing repository at #{workdir}" }
-      end
-    end
-
-
-    private :initialize_logger, :initialize_workdir
-
-
-    # @return [Logger] a logger
-    def logger
       @logger
     end
 
 
-    # @return [String] the git working directory
-    def workdir
-      @workdir
+    def server_name
+      @server_name ||= remote_name
+    end
+
+
+    def master_branch
+      @master_branch ||= config('gitProcess.integrationBranch') || 'master'
     end
 
 
@@ -109,7 +90,7 @@ module Git
 
 
     def branches
-      GitBranches.new(self)
+      GitProc::GitBranches.new(self)
     end
 
 
@@ -130,7 +111,7 @@ module Git
     def branch(branch_name, opts = {})
       args = []
       if opts[:delete]
-        logger.info { "Deleting local branch '#{branch_name}'."}
+        logger.info { "Deleting local branch '#{branch_name}'."} unless branch_name == '_parking_'
 
         args << (opts[:force] ? '-D' : '-d')
         args << branch_name
@@ -178,14 +159,22 @@ module Git
 
       if opts[:delete]
         if remote_branch
-          opts[:delete] = remote_branch
+          rb = remote_branch
         elsif local_branch
-          opts[:delete] = local_branch
+          rb = local_branch
+        elsif !(opts[:delete].is_a? TrueClass)
+          rb = opts[:delete]
         else
-          raise ArgumentError.new("Need a branch name to delete.") if opts[:delete].is_a? TrueClass
+          raise ArgumentError.new("Need a branch name to delete.")
         end
-        logger.info { "Deleting remote branch '#{opts[:delete]}' on '#{remote_name}'."}
-        args << '--delete' << opts[:delete]
+
+        int_branch = master_branch
+        if rb == int_branch
+          raise GitProc::GitProcessError.new("Can not delete the integration branch '#{int_branch}'")
+        end
+
+        logger.info { "Deleting remote branch '#{rb}' on '#{remote_name}'."}
+        args << '--delete' << rb
       else
         local_branch ||= branches.current
         remote_branch ||= local_branch
@@ -259,7 +248,7 @@ module Git
       elsif key
         value = config_hash[key]
         unless value
-          value = command('config', ['--get', key])
+          value = command(:config, ['--get', key])
           value = nil if value.empty?
           config_hash[key] = value unless config_hash.empty?
         end
@@ -281,7 +270,7 @@ module Git
     def repo_name
       unless @repo_name
         origin_url = config("remote.#{remote_name}.url")
-        raise Git::Process::GitProcessError.new("There is no #{remote_name} url set up.") if origin_url.empty?
+        raise GitProc::Process::GitProcessError.new("There is no #{remote_name} url set up.") if origin_url.empty?
         @repo_name = origin_url.sub(/^.*:(.*?)(.git)?$/, '\1')
       end
       @repo_name
@@ -399,7 +388,7 @@ module Git
         if $?.exitstatus == 1 && out == ''
           return ''
         end
-        raise Git::GitExecuteError.new(git_cmd + ':' + out.to_s) 
+        raise GitProc::GitExecuteError.new(git_cmd + ':' + out.to_s) 
       end
       out
     end

@@ -1,21 +1,87 @@
 #!/usr/bin/env ruby
 
-require "rubygems"
-require "bundler/setup"
+require 'git-process/pull_request'
+require 'git-process/git_process_options'
 
-require 'logger'
+class PullRequestOptions
+  include GitProc::GitProcessOptions
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib/git-process')
-require 'git-pull-request-options'
-require 'git-process'
+  def summary
+    "Creates a Pull Request for the current branch."
+  end
 
-options = Git::Process::PullRequestOptions.new(File.basename(__FILE__), ARGV)
 
-gp = Git::Process.new('.', nil, :log_level => options.log_level)
+  def description
+    <<DESC
+DESCRIPTION
 
-begin
-  gp.create(nil, nil, nil, options.title, options.description, :user => options.user, :password => options.password)
-rescue Git::Process::GitProcessError => exp
-  puts exp.message
-  exit(-1)
+This creates a Pull Request on the GitHub server associated with the current \
+branch. For the reasons why Pull Requests are useful for the development process, \
+see https://help.github.com/articles/using-pull-requests
+
+The "git pull-request" command is a nice, simplified alternative to using the \
+web interface.
+
+EXAMPLE
+
+You've been developing your killer new feature or bug fix, and you want \
+someone else to look at it (to do code-review or otherwise provide input). \
+When you do "git pull-request", it synchronizes the current branch with \
+the server (effectively executing "git sync") and creates the Pull Request \
+against the integration branch. (Usually "master", but this can be changed; \
+see below.)
+
+The counterpart to this command is "git to-master".
+
+NOTES
+
+* It's assumed that you *never* do any work directly on "master":
+  everything is done on a feature branch.  In addition to being a much
+  safer and more flexible way of working in general, it is also a
+  requirement to take advantage of Pull Request functionality.
+* The first time you use a GitHub feature like this, you will be asked
+  for your username and password. This does not store them, but instead
+  uses them to get an OAuth2 token, which is stored in
+  "git config gitProcess.github.authToken".
+* If you want to use a different integration branch other than "master",
+  set the "gitProcess.integrationBranch" configuration value. (e.g.,
+  "git config gitProcess.integrationBranch my-integ-branch")
+
+DESC
+  end
+
+
+  def usage(filename)
+    "Usage: #{filename} [ options ] pull_request_title"
+  end
+
+
+  def empty_argv_ok?
+    false
+  end
+
+
+  def extend_opts(parser)
+    parser.opt :base_branch,  "The branch on the server that you want this \"pulled\" into. "+
+                              "Defaults to the integration branch."
+    parser.opt :head_branch,  "The branch that you want reviewed before being \"pulled\" "+
+                              "into the base branch. Defaults to the current branch."
+    parser.opt :repo_name,    "The name of the repository to \"pull\" into. Defaults to "+
+                              "the current repository."
+    parser.opt :description,  "The description of the Pull Request. Usually includes a "+
+                              "nice description of what was changed to make things easier "+
+                              "for the reviewer.", :short => :d
+    parser.opt :user,         "Your GitHub username. Only needed the first time you connect, "+
+                              "and you will be prompted for it if needed."
+    parser.opt :password,     "Your GitHub password. Only needed the first time you connect, "+
+                              "and you will be prompted for it if needed."
+  end
+
+
+  def post_parse(opts, argv)
+    opts[:title] = argv.shift
+  end
+
 end
+
+GitProc::PullRequest.new('.', PullRequestOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run

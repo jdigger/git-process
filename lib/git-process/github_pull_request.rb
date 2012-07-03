@@ -1,4 +1,4 @@
-require 'github-service'
+require 'git-process/github_service'
 require 'octokit'
 
 

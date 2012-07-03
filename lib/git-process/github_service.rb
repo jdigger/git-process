@@ -1,5 +1,5 @@
 require 'highline/import'
-require 'github-client'
+require 'git-process/github_client'
 require 'uri'
 
 

@@ -1,7 +1,46 @@
-require 'git-lib'
+require 'git-process/git_lib'
 require 'GitRepoHelper'
 
-describe Git::GitLib do
+describe GitProc::GitLib do
+
+  class GLStub
+    include GitProc::GitLib
+
+    def initialize(workdir, log_level)
+      @logger = Logger.new(STDOUT)
+      @logger.level = log_level || Logger::WARN
+      @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
+      f = Logger::Formatter.new
+      @logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{msg}\n"
+      end
+
+      @workdir = workdir
+      if workdir
+        unless File.directory?(File.join(workdir, '.git'))
+          logger.info { "Initializing new repository at #{workdir}" }
+          command(:init)
+        else
+          logger.debug { "Opening existing repository at #{workdir}" }
+        end
+      end
+    end
+
+
+    def workdir
+      @workdir
+    end
+
+    def logger
+      @logger
+    end
+  end
+
+
+  def gitlib
+    gitprocess
+  end
+
 
   describe "branches" do
     include GitRepoHelper
@@ -24,7 +63,7 @@ describe Git::GitLib do
     attr_reader :lib
 
     before(:each) do
-      @lib = Git::GitLib.new(nil)
+      @lib = GLStub.new(nil, nil)
     end
 
 
@@ -58,7 +97,7 @@ describe Git::GitLib do
     attr_reader :lib
 
     before(:each) do
-      @lib = Git::GitLib.new(nil, :git => double('git'))
+      @lib = GLStub.new(nil, nil)
     end
 
 
@@ -83,6 +122,8 @@ describe Git::GitLib do
 
 
     it "should remove named branch on remote" do
+      lib.stub(:remote_name).and_return('remote')
+      lib.stub(:config).and_return('master')
       lib.should_receive(:command).with(:push, ['remote', '--delete', 'my_branch'])
 
       lib.push('remote', 'my_branch', nil, :delete => true)
@@ -90,9 +131,19 @@ describe Git::GitLib do
 
 
     it "should remove current branch on remote" do
+      lib.stub(:remote_name).and_return('remote')
+      lib.stub(:config).and_return('master')
       lib.should_receive(:command).with(:push, ['remote', '--delete', 'my_branch'])
 
       lib.push('remote', nil, nil, :delete => 'my_branch')
+    end
+
+
+    it "should not remove integration branch on remote" do
+      lib.stub(:remote_name).and_return('remote')
+      lib.stub(:config).and_return('master')
+
+      expect {lib.push('remote', nil, nil, :delete => 'master')}.should raise_error GitProc::GitProcessError
     end
 
   end
