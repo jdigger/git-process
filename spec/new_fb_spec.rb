@@ -15,8 +15,9 @@ describe GitProc::NewFeatureBranch do
   end
 
 
-  def create_process(dir, log_level)
-    GitProc::NewFeatureBranch.new(dir, log_level)
+  def create_process(dir, opts)
+    opts[:branch_name] = 'test_branch'
+    GitProc::NewFeatureBranch.new(dir, opts)
   end
 
 
@@ -29,7 +30,7 @@ describe GitProc::NewFeatureBranch do
 
     it "should create the named branch against origin/master" do
       clone do |gp|
-        new_branch = gp.new_feature_branch('test_branch')
+        new_branch = gp.run
 
         new_branch.name.should == 'test_branch'
         new_branch.sha.should == gp.branches['origin/master'].sha
@@ -43,7 +44,7 @@ describe GitProc::NewFeatureBranch do
       change_file_and_commit('a', '')
       change_file_and_commit('b', '')
 
-      new_branch = gitprocess.new_feature_branch('test_branch')
+      new_branch = gitprocess.run
 
       new_branch.name.should == 'test_branch'
       Dir.chdir(gitprocess.workdir) do |dir|
@@ -62,7 +63,7 @@ describe GitProc::NewFeatureBranch do
       change_file_and_add('b', '')
       change_file('c', '')
 
-      new_branch = gitprocess.new_feature_branch('test_branch')
+      new_branch = gitprocess.run
 
       new_branch.name.should == 'test_branch'
       Dir.chdir(gitprocess.workdir) do |dir|

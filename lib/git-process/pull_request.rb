@@ -1,6 +1,5 @@
 require 'git-process/git-process'
 require 'git-process/github_pull_request'
-require 'shellwords'
 require 'highline/import'
 
 
@@ -10,14 +9,26 @@ module GitProc
     include GitLib
 
 
-    def pull_request(repo_name, base, head, title, body, opts = {})
-      repo_name ||= repo_name
-      base ||= master_branch
-      head ||= branches.current
-      title ||= ask_for_pull_title
-      body ||= ask_for_pull_body
-      GitHub::PullRequest.new(self, repo_name, opts).pull_request(base, head, title, body)
+    def initialize(dir, opts)
+      super
+      @title = opts[:title]
+      @base_branch = opts[:base_branch] || master_branch
+      @head_branch = opts[:head_branch] || branches.current
+      @repo_name = opts[:repo_name] || repo_name()
+      @title = opts[:title] || ask_for_pull_title()
+      @description = opts[:description] || ask_for_pull_description()
+      @user = opts[:user]
+      @password = opts[:password]
     end
+
+
+    def runner
+      pr = GitHub::PullRequest.new(self, @repo_name, {:user => @user, :password => @password})
+      pr.create(@base_branch, @head_branch, @title, @description)
+    end
+
+
+    private
 
 
     def ask_for_pull_title
@@ -27,7 +38,7 @@ module GitProc
     end
 
 
-    def ask_for_pull_body
+    def ask_for_pull_description
       ask("What <%= color('description', [:bold]) %> do you want to give the pull request? ")
     end
 

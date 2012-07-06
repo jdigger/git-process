@@ -1,4 +1,3 @@
-require 'git-process/git-lib'
 require 'git-process/git-process'
 require 'git-process/git-rebase-error'
 require 'git-process/git-process-error'
@@ -8,14 +7,8 @@ require 'git-process/parked-changes-error'
 module GitProc
 
   class RebaseToMaster < Process
-    include GitLib
 
-    def remote_master_branch
-      "#{server_name}/#{master_branch}"
-    end
-
-
-    def rebase_to_master
+    def runner
       raise UncommittedChangesError.new unless status.clean?
       raise ParkedChangesError.new(self) if is_parked?
 

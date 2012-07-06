@@ -48,14 +48,18 @@ _The following assumes that the integration branch is "origin/master"._
 
 # Notes #
 
-* It's assumed that you **_never_** do any work directly on "master": everything is done on a
+* It's assumed that you **_never_** do any work directly on "`master`": everything is done on a
   feature branch.  This is a much safer and more flexible practice, but may seem odd to
-  people used to old VCSs.
+  people used to old VCSs. In addition to being a much better way of working in general,
+  it is also a requirement to take advantage of Pull Request functionality.
     * After publishing changes to the main integration branch (i.e., "`git to-master`") the
       old feature branch is removed as part of cleanup. Git is then "parked" on a "`_parking_`"
       branch until a new feature branch is created. Work is not expected to be done on this
       branch, but any that is done is brought over to a newly created feature branch (i.e.,
       "`git new-fb`").
+* If there is a problem (such as a merge conflict), this will try to resolve such errors
+  for you as much as it can do safely. When it can't do so in an automated way, it will try
+  to tell you the process for doing so manually.
 * The first time you use a GitHub feature (e.g., "`git pull-request`"), this will ask for your
   username and password. It does not store them, but instead uses them to get an OAuth2 token,
   which is stored in "`git config gitProcess.github.authToken`".

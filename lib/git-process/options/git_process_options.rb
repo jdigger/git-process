@@ -1,82 +1,86 @@
 require 'optparse'
+require 'trollop'
 require 'git-process/version'
 
 module GitProc
 
   module GitProcessOptions
 
-    attr_reader :quiet, :verbose
+    DEBUG = false
 
+    def parse_cli(filename, argv)
+      parser = Trollop::Parser.new
+      parser.version "#{filename} #{GitProc::Version::STRING}"
 
-    def quiet
-      @quiet
-    end
+      parser.banner "#{summary}\n\n"
+      parser.banner "\nUsage:\n    #{usage(filename)}\n\nWhere [options] are:"
 
+      extend_opts(parser)
+      standard_opts(parser)
 
-    def verbose
-      @verbose
-    end
+      parser.banner "\n#{description}"
 
-
-    def log_level
-      if quiet
-        Logger::ERROR
-      elsif verbose
-        Logger::DEBUG
-      else
-        Logger::INFO
+      opts = Trollop::with_standard_exception_handling parser do
+        raise Trollop::HelpNeeded if ARGV.empty? and !empty_argv_ok?
+        parser.parse argv
       end
-    end
 
+      opts[:info] = false if opts[:verbose] || opts[:quiet]
+      opts[:info] = true if opts[:info_given]
 
-    def parse(filename, argv)
-      OptionParser.new do |opts|
-        banner = "Usage: #{filename} [ options ]"
-        opts.banner = banner
+      post_parse(opts, argv)
 
-        opts.on("-q", "--quiet", "Quiet") do
-          @quiet = true
-        end
-
-        opts.on("-v", "--verbose", "Verbose") do
-          @verbose = true
-          @quiet = false
-        end
-
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit(-1)
-        end
-
-        opts.on(nil, "--version", "Print the version") do
-          puts "#{filename} version #{GitProc::Version::STRING}"
-          exit(0)
-        end
-
-        extend_opts(opts)
-
-        begin
-          begin
-            opts.parse!(argv)
-
-            extend_args(argv)
-          rescue OptionParser::ParseError => e
-            raise "#{e.message}\n#{opts}"
-          end
-        rescue RuntimeError => e
-          STDERR.puts e.message
-          exit(-1)
-        end
+      if (DEBUG)
+        puts "\n\n#{opts.map{|k,v| "#{k}:#{v}"}.join(', ')}"
+        puts "\nargs: #{argv.join(', ')}"
       end
+
+      opts
     end
 
 
-    def extend_opts(opts)
+    def standard_opts(parser)
+      parser.opt :info, "Informational messages; show the major things this is doing", :short => :i, :default => true
+      parser.opt :quiet, "Quiet messages; only show errors", :short => :q
+      parser.opt :verbose, "Verbose messages; show lots of details on what this is doing", :short => :v
+      parser.opt :version, "Print version (#{GitProc::Version::STRING}) and exit", :short => :none
+      parser.opt :help, "Show this message", :short => :h
+
+      parser.conflicts :verbose, :info, :quiet
+    end
+
+
+    def summary
+      "Default summary"
+    end
+
+
+    def usage(filename)
+      "#{filename} [options]"
+    end
+
+
+    def description
+      "Default description"
+    end
+
+
+    def empty_argv_ok?
+      true
+    end
+
+
+    def extend_opts(parser)
       # extension point - does nothing by default
     end
 
 
-    def extend_args(argv)
+    # def extend_args(argv)
+    #   # extension point - does nothing by default
+    # end
+
+
+    def post_parse(opts, argv)
       # extension point - does nothing by default
     end
 

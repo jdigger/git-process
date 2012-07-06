@@ -4,7 +4,10 @@ require 'git-process/git-process'
 module GitRepoHelper
 
   def gitprocess
-    @gitprocess ||= create_process(tmpdir, log_level)
+    opts = {}
+    opts[:quiet] = true if log_level == Logger::ERROR
+    opts[:verbose] = true if log_level == Logger::DEBUG
+    @gitprocess ||= create_process(tmpdir, opts)
   end
 
 
@@ -58,8 +61,8 @@ module GitRepoHelper
   end
 
 
-  def create_process(dir, log_level)
-    GitProc::Process.new(dir, log_level)
+  def create_process(dir, opts)
+    GitProc::Process.new(dir, opts)
   end
 
 
@@ -68,7 +71,10 @@ module GitRepoHelper
 
     logger.debug {"Cloning '#{tmpdir}' to '#{td}'"}
 
-    gl = create_process(td, log_level)
+    opts = {}
+    opts[:quiet] = true if log_level == Logger::ERROR
+    opts[:verbose] = true if log_level == Logger::DEBUG
+    gl = create_process(td, opts)
     gl.add_remote(remote_name, "file://#{tmpdir}")
     gl.fetch(remote_name)
 

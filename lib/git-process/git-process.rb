@@ -8,8 +8,8 @@ module GitProc
   class Process
     include GitLib
 
-    def initialize(dir, log_level)
-      @log_level ||= log_level || Logger::WARN
+    def initialize(dir, opts)
+      @log_level = Process.log_level(opts)
 
       @workdir = dir
       if workdir
@@ -23,6 +23,21 @@ module GitProc
     end
 
 
+    def run
+      begin
+        runner
+      rescue GitProc::GitProcessError => exp
+        puts exp.message
+        exit(-1)
+      end
+    end
+
+
+    def runner
+      # extension point - does nothing by default
+    end
+
+
     def workdir
       @workdir
     end
@@ -33,8 +48,24 @@ module GitProc
     end
 
 
+    def log_level=(ll)
+      @log_level = ll
+    end
+
+
     def remote_master_branch
       "#{server_name}/#{master_branch}"
+    end
+
+
+    def Process.log_level(opts)
+      if opts[:quiet]
+        Logger::ERROR
+      elsif opts[:verbose]
+        Logger::DEBUG
+      else
+        Logger::INFO
+      end
     end
 
 

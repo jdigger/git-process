@@ -1,15 +1,49 @@
 #!/usr/bin/env ruby
 
-require 'git-process/options/git_new_fb_options'
 require 'git-process/new_fb'
 
-options = GitProc::NewFeatureBranchOptions.new(File.basename(__FILE__), ARGV)
+class NewFeatureBranchOptions
+  include GitProc::GitProcessOptions
 
-gp = GitProc::NewFeatureBranch.new('.', options.log_level)
+  def summary
+    "Create a new feature branch based on the integration branch."
+  end
 
-begin
-  gp.new_feature_branch(options.branch_name)
-rescue GitProc::GitProcessError => exp
-  puts exp.message
-  exit(-1)
+
+  def description
+    <<DESC
+DESCRIPTION
+
+This creates the named branch based on the integration branch.
+
+EXAMPLE
+
+Assuming that the the integration branch on the server is "master", \
+typing "git new-fb my_feature" will do roughly the following \
+for you:
+  $ git checkout my_feature origin/master
+
+Also, if you are currently on the "_parking_" branch (see "git to-master"), \
+this will remove that branch.
+
+DESC
+  end
+
+
+  def usage(filename)
+    "#{filename} [options] branch_name"
+  end
+
+
+  def empty_argv_ok?
+    false
+  end
+
+
+  def post_parse(opts, argv)
+    opts[:branch_name] = argv.shift
+  end
+
 end
+
+GitProc::NewFeatureBranch.new('.', NewFeatureBranchOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run

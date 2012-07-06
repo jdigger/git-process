@@ -15,12 +15,14 @@ describe GitProc::Sync do
   end
 
 
-  def create_process(dir, log_level)
-    GitProc::Sync.new(dir, log_level)
+  def create_process(dir, opts)
+    opts[:rebase] = false
+    opts[:force] = false
+    GitProc::Sync.new(dir, opts)
   end
 
 
-  describe "#sync_with_server" do
+  describe "#run" do
 
     def log_level
       Logger::ERROR
@@ -32,11 +34,11 @@ describe GitProc::Sync do
 
       gitprocess.branch('fb', :base_branch => 'master')
 
-      clone('fb') do |gl|
-        change_file_and_commit('a', 'hello', gl)
-        gl.branches.include?('origin/fb').should be_true
-        gl.sync_with_server(false, false)
-        gl.branches.include?('origin/fb').should be_true
+      clone('fb') do |gp|
+        change_file_and_commit('a', 'hello', gp)
+        gp.branches.include?('origin/fb').should be_true
+        gp.run
+        gp.branches.include?('origin/fb').should be_true
         gitprocess.branches.include?('fb').should be_true
       end
     end
@@ -50,7 +52,7 @@ describe GitProc::Sync do
       clone('fb', 'a_remote') do |gp|
         change_file_and_commit('a', 'hello', gp)
         gp.branches.include?('a_remote/fb').should be_true
-        gp.sync_with_server(false, false)
+        gp.run
         gp.branches.include?('a_remote/fb').should be_true
         gitprocess.branches.include?('fb').should be_true
       end
@@ -67,12 +69,23 @@ describe GitProc::Sync do
           change_file_and_commit('a', 'hello', gitprocess)
         end
 
-        expect {gp.sync_with_server(false, false)}.should raise_error GitProc::GitExecuteError
+        expect {gp.run}.should raise_error GitProc::GitExecuteError
       end
     end
 
+  end
 
-    it "should work when pushing with non-fast-forward and force" do
+
+  describe "when forcing the push" do
+
+    def create_process(dir, opts)
+      opts[:force] = false
+      opts[:force] = true
+      GitProc::Sync.new(dir, opts)
+    end
+
+
+    it "should work when pushing with non-fast-forward" do
       change_file_and_commit('a', '')
 
       gitprocess.branch('fb', :base_branch => 'master')
@@ -82,7 +95,7 @@ describe GitProc::Sync do
           change_file_and_commit('a', 'hello', gp)
         end
 
-        expect {gp.sync_with_server(false, true)}.should_not raise_error GitProc::GitExecuteError
+        expect {gp.run}.should_not raise_error GitProc::GitExecuteError
       end
     end
 
@@ -96,10 +109,12 @@ describe GitProc::Sync do
     end
 
 
-    def gitprocess
-      @gitprocess ||= GitProc::Sync.new(tmpdir, log_level)
-      @gitprocess.instance_variable_set('@server_name', 'a_remote')
-      @gitprocess
+    def create_process(dir, opts)
+      opts[:force] = false
+      opts[:force] = true
+      gp = GitProc::Sync.new(dir, opts)
+      gp.instance_variable_set('@server_name', 'a_remote')
+      gp
     end
 
 
@@ -111,7 +126,7 @@ describe GitProc::Sync do
       clone('fb', 'a_remote') do |gp|
         change_file_and_commit('a', 'hello', gp)
         gp.branches.include?('a_remote/fb').should be_true
-        gp.sync_with_server(false, false)
+        gp.run
         gp.branches.include?('a_remote/fb').should be_true
         gitprocess.branches.include?('fb').should be_true
       end
@@ -126,7 +141,7 @@ describe GitProc::Sync do
       gitprocess.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '')
 
-      expect {gitprocess.sync_with_server(false, false)}.should raise_error GitProc::ParkedChangesError
+      expect {gitprocess.run}.should raise_error GitProc::ParkedChangesError
     end
 
   end
