@@ -1,3 +1,4 @@
+require 'set'
 require 'git-process/git_branch'
 
 module GitProc
