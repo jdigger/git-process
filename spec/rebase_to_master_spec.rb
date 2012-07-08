@@ -15,8 +15,8 @@ describe GitProc::RebaseToMaster do
   end
 
 
-  def create_process(dir, log_level)
-    GitProc::RebaseToMaster.new(dir, log_level)
+  def create_process(dir, opts)
+    GitProc::RebaseToMaster.new(dir, opts)
   end
 
 
@@ -38,7 +38,7 @@ describe GitProc::RebaseToMaster do
 
       gitprocess.checkout('fb')
 
-      gitprocess.rebase_to_master
+      gitprocess.run
 
       commit_count.should == 3
     end
@@ -77,7 +77,7 @@ describe GitProc::RebaseToMaster do
       gitprocess.checkout('fb')
 
       begin
-        gitprocess.rebase_to_master
+        gitprocess.runner
         raise "Should have raised RebaseError"
       rescue GitProc::RebaseError => exp
         exp.resolved_files.should == ['a']
@@ -96,7 +96,7 @@ describe GitProc::RebaseToMaster do
         gitprocess.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
-        expect {gitprocess.rebase_to_master}.should raise_error GitProc::ParkedChangesError
+        expect {gitprocess.runner}.should raise_error GitProc::ParkedChangesError
       end
     end
 
@@ -133,7 +133,7 @@ describe GitProc::RebaseToMaster do
         branches = gl.branches
         branches['ab'].sha.should_not == branches['origin/int-br'].sha
 
-        gl.rebase_to_master
+        gl.run
 
         branches = gl.branches
         branches['HEAD'].sha.should == branches['origin/int-br'].sha

@@ -141,7 +141,7 @@ describe GitProc::Sync do
       gitprocess.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '')
 
-      expect {gitprocess.run}.should raise_error GitProc::ParkedChangesError
+      expect {gitprocess.runner}.should raise_error GitProc::ParkedChangesError
     end
 
   end
