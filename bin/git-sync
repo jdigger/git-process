@@ -1,21 +1,55 @@
 #!/usr/bin/env ruby
 
-require "rubygems"
-require "bundler/setup"
+require 'git-process/options/git_process_options'
+require 'git-process/sync'
 
-require 'logger'
+class SyncOptions
+  include GitProc::GitProcessOptions
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib/git-process')
-require 'git-sync-options'
-require 'git-process'
+  def summary
+    "Gets the latest changes that have happened on the integration branch, then pushes your changes to a \"private\" branch on the server."
+  end
 
-options = Git::Process::SyncOptions.new(File.basename(__FILE__), ARGV)
 
-gp = Git::Process.new('.', nil, :log_level => options.log_level)
+  def description
+    <<DESC
+DESCRIPTION
 
-begin
-  gp.sync_with_server(options.rebase, options.force)
-rescue Git::Process::GitProcessError => exp
-  puts exp.message
-  exit(-1)
+This fetches the latest repository from the server, rebases/merges the current branch \
+against the changes in the integration branch, then pushes the result up to a branch on \
+the server of the same name.
+
+If there is a problem, such as a merge conflict, this tries to \
+resolve it automatically. If it can not do so in an automated way, \
+if tells you the steps involved for doing so manually.
+
+EXAMPLE
+
+Assuming that the current branch is called "interesting_changes" and the integration \
+branch on the server is "master", typing "git sync" will do roughly the following \
+for you:
+  $ git fetch -p
+  $ git merge origin/master
+  $ git push origin interesting_changes:interesting_changes
+
+DESC
+  end
+
+
+  def extend_opts(parser)
+    parser.opt :rebase, "Rebase instead of merge against the integration branch"
+    parser.opt :merge, "Merge instead of rebase against the integration branch", :short => :none, :default => true
+    parser.opt :force, "Force the push; defaults to true if --rebase is used", :short => :f, :default => false
+
+    parser.conflicts :rebase, :merge
+  end
+
+
+  def post_parse(opts, argv)
+    opts[:force] = true if opts[:rebase]
+    opts[:merge] = !opts[:rebase]
+  end
+
 end
+
+GitProc::Sync.new('.', SyncOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run

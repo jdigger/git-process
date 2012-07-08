@@ -1,15 +1,13 @@
-require 'git-lib'
-require 'abstract-error-builder'
-require 'git-process-error'
+require 'git-process/abstract-error-builder'
 require 'shellwords'
 
-module Git
+module GitProc
 
   #
   # Assumes that there are three attributes defined: error_message, lib, continue_command
   #
   module AbstractMergeErrorBuilder
-    include AbstractErrorBuilder
+    include GitProc::AbstractErrorBuilder
 
     def resolved_files
       @resolved_files ||= find_resolved_files

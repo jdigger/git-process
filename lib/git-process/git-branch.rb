@@ -1,4 +1,4 @@
-module Git
+module GitProc
 
   class GitBranch
     include Comparable

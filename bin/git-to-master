@@ -1,21 +1,64 @@
 #!/usr/bin/env ruby
 
-require "rubygems"
-require "bundler/setup"
+require 'git-process/options/git_process_options'
+require 'git-process/rebase_to_master'
 
-require 'logger'
+class ToMasterOptions
+  include GitProc::GitProcessOptions
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib/git-process')
-require 'git-to-master-options'
-require 'git-process'
+  def summary
+    "Rebase against the integration branch, then pushes to it."
+  end
 
-options = Git::Process::ToMasterOptions.new(File.basename(__FILE__), ARGV)
 
-gp = Git::Process.new('.', nil, :log_level => options.log_level)
+  def description
+    <<DESC
+DESCRIPTION
 
-begin
-  gp.rebase_to_master
-rescue Git::Process::GitProcessError => exp
-  puts exp.message
-  exit(-1)
+This fetches the latest changes from the server, rebases against \
+the integration branch, pushes to the integration branch, then does \
+housecleaning.
+
+If there is a problem, such as a merge conflict, this tries to \
+resolve it automatically. If it can not do so in an automated way, \
+if tells you the steps involved for doing so manually.
+
+"Housecleaning" includes such things as closing any \
+Pull Request that may exist for the branch, removing the (now obsolete) \
+local and remote feature branches, and then "parking" on the \
+special "_parking_" branch.
+
+Work is not expected to be done on the "parking" branch, but any that is \
+done is brought over to a newly created feature branch when you do \
+"git new-fb".
+
+It's assumed that you *never* do any work directly on "master": \
+everything is done on a feature branch.  In addition to being a much \
+safer and more flexible way of working in general, it is also a \
+requirement to take advantage of Pull Request functionality.
+
+EXAMPLE
+
+Assuming that the current branch is called "interesting_changes" and the integration \
+branch on the server is "master", typing "git to-master" will do roughly the following \
+for you:
+  $ git fetch -p
+  $ git rebase origin/master
+  $ git push origin interesting_changes:master
+  # close pull request
+  $ git co -b _parking_ origin/master
+  $ git branch -d interesting_changes
+  $ git push origin :interesting_changes
+
+NOTES
+
+* If you want to use a different integration branch other than "master",
+  set the "gitProcess.integrationBranch" configuration value. (e.g.,
+  "git config gitProcess.integrationBranch my-integ-branch")
+
+DESC
+  end
+
 end
+
+GitProc::RebaseToMaster.new('.', ToMasterOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run

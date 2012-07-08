@@ -1,8 +1,6 @@
-require 'git-lib'
-require 'git-process-error'
 require 'shellwords'
 
-module Git
+module GitProc
 
   #
   # Assumes that there are two attributes defined: error_message, lib

@@ -15,7 +15,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "git-process"
   gem.require_paths = ["lib"]
-  gem.version       = Git::Process::Version::STRING
+  gem.version       = GitProc::Version::STRING
   gem.platform      = Gem::Platform::RUBY
   gem.required_ruby_version = '>= 1.8.7'
 end
