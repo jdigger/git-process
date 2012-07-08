@@ -23,6 +23,8 @@ module GitProc
 
 
     def runner
+      current_branch = branches.current
+      push(server_name, current_branch, current_branch, :force => false)
       pr = GitHub::PullRequest.new(self, @repo_name, {:user => @user, :password => @password})
       pr.create(@base_branch, @head_branch, @title, @description)
     end
