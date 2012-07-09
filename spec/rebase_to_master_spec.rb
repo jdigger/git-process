@@ -1,5 +1,7 @@
 require 'git-process/rebase_to_master'
 require 'GitRepoHelper'
+require 'webmock/rspec'
+require 'json'
 
 describe GitProc::RebaseToMaster do
   include GitRepoHelper
@@ -100,6 +102,61 @@ describe GitProc::RebaseToMaster do
       end
     end
 
+
+    describe "closing the pull request" do
+
+      def log_level
+        Logger::ERROR
+      end
+
+
+      it "should work for an existing pull request" do
+        gitprocess.branch('fb', :base_branch => 'master')
+        clone('fb') do |gp|
+          stub_request(:get, /test_repo\/pulls\?access_token=/).
+            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'open', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
+          stub_request(:patch, /test_repo\/pulls\/987\?access_token=/).
+            with(:body => JSON({:state => 'closed'})).
+            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
+          gp.config('gitProcess.github.authToken', 'test-token')
+          gp.config('remote.origin.url', 'git@github.com:test_repo.git')
+          gp.config('github.user', 'test_user')
+          gp.stub(:fetch)
+          gp.stub(:push)
+
+          gp.runner
+        end
+      end
+
+
+      it "should not try when there is no auth token" do
+        gitprocess.branch('fb', :base_branch => 'master')
+        clone('fb') do |gp|
+          gp.config('gitProcess.github.authToken', '')
+          gp.config('remote.origin.url', 'git@github.com:test_repo.git')
+          gp.config('github.user', 'test_user')
+          gp.stub(:fetch)
+          gp.stub(:push)
+
+          gp.runner
+        end
+      end
+
+
+      it "should not try when there is a file:// origin url" do
+        gitprocess.branch('fb', :base_branch => 'master')
+        clone('fb') do |gp|
+          gp.config('gitProcess.github.authToken', 'test-token')
+          gp.config('github.user', 'test_user')
+          gp.stub(:fetch)
+          gp.stub(:push)
+
+          gp.runner
+        end
+      end
+
+    end
+
   end
 
 
@@ -128,6 +185,8 @@ describe GitProc::RebaseToMaster do
         branches.include?('origin/master').should be_false
         branches['ab'].sha.should == branches['origin/int-br'].sha
 
+        gl.stub(:repo_name).and_return('test_repo')
+
         change_file_and_commit('c', '', gl)
 
         branches = gl.branches
@@ -141,6 +200,7 @@ describe GitProc::RebaseToMaster do
     end
 
   end
+
 
   describe "remove current feature branch" do
 

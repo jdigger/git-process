@@ -2,6 +2,7 @@ require 'git-process/git_process'
 require 'git-process/git_rebase_error'
 require 'git-process/git_process_error'
 require 'git-process/parked_changes_error'
+require 'git-process/github_pull_request'
 
 
 module GitProc
@@ -16,6 +17,7 @@ module GitProc
         fetch(server_name)
         proc_rebase(remote_master_branch)
         push(server_name, branches.current, master_branch)
+        close_pull_request
         remove_feature_branch
       else
         proc_rebase(master_branch)
@@ -50,6 +52,30 @@ module GitProc
       current_branch.delete(true)
       if mybranches["#{server_name}/#{current_branch.name}"]
         push(server_name, nil, nil, :delete => current_branch.name)
+      end
+    end
+
+
+    def close_pull_request
+      pr = GitHub::PullRequest.new(self, repo_name)
+
+      # Assume that if we haven't done something that would create the
+      # GitHub auth token, then this likely isn't a GitHub-based repo.
+      # (Or at least the user isn't using pull requests)
+      if pr.config_auth_token
+        begin
+          mybranches = branches()
+          pull = pr.find_pull_request(master_branch, mybranches.current.name)
+          if pull
+            pr.close(pull[:number])
+          else
+            logger.debug { "There is no pull request for #{mybranches.current.name} against #{master_branch}" }
+          end
+        rescue GitHubService::NoRemoteRepository => exp
+          logger.debug exp.to_s
+        end
+      else
+        logger.debug "There is no GitHub auth token defined, so not trying to close a pull request."
       end
     end
 

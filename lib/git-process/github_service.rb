@@ -6,7 +6,7 @@ require 'uri'
 module GitHubService
 
   def client
-    unless @client
+    if @client.nil?
       auth_token
       logger.debug { "Creating GitHub client for user #{user} using token '#{auth_token}'" }
       @client = GitHubClient.new(:login => user, :oauth_token=> auth_token)
@@ -36,10 +36,12 @@ module GitHubService
 
       raise URI::InvalidURIError.new("Need a scheme in URI: '#{origin_url}'") unless scheme
 
-      unless host
+      if host.nil?
         # assume that the 'scheme' is the named configuration in ~/.ssh/config
         host = hostname_from_ssh_config(scheme, opts[:ssh_config_file] ||= "#{ENV['HOME']}/.ssh/config")
       end
+
+      raise GitHubService::NoRemoteRepository.new("Could not determine a host from #{origin_url}") if host.nil?
 
       site = host_to_site(host, scheme == 'https')
     end
@@ -48,23 +50,27 @@ module GitHubService
 
 
   def hostname_from_ssh_config(host_alias, config_file)
-    config_lines = File.new(config_file).readlines
+    if File.exists?(config_file)
+      config_lines = File.new(config_file).readlines
 
-    in_host_section = false
-    host_name = nil
+      in_host_section = false
+      host_name = nil
 
-    sections = config_lines.each do |line|
-      line.chop!
-      if /^\s*Host\s+#{host_alias}\s*$/ =~ line
-          in_host_section = true
-        next
+      sections = config_lines.each do |line|
+        line.chop!
+        if /^\s*Host\s+#{host_alias}\s*$/ =~ line
+            in_host_section = true
+          next
+        end
+        if in_host_section and (/^\s*HostName\s+\S+\s*$/ =~ line)
+          host_name = line.sub(/^\s*HostName\s+(\S+)\s*$/, '\1')
+          break
+        end
       end
-      if in_host_section and (/^\s*HostName\s+\S+\s*$/ =~ line)
-        host_name = line.sub(/^\s*HostName\s+(\S+)\s*$/, '\1')
-        break
-      end
+      host_name
+    else
+      nil
     end
-    host_name
   end
 
 
@@ -93,7 +99,7 @@ module GitHubService
   def user
     unless @user
       user = lib.config('github.user')
-      if user.empty?
+      if user.nil? or user.empty?
         user = ask("Your <%= color('GitHub', [:bold, :blue]) %> username: ") do |q|
           q.validate = /^\w\w+$/
         end
@@ -133,9 +139,9 @@ module GitHubService
 
 
   def config_auth_token
-    unless @auth_token
+    if @auth_token.nil?
       c_auth_token = lib.config('gitProcess.github.authToken')
-      @auth_token = c_auth_token.empty? ? nil : c_auth_token
+      @auth_token = (c_auth_token.nil? or c_auth_token.empty?) ? nil : c_auth_token
     end
     @auth_token
   end

@@ -1,5 +1,6 @@
 require 'git-process/github_service'
 require 'octokit'
+require 'octokit/repository'
 
 
 module GitHub
@@ -31,6 +32,62 @@ module GitHub
         logger.warn { "Pull request already exists. See #{pull[:html_url]}" }
         pull
       end
+    end
+
+
+    def find_pull_request(base, head)
+      json = pull_requests
+      json.find {|p| p[:head][:ref] == head and p[:base][:ref] == base}
+    end
+
+
+    def close(*args)
+      pull_number = nil
+
+      if args.size == 2
+        base = args[0]
+        head = args[1]
+        logger.info { "Closing a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
+
+        json = pull_requests
+        pull = json.find {|p| p[:head][:ref] == head and p[:base][:ref] == base}
+
+        raise NotFoundError.new(base, head, repo, json) if pull.nil?
+
+        pull_number = pull[:number]
+      elsif args.size == 1
+        pull_number = args[0]
+        logger.info { "Closing a pull request \##{pull_number} on #{repo}." }
+      end
+
+      client.patch("repos/#{Octokit::Repository.new(repo)}/pulls/#{pull_number}", {:state  => 'closed'})
+    end
+
+
+    class NotFoundError < StandardError
+      attr_reader :base, :head, :repo
+
+      def initialize(base, head, repo, pull_requests_json)
+        @base = base
+        @head = head
+        @repo = repo
+
+        @pull_requests = pull_requests_json.map do |p|
+          {:head => p[:head][:ref], :base => p[:base][:ref]}
+        end
+
+        msg = "Could not find a pull request for '#{head}' to be merged with '#{base}' on #{repo}."
+        msg += "\n\nExisting Pull Requests:"
+        msg = pull_requests.inject(msg) {|a,v| "#{a}\n  #{v[:head]} -> #{v[:base]}" }
+
+        super(msg)
+      end
+
+
+      def pull_requests
+        @pull_requests
+      end
+
     end
 
   end
