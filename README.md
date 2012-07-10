@@ -9,6 +9,7 @@ This provides an easy way to work with a sane git workflow process.
 
     $ gem install git-process
 
+
 # Overview #
 
 * `git new-fb` - Create a new feature branch based on the integration branch.
@@ -31,7 +32,7 @@ _The following assumes that the integration branch is "origin/master"._
 3. When you feel your work is ready for others to look at, do another "`git sync`" to post your
    changes to the server, and then "`git pull-request`" to ask someone to review your changes.
 4. If you get the thumbs up from the code-review, use "`git to-master`".
-    * This will merge and push your changes into "`origin/master`"
+    * This will merge and push your changes into "`origin/master`", closing the pull request.
 5. If you still need to make changes, do so and use "`git sync`" to keep your branch on the
    server for that feature updated with your work until all issues have been resolved.
 
@@ -45,6 +46,7 @@ _The following assumes that the integration branch is "origin/master"._
       result to the "`feature_branch`" branch to the server.
 3. When you are ready to merge your work into the mainline, "`git to-master`".
     * This will merge and push your changes into "`origin/master`"
+
 
 # Notes #
 
@@ -66,12 +68,7 @@ _The following assumes that the integration branch is "origin/master"._
 * If you want to use a different integration branch other than "`master`", set the
   "`gitProcess.integrationBranch`" configuration value. (e.g.,
   "`git config gitProcess.integrationBranch my-integ-branch`")
-
-## Misc ##
-
-* http://git-scm.com/2010/03/08/rerere.html
-* http://git.kernel.org/?p=git/git.git;a=blob;f=contrib/rerere-train.sh;hb=HEAD
-* https://github.com/b4mboo/git-review
+* This tries to respond "intelligently" to the use of 'rerere'.
 
 
 # Contributing #
@@ -85,3 +82,17 @@ _The following assumes that the integration branch is "origin/master"._
 5. Create new Pull Request
 
 The tests are written for RSpec 2.
+
+## License ##
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0 "License Link")
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
