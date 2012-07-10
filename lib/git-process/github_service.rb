@@ -122,7 +122,7 @@ module GitHubService
 
 
   def create_authorization
-    logger.info("Authorizing this to work with your repos.")
+    logger.info("Authorizing #{user} to work with #{site}.")
     auth = pw_client.create_authorization(:scopes => ['repo', 'user', 'gist'],
                                           :note => 'Git-Process',
                                           :note_url => 'http://jdigger.github.com/git-process')
