@@ -8,12 +8,13 @@ module GitProc
   class Process
     include GitLib
 
-    def initialize(dir, opts)
+    def initialize(dir, opts = {})
       @log_level = Process.log_level(opts)
 
-      @workdir = dir
-      if workdir
-        unless File.directory?(File.join(workdir, '.git'))
+      if dir
+        @workdir = find_workdir(dir)
+        if @workdir.nil?
+          @workdir = dir
           logger.info { "Initializing new repository at #{workdir}" }
           command(:init)
         else
@@ -76,6 +77,17 @@ module GitProc
 
 
     private
+
+
+    def find_workdir(dir)
+      if dir == File::SEPARATOR
+        nil
+      elsif File.directory?(File.join(dir, '.git'))
+        dir
+      else
+        find_workdir(File.expand_path("#{dir}/.."))
+      end
+    end
 
 
     def proc_rebase(base)
