@@ -65,7 +65,7 @@ class GitHubClient < Octokit::Client
 
   def request(method, path, options, version, authenticate, raw, force_urlencoded)
     if /api.github.com/ !~ site
-      path = "/api/v3#{path}"
+      path = "/api/v3/#{path}"
     end
     old_request(method, path, options, version, authenticate, raw, force_urlencoded)
   end
