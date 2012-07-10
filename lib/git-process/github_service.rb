@@ -108,7 +108,7 @@ module GitHubService
   def password
     unless @password
       @password = ask("Your <%= color('GitHub', [:bold, :blue]) %> password: ") do |q|
-        q.validate = /^\w\w+$/
+        q.validate = /^\S\S+$/
         q.echo = 'x'
       end
     end
