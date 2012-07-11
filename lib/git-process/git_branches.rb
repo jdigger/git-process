@@ -61,7 +61,7 @@ module GitProc
     def [](branch_name)
       branch_name = current.name if branch_name == 'HEAD'
       br = @items.find {|b| b.name == branch_name}
-      unless br
+      if br.nil? and branch_name !~ /origin\//
         @lib.logger.warn {"Could not find '#{branch_name}' in #{@items.map{|i|i.name}.join(',')}"}
       end
       br
