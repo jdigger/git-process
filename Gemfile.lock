@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    git-process (0.9.3)
+    git-process (0.9.4)
       highline (~> 1.6.12)
       json (~> 1.7.3)
       launchy (~> 2.1.0)
