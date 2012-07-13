@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "highline", "~> 1.6.12" # user CLI interaction
   gem.add_dependency "termios", "~> 0.9.4"  # used by highline to make things a little nicer
   gem.add_dependency "system_timer", "~> 1.2.4" # Needed by faraday via octokit
+  gem.add_dependency "grit", "~> 2.5.0" # git library
 
   gem.add_development_dependency "rake", "~> 0.9.2"
   gem.add_development_dependency "yard", "~> 0.8.2.1" # documentation generator

@@ -16,7 +16,6 @@ require 'git-process/git_branches'
 require 'git-process/git_status'
 require 'git-process/git_process_error'
 
-
 class String
 
   def to_boolean
@@ -55,7 +54,6 @@ module GitProc
       end
       @logger
     end
-
 
     def server_name
       @server_name ||= remote_name
@@ -370,6 +368,61 @@ module GitProc
     def add_remote(remote_name, url)
       command(:remote, ['add', remote_name, url])
     end
+
+
+###################################################
+###################################################
+###################################################
+
+    def grit_repo
+      @grit_repo ||= Grit::Repo.new(workdir)
+    end
+
+
+    def add(file)
+      files = file.is_a?(Array) ? file : [file]
+      files.each do |f|
+        filename = File.expand_path(f, workdir)
+        puts "  filename: #{filename}   - #{workdir}"
+        grit_repo.add(filename, IO.read(filename))
+      end
+    end
+
+
+    def commit(msg)
+      grit_repo.commit(msg)
+    end
+
+
+    def reset(rev_name, opts = {})
+      args = []
+      args << '--hard' if opts[:hard]
+      args << rev_name
+
+      logger.info { "Resetting #{opts[:hard] ? '(hard)' : ''} to #{rev_name}" }
+
+      command(:reset, args)
+    end
+
+
+    def rebase(base)
+      command('rebase', base)
+    end
+
+
+    def merge(base)
+      command(:merge, [base])
+    end
+
+
+    def fetch(name = remote_name)
+      command(:fetch, ['-p', name])
+    end
+
+
+###################################################
+###################################################
+###################################################
 
 
     private

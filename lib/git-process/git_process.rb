@@ -13,6 +13,7 @@
 require 'git-process/git_lib'
 require 'git-process/git_rebase_error'
 require 'git-process/git_merge_error'
+require 'grit'
 
 
 module GitProc
@@ -33,6 +34,11 @@ module GitProc
           logger.debug { "Opening existing repository at #{workdir}" }
         end
       end
+    end
+
+
+    def repo
+      @repo
     end
 
 
