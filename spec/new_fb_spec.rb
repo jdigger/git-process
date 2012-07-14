@@ -56,6 +56,15 @@ describe GitProc::NewFeatureBranch do
     end
 
 
+    it "should use 'integration_branch' instead of 'remote_master_branch'" do
+      change_file_and_commit('a', '')
+
+      new_branch = gitprocess.run
+
+      new_branch.name.should == 'test_branch'
+    end
+
+
     it "should bring new/uncommitted changes on _parking_ over to the new branch" do
       gitprocess.branch('origin/master', :base_branch => 'master')
       gitprocess.checkout('_parking_', :new_branch => 'master')

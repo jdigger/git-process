@@ -31,7 +31,7 @@ module GitProc
         mybranches.parking.delete
         new_branch
       else
-        checkout(@branch_name, :new_branch => remote_master_branch)
+        checkout(@branch_name, :new_branch => integration_branch)
       end
     end
 

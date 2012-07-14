@@ -71,6 +71,11 @@ module GitProc
     end
 
 
+    def integration_branch
+      has_a_remote? ? remote_master_branch : master_branch
+    end
+
+
     def Process.log_level(opts)
       if opts[:quiet]
         Logger::ERROR
