@@ -1,16 +1,31 @@
 [![Build Status](https://secure.travis-ci.org/jdigger/git-process.png)](http://travis-ci.org/jdigger/git-process)
 
-# Purpose #
+# Purpose and Motivation #
 
 This provides an easy way to work with a sane git workflow process.
-
+Short-lived feature branches can work quite well, but the formal git-flow process can be rather heavy in cost.
 
 # Installation #
 
-    $ gem install git-process
+    $ sudo gem install git-process
 
+## Configurables ##
+See notes for more details
 
+* OAuth2 Token 
+* The name of the integration branch (defaults to `origin/master`, but can be set to `develop` or other)
+
+---
 # Overview #
+
+## Anticipated Use Cases ##
+
+1. User Creates new local branch
+1. User pushes local branch to remote (as feature branch) by rebasing integration branch, then pushing branch to remote
+1. User closes local branch by rebasing integration branch first, then pushing local to integration
+1. User initiates GitHub "pull request"
+
+## Command List ##
 
 * `git new-fb` - Create a new feature branch based on the integration branch.
 * `git sync` - Gets the latest changes that have happened on the integration branch, then pushes your changes to a "private" branch on the server.
