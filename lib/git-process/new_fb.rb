@@ -24,6 +24,7 @@ module GitProc
 
     def runner
       mybranches = branches()
+      puts "branches: #{mybranches.names.join(', ')}"
       on_parking = (mybranches.parking == mybranches.current)
 
       if on_parking

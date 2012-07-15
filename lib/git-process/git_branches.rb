@@ -20,11 +20,27 @@ module GitProc
 
     def initialize(lib)
       @lib = lib
-      branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
+      # branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
+      # raise "No branches found" if branch_lines.empty?
       @items = SortedSet.new
-      branch_lines.each do |bl|
-        @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)
+      # branch_lines.each do |bl|
+      #   @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)
+      # end
+      refs = @lib.grit_repo.refs
+      puts "refs: #{refs.map{|i| i.name}.join(', ')}"
+
+
+      puts "commits: #{@lib.grit_repo.commits}"
+
+
+      ls = `ls -al #{@lib.repo.working_dir}/.git/refs/heads`
+      puts "ls #{@lib.repo.working_dir}: #{ls}"
+
+
+      refs.each do |bl|
+        @items << GitBranch.new(bl.name, false, lib)
       end
+      puts "gr branches: #{@items.map{|i| i.name}.join(', ')}"
     end
 
 

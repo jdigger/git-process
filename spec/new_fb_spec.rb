@@ -5,6 +5,10 @@ describe GitProc::NewFeatureBranch do
   include GitRepoHelper
 
   before(:each) do
+    Grit.debug = true
+    Grit.use_git_ruby = false
+    Grit.logger.level = Logger::DEBUG
+
     create_files(['.gitignore'])
     gitprocess.commit('initial')
   end
@@ -24,7 +28,7 @@ describe GitProc::NewFeatureBranch do
   describe "#new_feature_branch" do
 
     def log_level
-      Logger::ERROR
+      Logger::DEBUG
     end
 
 

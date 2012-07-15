@@ -15,6 +15,7 @@ require 'git-process/git_branch'
 require 'git-process/git_branches'
 require 'git-process/git_status'
 require 'git-process/git_process_error'
+require 'grit'
 
 class String
 
@@ -376,21 +377,40 @@ module GitProc
 
     def grit_repo
       @grit_repo ||= Grit::Repo.new(workdir)
+      File.expand_path(".git", workdir)
+      @grit_repo
     end
+
+
+    alias :repo :grit_repo
 
 
     def add(file)
       files = file.is_a?(Array) ? file : [file]
       files.each do |f|
         filename = File.expand_path(f, workdir)
-        puts "  filename: #{filename}   - #{workdir}"
-        grit_repo.add(filename, IO.read(filename))
+        puts "grit add '#{f}' in '#{workdir}'"
+        # grit_repo.add(filename, IO.read(filename))
+        raise "Could not add #{filename}" unless grit_repo.add(filename)
+      end
+    end
+
+
+    class ::Grit::Git
+      def method_missing(cmd, options={}, *args, &block)
+        # logger.debug "method_missing(#{cmd}, #{options}, [#{args.map{|i| '\''+i+'\''}.join(', ')}])"
+        opts = options
+        opts[:raise] = true
+        opts[:chdir] = self.work_tree
+        native(cmd, opts, *args, &block)
       end
     end
 
 
     def commit(msg)
-      grit_repo.commit(msg)
+      puts "grit commit #{msg}"
+      raise "Could not commit" unless grit_repo.commit_index(msg)
+      puts "grit commits #{grit_repo.commits}"
     end
 
 

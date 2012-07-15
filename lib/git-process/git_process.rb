@@ -24,21 +24,19 @@ module GitProc
     def initialize(dir, opts = {})
       @log_level = Process.log_level(opts)
 
+puts "Creating #{self.class}(#{dir}, #{opts})"
       if dir
         @workdir = find_workdir(dir)
         if @workdir.nil?
           @workdir = dir
           logger.info { "Initializing new repository at #{workdir}" }
-          command(:init)
+          # command(:init)
+          @grit_repo = Grit::Repo.init(@workdir)
         else
           logger.debug { "Opening existing repository at #{workdir}" }
+          @grit_repo = Grit::Repo.new(@workdir)
         end
       end
-    end
-
-
-    def repo
-      @repo
     end
 
 
@@ -106,6 +104,9 @@ module GitProc
       if dir == File::SEPARATOR
         nil
       elsif File.directory?(File.join(dir, '.git'))
+        gdir = File.join(dir, '.git')
+        ls = `ls -la #{gdir}`
+        puts "!!!!!!!!!!! git dir ls: #{ls}"
         dir
       else
         find_workdir(File.expand_path("#{dir}/.."))
