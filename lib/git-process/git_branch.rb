@@ -25,7 +25,7 @@ module GitProc
         @name = name
         @remote = false
       end
-      @current = Grit::Head.current.name == name
+      @current = Grit::Head.current(lib.grit_repo).name == name
       @lib = lib
     end
 

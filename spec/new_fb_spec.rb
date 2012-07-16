@@ -6,7 +6,7 @@ describe GitProc::NewFeatureBranch do
 
   before(:each) do
     Grit.debug = true
-    Grit.use_git_ruby = false
+    # Grit.use_git_ruby = false
     Grit.logger.level = Logger::DEBUG
 
     create_files(['.gitignore'])
@@ -15,7 +15,7 @@ describe GitProc::NewFeatureBranch do
 
 
   after(:each) do
-    rm_rf(tmpdir)
+    # rm_rf(tmpdir)
   end
 
 
@@ -27,9 +27,9 @@ describe GitProc::NewFeatureBranch do
 
   describe "#new_feature_branch" do
 
-    def log_level
-      Logger::DEBUG
-    end
+    # def log_level
+    #   Logger::DEBUG
+    # end
 
 
     it "should create the named branch against origin/master" do

@@ -358,14 +358,6 @@ module GitProc
     end
 
 
-    def rev_parse(name)
-      command('rev-parse', name)
-    end
-
-
-    alias sha rev_parse
-
-
     def add_remote(remote_name, url)
       command(:remote, ['add', remote_name, url])
     end
@@ -389,28 +381,79 @@ module GitProc
       files = file.is_a?(Array) ? file : [file]
       files.each do |f|
         filename = File.expand_path(f, workdir)
-        puts "grit add '#{f}' in '#{workdir}'"
-        # grit_repo.add(filename, IO.read(filename))
-        raise "Could not add #{filename}" unless grit_repo.add(filename)
+        index = grit_repo.index
+        index.read_tree("master")
+        index.add(filename, IO.read(filename))
       end
     end
 
 
+    def rev_parse(name)
+      grit_repo.rev_parse(name)
+    end
+
+
+    alias sha rev_parse
+
+
     class ::Grit::Git
-      def method_missing(cmd, options={}, *args, &block)
-        # logger.debug "method_missing(#{cmd}, #{options}, [#{args.map{|i| '\''+i+'\''}.join(', ')}])"
-        opts = options
-        opts[:raise] = true
-        opts[:chdir] = self.work_tree
-        native(cmd, opts, *args, &block)
-      end
+      # def method_missing(cmd, options={}, *args, &block)
+      #   opts = options
+      #   opts[:raise] = true unless cmd == 'rev-parse'
+      #   opts[:chdir] = self.work_tree
+      #   native(cmd, opts, *args, &block)
+      # end
+
+
+      # def rev_parse(options, string)
+      #   puts "REV-PARSE"
+      #   raise RuntimeError, "invalid string: #{string.inspect}" unless string.is_a?(String)
+
+      #   if string =~ /\.\./
+      #     (sha1, sha2) = string.split('..')
+      #     return [rev_parse({}, sha1), rev_parse({}, sha2)]
+      #   end
+
+      #   if /^[0-9a-f]{40}$/.match(string)  # passing in a sha - just no-op it
+      #     return string.chomp
+      #   end
+
+      #   head = File.join(@git_dir, 'refs', 'heads', string)
+      #   return File.read(head).chomp if File.file?(head)
+      #   puts "NO #{head}"
+
+      #   head = File.join(@git_dir, 'refs', 'remotes', string)
+      #   return File.read(head).chomp if File.file?(head)
+      #   puts "NO #{head}"
+
+      #   head = File.join(@git_dir, 'refs', 'tags', string)
+      #   return File.read(head).chomp if File.file?(head)
+      #   puts "NO #{head}"
+
+      #   ## check packed-refs file, too
+      #   packref = File.join(@git_dir, 'packed-refs')
+      #   if File.file?(packref)
+      #     File.readlines(packref).each do |line|
+      #       if m = /^(\w{40}) refs\/.+?\/(.*?)$/.match(line)
+      #         next if !Regexp.new(Regexp.escape(string) + '$').match(m[3])
+      #         return m[1].chomp
+      #       end
+      #     end
+      #   end
+
+      #   ## !! more - partials and such !!
+
+      #   # revert to calling git - grr
+      #   return method_missing('rev-parse', options, string).chomp
+      # end
     end
 
 
     def commit(msg)
-      puts "grit commit #{msg}"
-      raise "Could not commit" unless grit_repo.commit_index(msg)
-      puts "grit commits #{grit_repo.commits}"
+      index = grit_repo.index
+      index.read_tree(Grit::Head.current(grit_repo).name)
+      # sha = index.commit(msg, [grit_repo.commits.first])
+      sha = index.commit(msg)
     end
 
 
