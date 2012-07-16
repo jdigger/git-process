@@ -15,6 +15,7 @@ require 'git-process/git_branch'
 require 'git-process/git_branches'
 require 'git-process/git_status'
 require 'git-process/git_process_error'
+require 'rugged'
 
 
 class String
@@ -370,6 +371,56 @@ module GitProc
     def add_remote(remote_name, url)
       command(:remote, ['add', remote_name, url])
     end
+
+
+    ###################################################################
+    ###################################################################
+
+
+    def rugged
+      @rugged ||= Rugged::Repository.new(workdir)
+    end
+
+
+    def add(file)
+      index = rugged.index
+      index.reload
+      files = file.is_a?(Array) ? file : [file]
+      files.each do |f|
+        fn = File.expand_path(f, rugged.workdir)
+        logger.debug {"Adding #{fn}"}
+        index.add(f)
+      end
+      logger.debug "Writing index"
+      index.write
+      # command(:add, ['--', file])
+    end
+
+
+    def commit(msg)
+      index = rugged.index
+      index.reload
+      tree = index.write_tree
+      puts "msg: #{msg}"
+      puts "tree: #{tree}"
+      person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
+
+      parents = rugged.head_orphan? ? [""] : [rugged.head]
+      puts "parents: #{parents[0].class} '#{parents[0]}'  - #{rugged.head_orphan?}"
+      commit = Rugged::Commit.create(rugged,
+        :message => msg,
+        :committer => person,
+        :author => person,
+        :parents => parents,
+        :tree => tree)
+
+      rm_loose(commit.oid)
+      # command(:commit, ['-m', msg])
+    end
+
+
+    ###################################################################
+    ###################################################################
 
 
     private

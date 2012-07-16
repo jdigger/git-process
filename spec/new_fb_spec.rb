@@ -24,7 +24,7 @@ describe GitProc::NewFeatureBranch do
   describe "#new_feature_branch" do
 
     def log_level
-      Logger::ERROR
+      Logger::DEBUG
     end
 
 
