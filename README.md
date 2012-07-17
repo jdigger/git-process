@@ -32,6 +32,8 @@ See notes for more details
 * `git pull-request` - Creates a Pull Request for the current branch.
 * `git to-master` - Rebase against the integration branch, then pushes to it.
 
+**All commands are well documented within themselves: Use the "-h" switch to see the full documentation.** (e.g., "`git sync -h`")
+
 # Workflow #
 
 _The following assumes that the integration branch is "origin/master"._
@@ -41,7 +43,7 @@ _The following assumes that the integration branch is "origin/master"._
 1. When starting work on a new feature, use "`git new-fb feature-name`".
     * This creates a new branch called "`feature-name`" based on "`origin/master`".
 2. After making some changes, if you want to pick up any changes other people have made, as well
-   as save your work on the server, do "`git synch`".
+   as save your work on the server, do "`git sync`".
     * That will merge in the changes that have occurred in "`origin/master`" and then push the
       result to the "`feature_branch`" branch to the server.
 3. When you feel your work is ready for others to look at, do another "`git sync`" to post your
@@ -56,7 +58,7 @@ _The following assumes that the integration branch is "origin/master"._
 1. When starting work on a new feature, use "`git new-fb feature-name`".
     * This creates a new branch called "`feature-name`" based on "`origin/master`".
 2. After making some changes, if you want to pick up any changes other people have made, as well
-   as save your work on the server, do "`git synch`".
+   as save your work on the server, do "`git sync`".
     * That will merge in the changes that have occurred in "`origin/master`" and then push the
       result to the "`feature_branch`" branch to the server.
 3. When you are ready to merge your work into the mainline, "`git to-master`".
@@ -84,6 +86,45 @@ _The following assumes that the integration branch is "origin/master"._
   "`gitProcess.integrationBranch`" configuration value. (e.g.,
   "`git config gitProcess.integrationBranch my-integ-branch`")
 * This tries to respond "intelligently" to the use of 'rerere'.
+
+
+# FAQ #
+
+## Q: How is this different from git-flow or GitHub flow? ##
+
+["git-flow"](http://nvie.com/posts/a-successful-git-branching-model/) is designed around having a very strongly defined process around keeping new development, hotfixes, release process changes, etc. all clearly separated. The problem I have with it is that it's too much "process" for not enough gain. (It has a waterfall feel to it, very much against the more modern [Continuous Delivery](http://continuousdelivery.com/) approach.)
+
+["GitHub Flow"](http://scottchacon.com/2011/08/31/github-flow.html) is a lot cleaner, but relies too heavily (IMHO) on web-based tools and on merging instead of rebasing. It is also focussed very tightly on a Continuous Deployment process, which is great for them, but not practical for everyone.
+
+
+## Q: Wait, I heard "branches are evil." Why should I do something evil? ##
+
+Branches are extremely powerful tools that allow for clean organization/modularization of development.
+
+* Branches make it easy to sandbox changes while they are in a state of flux, while at the same time be very fearless about making potentially breaking changes.
+    * For example, I commit "green to green": Doing [TDD](http://en.wikipedia.org/wiki/Test-driven_development), I commit every time I have a newly passing test case. So, assuming I'm in a regular development flow, I'm committing my changes every five minutes. Tiny commits, but lots of them. What that means is that if I make a "less than wise choice" at some point, it's trivial to rewind to before I'd made the mistake, potentially keep the throw-away code in another branch while I do my cleanup, and generally use the full power of a revision control system to make my life safer and easier. The branch(es) are pretty chaotic, but that's not a problem because before integrating with the mainline, I take a moment to cleanup: Squash related commits together, write clearer commit messages (since now I know what "the answer" is), and generally move from my drafts to a more finished result. (See below on objections related to "lying with rebase.") That may just be me, though, because I'm very paranoid when it comes to computers. I tend to automatically hit Cmd/Ctl-S every time I type a period when I'm writing, or when I close a block when I'm programming. I have a minimum of three copies/backups around the world of all my important documents. And I "`git sync`" frequently to make sure my machine isn't the only place where all my hard work is being stored. Have I mentioned I don't trust computers?
+
+* Branches allow for focused collaboration. Because a branch is about exactly one thing, it means that a team can collaborate around a feature/bug (especially when used in conjunction with a "pull request"), and keep such changes sandboxed until such time that they are ready to bring a larger audience into the mix.
+    * Branches encourage being less "shy" about your code. I have heard, on a number of occasions, developers say "I'm not ready to push this to the server yet because [it's still rough (and embarrassing)]/[it may break other people]/etc." All of those reasons for "hoarding" code are moot with branches.
+
+Jez Humble, a brilliant Principle at ThoughtWorks Studios, talks a lot about how "branches are evil." Unfortunately, people hear that, know how smart he is, and simply repeat it without really understanding what his objections are. Fortunately, he [posted clarification about what's really meant by that](http://continuousdelivery.com/2011/07/on-dvcs-continuous-integration-and-feature-branches/). He essentially says that the problem is that developers abuse branches by not merging with mainline (i.e., "master") on a regular basis. Not constantly getting changes *from* mainline makes life rough when it comes time to integrate. Not putting your changes *into* mainline means that your changes are not being validated (via [Continuous Integration](http://martinfowler.com/articles/continuousIntegration.html), or -- better -- with [Continuous Delivery](http://continuousdelivery.com/)). Both are, in fact, sins akin to not doing automated testing.
+
+Making it "easier to do things right than wrong" (i.e., using branches and keeping them synced with mainline) was the primary motivation for this project. This should be especially evident in the "`git sync`" and "`git to-master`" commands.
+
+
+## Q: Why so much emphasis on rebasing? Isn't rebasing a dangerous lie? ##
+
+Like any powerful tool, "`git rebase`" is "dangerous" if used incorrectly, just like "`rm -rf`". You simply need to know when and how to use it safely. And in the world of version control systems, "rebasing" is easily one of the most _**useful**_ tools to come around since the "`commit`" command.
+
+[A famous article](http://paul.stadig.name/2010/12/thou-shalt-not-lie-git-rebase-ammend.html) that people have been parroting in various forms for a while makes the case that rebasing (and its various forms, such as squashing, amending commits, etc.) is a "lie." As with so many things, context is everything.
+
+You almost certainly should *not* rebase things that you have "published." Generally this really means "Don't rebase the 'master' branch!" Fortunately, these scripts make it impossible to rebase the mainline by accident. By default "`git sync`" uses "merge" instead of "rebase" to encourage collaboration. (Though you can easily use "-r" if you know no one else is working on the branch.) When it's time to actually merge your work into the mainline (and thus no one is working against it except in the context of mainline), that's when it gets rebased in.
+
+Rebasing "your" code is an extremely useful way of communicating clearly. In the "green to green" scenario above about branches, a lot of noise is generated. If someone wants to review my code, or cherry-pick in my changes, it's too much of a mess to effectively do so. Also, as part of the process of squashing, I have the opportunity to write clearer commit message based upon my newly enhanced understanding. The intermediate commits were my "drafts" and I'm now submitting my cleaned up copy.
+
+If you have ever seen an "active" project that uses a process like "git-flow" that encourages a lot of branching and merging, you've seen how hard it can be to follow a particular line of development. Branch lines are flying around everywhere, and half the commits are pretty much pure noise. (e.g., "Merge branch 'develop' of ... into develop".) It's also hard to follow the order in which commits actually impacted the mainline. In many ways, in practice merges turn into "a truth effectively being a lie (because it's buried in the noise)" versus rebases that are "a lie (changed from it's 'original' form) to tell an effective truth (clean and very clear about its impact)."
+
+I am trying to promote clear communication about current reality over micro-management over no-longer-relevant history. Thus the judicious use of rebase.
 
 
 # Contributing #
