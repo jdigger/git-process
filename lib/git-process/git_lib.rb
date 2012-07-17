@@ -407,7 +407,7 @@ module GitProc
       puts "msg: #{msg}"
       puts "tree: #{tree}"
       # person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
-      person = {'name' => 'Scott', 'email' => 'schacon@gmail.com', 'time' => Time.now }
+      person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
 
       parents = rugged.head_orphan? ? ["0000000000000000000000000000000000000000", "0000000000000000000000000000000000000000"] : [rugged.head, "0000000000000000000000000000000000000000"]
       puts "parents: #{parents[0].class} '#{parents[0]}'  - #{rugged.head_orphan?}"
