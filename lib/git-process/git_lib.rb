@@ -393,20 +393,35 @@ module GitProc
       end
       logger.debug "Writing index"
       index.write
+      # tree = index.write_tree
       # command(:add, ['--', file])
     end
 
 
     def commit(msg)
       index = rugged.index
-      index.reload
-      tree = index.write_tree
+      # index.reload
+      tree_sha = index.write_tree
+      tree = rugged.lookup(tree_sha)
+      tree = tree_sha
       puts "msg: #{msg}"
       puts "tree: #{tree}"
-      person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
+      # person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
+      person = {'name' => 'Scott', 'email' => 'schacon@gmail.com', 'time' => Time.now }
 
-      parents = rugged.head_orphan? ? [""] : [rugged.head]
+      parents = rugged.head_orphan? ? ["0000000000000000000000000000000000000000", "0000000000000000000000000000000000000000"] : [rugged.head, "0000000000000000000000000000000000000000"]
       puts "parents: #{parents[0].class} '#{parents[0]}'  - #{rugged.head_orphan?}"
+
+      # obj = Rugged::Commit.new(rugged)
+      # person = Rugged::Signature.new('Scott', 'schacon@gmail.com', Time.now)
+
+      # obj.message = 'new message'
+      # obj.author = person
+      # obj.committer = person
+      # obj.tree = tree
+      # obj.write
+      # rm_loose(obj.oid)
+
       commit = Rugged::Commit.create(rugged,
         :message => msg,
         :committer => person,
