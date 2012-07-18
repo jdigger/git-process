@@ -15,73 +15,65 @@ describe GitProc::Sync do
   end
 
 
-  def create_process(dir, opts)
-    opts[:rebase] = false
-    opts[:force] = false
-    GitProc::Sync.new(dir, opts)
+  def log_level
+    Logger::ERROR
   end
 
 
-  describe "#run" do
+  def create_process(dir, opts)
+    GitProc::Sync.new(dir, opts.merge({:rebase => false, :force => false}))
+  end
 
-    def log_level
-      Logger::ERROR
+
+  it "should work when pushing with fast-forward" do
+    change_file_and_commit('a', '')
+
+    gitprocess.branch('fb', :base_branch => 'master')
+
+    clone('fb') do |gp|
+      change_file_and_commit('a', 'hello', gp)
+      gp.branches.include?('origin/fb').should be_true
+      gp.runner
+      gp.branches.include?('origin/fb').should be_true
+      gitprocess.branches.include?('fb').should be_true
     end
+  end
 
 
-    it "should work when pushing with fast-forward" do
-      change_file_and_commit('a', '')
+  it "should work with a different remote server name" do
+    change_file_and_commit('a', '')
 
-      gitprocess.branch('fb', :base_branch => 'master')
+    gitprocess.branch('fb', :base_branch => 'master')
 
-      clone('fb') do |gp|
-        change_file_and_commit('a', 'hello', gp)
-        gp.branches.include?('origin/fb').should be_true
-        gp.run
-        gp.branches.include?('origin/fb').should be_true
-        gitprocess.branches.include?('fb').should be_true
+    clone('fb', 'a_remote') do |gp|
+      change_file_and_commit('a', 'hello', gp)
+      gp.branches.include?('a_remote/fb').should be_true
+      gp.runner
+      gp.branches.include?('a_remote/fb').should be_true
+      gitprocess.branches.include?('fb').should be_true
+    end
+  end
+
+
+  it "should fail when pushing with non-fast-forward and no force" do
+    change_file_and_commit('a', '')
+
+    gitprocess.branch('fb', :base_branch => 'master')
+
+    clone('fb') do |gp|
+      gitprocess.checkout('fb') do
+        change_file_and_commit('a', 'hello', gitprocess)
       end
+
+      expect {gp.runner}.should raise_error GitProc::GitExecuteError
     end
-
-
-    it "should work with a different remote server name" do
-      change_file_and_commit('a', '')
-
-      gitprocess.branch('fb', :base_branch => 'master')
-
-      clone('fb', 'a_remote') do |gp|
-        change_file_and_commit('a', 'hello', gp)
-        gp.branches.include?('a_remote/fb').should be_true
-        gp.run
-        gp.branches.include?('a_remote/fb').should be_true
-        gitprocess.branches.include?('fb').should be_true
-      end
-    end
-
-
-    it "should fail when pushing with non-fast-forward and no force" do
-      change_file_and_commit('a', '')
-
-      gitprocess.branch('fb', :base_branch => 'master')
-
-      clone('fb') do |gp|
-        gitprocess.checkout('fb') do
-          change_file_and_commit('a', 'hello', gitprocess)
-        end
-
-        expect {gp.run}.should raise_error GitProc::GitExecuteError
-      end
-    end
-
   end
 
 
   describe "when forcing the push" do
 
     def create_process(dir, opts)
-      opts[:force] = false
-      opts[:force] = true
-      GitProc::Sync.new(dir, opts)
+      GitProc::Sync.new(dir, opts.merge({:rebase => false, :force => true}))
     end
 
 
@@ -92,58 +84,60 @@ describe GitProc::Sync do
 
       clone('fb') do |gp|
         gitprocess.checkout('fb') do
-          change_file_and_commit('a', 'hello', gp)
+          change_file_and_commit('a', 'hello', gitprocess)
         end
 
-        expect {gp.run}.should_not raise_error GitProc::GitExecuteError
+        expect {gp.runner}.should_not raise_error GitProc::GitExecuteError
       end
     end
 
   end
 
 
-  describe "sync_with_server with different remote name" do
-
-    def log_level
-      Logger::ERROR
-    end
-
+  describe "when rebasing" do
 
     def create_process(dir, opts)
-      opts[:force] = false
-      opts[:force] = true
-      gp = GitProc::Sync.new(dir, opts)
-      gp.instance_variable_set('@server_name', 'a_remote')
-      gp
+      GitProc::Sync.new(dir, opts.merge({:rebase => true, :force => false}))
     end
 
 
-    it "should work with a different remote server name" do
+    it "should work when pushing (non-fast-forward)" do
       change_file_and_commit('a', '')
 
       gitprocess.branch('fb', :base_branch => 'master')
 
-      clone('fb', 'a_remote') do |gp|
-        change_file_and_commit('a', 'hello', gp)
-        gp.branches.include?('a_remote/fb').should be_true
-        gp.run
-        gp.branches.include?('a_remote/fb').should be_true
-        gitprocess.branches.include?('fb').should be_true
+      clone('fb') do |gp|
+        gitprocess.checkout('fb') do
+          change_file_and_commit('a', 'hello', gitprocess)
+        end
+
+        expect {gp.runner}.should_not raise_error GitProc::GitExecuteError
       end
     end
 
   end
 
 
-  describe "remove current feature branch when used while on _parking_" do
+  it "should work with a different remote server name than 'origin'" do
+    change_file_and_commit('a', '')
 
-    it 'should fail #sync_with_server' do
-      gitprocess.checkout('_parking_', :new_branch => 'master')
-      change_file_and_commit('a', '')
+    gitprocess.branch('fb', :base_branch => 'master')
 
-      expect {gitprocess.runner}.should raise_error GitProc::ParkedChangesError
+    clone('fb', 'a_remote') do |gp|
+      change_file_and_commit('a', 'hello', gp)
+      gp.branches.include?('a_remote/fb').should be_true
+      gp.runner
+      gp.branches.include?('a_remote/fb').should be_true
+      gitprocess.branches.include?('fb').should be_true
     end
+  end
 
+
+  it 'should fail when removing current feature while on _parking_' do
+    gitprocess.checkout('_parking_', :new_branch => 'master')
+    change_file_and_commit('a', '')
+
+    expect {gitprocess.runner}.should raise_error GitProc::ParkedChangesError
   end
 
 end

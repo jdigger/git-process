@@ -21,6 +21,14 @@ module GitProc
   class Sync < Process
 
     def initialize(dir, opts)
+      opts[:force] = true if opts[:rebase]
+
+      if !opts[:merge].nil? and opts[:merge] == opts[:rebase]
+        raise ArgumentError.new(":merge = #{opts[:merge]} and :rebase = #{opts[:rebase]}")
+      end
+
+      raise ArgumentError.new(":rebase is not set") if opts[:rebase].nil?
+
       @do_rebase = opts[:rebase]
       @force = opts[:force]
       super
@@ -31,8 +39,8 @@ module GitProc
       raise UncommittedChangesError.new unless status.clean?
       raise ParkedChangesError.new(self) if is_parked?
 
-      current_branch = branches.current
-      remote_branch = "#{server_name}/#{current_branch}"
+      @current_branch ||= branches.current
+      @remote_branch ||= "#{server_name}/#{@current_branch}"
 
       fetch(server_name)
 
@@ -42,19 +50,28 @@ module GitProc
         proc_merge(remote_master_branch)
       end
 
-      old_sha = command('rev-parse', remote_branch) rescue ''
+      old_sha = rev_parse(@remote_branch) rescue ''
 
-      unless current_branch == master_branch
-        fetch(server_name)
-        new_sha = command('rev-parse', remote_branch) rescue ''
-        unless old_sha == new_sha
-          logger.warn("'#{current_branch}' changed on '#{server_name}'"+
-                      " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
-          sync_with_server(@do_rebase, @force)
-        end
-        push(server_name, current_branch, current_branch, :force => @force)
+      unless @current_branch == master_branch
+        handle_remote_changed(old_sha)
+
+        push(server_name, @current_branch, @current_branch, :force => @force)
       else
         logger.warn("Not pushing to the server because the current branch is the master branch.")
+      end
+    end
+
+
+    private
+
+
+    def handle_remote_changed(old_sha)
+      fetch(server_name)
+      new_sha = rev_parse(@remote_branch) rescue ''
+      unless old_sha == new_sha
+        logger.warn("'#{@current_branch}' changed on '#{server_name}'"+
+                    " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+        runner # try again
       end
     end
 
