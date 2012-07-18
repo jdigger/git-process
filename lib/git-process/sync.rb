@@ -31,6 +31,7 @@ module GitProc
 
       @do_rebase = opts[:rebase]
       @force = opts[:force]
+      @local = opts[:local]
       super
     end
 
@@ -50,14 +51,16 @@ module GitProc
         proc_merge(remote_master_branch)
       end
 
-      old_sha = rev_parse(@remote_branch) rescue ''
+      if @local
+        logger.debug("Not pushing to the server because the user selected local-only.")
+      elsif @current_branch == master_branch
+        logger.warn("Not pushing to the server because the current branch is the mainline branch.")
+      else
+        old_sha = rev_parse(@remote_branch) rescue ''
 
-      unless @current_branch == master_branch
         handle_remote_changed(old_sha)
 
         push(server_name, @current_branch, @current_branch, :force => @force)
-      else
-        logger.warn("Not pushing to the server because the current branch is the master branch.")
       end
     end
 

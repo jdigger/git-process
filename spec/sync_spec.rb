@@ -118,6 +118,33 @@ describe GitProc::Sync do
   end
 
 
+  describe "when forcing local-only" do
+
+    def create_process(dir, opts)
+      GitProc::Sync.new(dir, opts.merge({:rebase => true, :force => false, :local => true}))
+    end
+
+
+    it "should not try to push" do
+      change_file_and_commit('a', '')
+
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      clone('fb') do |gp|
+        gitprocess.checkout('fb') do
+          change_file_and_commit('a', 'hello', gitprocess)
+        end
+
+        gp.should_receive(:fetch) # want to get remote changes
+        gp.should_not_receive(:push) # ...but not push any
+
+        gp.runner
+      end
+    end
+
+  end
+
+
   it "should work with a different remote server name than 'origin'" do
     change_file_and_commit('a', '')
 

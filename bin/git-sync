@@ -17,7 +17,7 @@ DESCRIPTION
 
 This fetches the latest repository from the server, rebases/merges the current branch \
 against the changes in the integration branch, then pushes the result up to a branch on \
-the server of the same name.
+the server of the same name. (Unless told not to.)
 
 If there is a problem, such as a merge conflict, this tries to \
 resolve it automatically. If it can not do so in an automated way, \
@@ -40,8 +40,10 @@ DESC
     parser.opt :rebase, "Rebase instead of merge against the integration branch"
     parser.opt :merge, "Merge instead of rebase against the integration branch", :short => :none, :default => true
     parser.opt :force, "Force the push; defaults to true if --rebase is used", :short => :f, :default => false
+    parser.opt :local, "Do not do a push; gets remote changes, but does not update the server", :short => :l, :default => false
 
     parser.conflicts :rebase, :merge
+    parser.conflicts :local, :force
   end
 
 
