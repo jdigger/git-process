@@ -13,6 +13,7 @@
 require 'git-process/git_lib'
 require 'git-process/git_rebase_error'
 require 'git-process/git_merge_error'
+require 'git-process/uncommitted_changes_error'
 
 
 module GitProc

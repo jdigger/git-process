@@ -4,6 +4,11 @@ require 'GitRepoHelper'
 describe GitProc::NewFeatureBranch do
   include GitRepoHelper
 
+  def log_level
+    Logger::ERROR
+  end
+
+
   before(:each) do
     create_files(['.gitignore'])
     gitprocess.commit('initial')
@@ -22,11 +27,6 @@ describe GitProc::NewFeatureBranch do
 
 
   describe "#new_feature_branch" do
-
-    def log_level
-      Logger::DEBUG
-    end
-
 
     it "should create the named branch against origin/master" do
       clone do |gp|

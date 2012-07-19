@@ -78,11 +78,17 @@ module GitProc
 
 
     def add(file)
+      # The 'rugged' version (0.16.0) has a timing issue when rapidly
+      #   changing between indexes (such as when checking out
+      #   a new branch).
+      # A 1 second delay fixes the problem, shelling out is faster.
       command(:add, ['--', file])
     end
 
 
     def commit(msg)
+      # The 'rugged' library (0.16.0) doesn't work for commit,
+      # so shell out
       command(:commit, ['-m', msg])
     end
 
@@ -379,58 +385,6 @@ module GitProc
 
     def rugged
       @rugged ||= Rugged::Repository.new(workdir)
-    end
-
-
-    def add(file)
-      index = rugged.index
-      index.reload
-      files = file.is_a?(Array) ? file : [file]
-      files.each do |f|
-        fn = File.expand_path(f, rugged.workdir)
-        logger.debug {"Adding #{fn}"}
-        index.add(f)
-      end
-      logger.debug "Writing index"
-      index.write
-      # tree = index.write_tree
-      # command(:add, ['--', file])
-    end
-
-
-    def commit(msg)
-      index = rugged.index
-      # index.reload
-      tree_sha = index.write_tree
-      tree = rugged.lookup(tree_sha)
-      tree = tree_sha
-      puts "msg: #{msg}"
-      puts "tree: #{tree}"
-      # person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
-      person = {:name => 'Scott', :email => 'schacon@gmail.com', :time => Time.now }
-
-      parents = rugged.head_orphan? ? ["0000000000000000000000000000000000000000", "0000000000000000000000000000000000000000"] : [rugged.head, "0000000000000000000000000000000000000000"]
-      puts "parents: #{parents[0].class} '#{parents[0]}'  - #{rugged.head_orphan?}"
-
-      # obj = Rugged::Commit.new(rugged)
-      # person = Rugged::Signature.new('Scott', 'schacon@gmail.com', Time.now)
-
-      # obj.message = 'new message'
-      # obj.author = person
-      # obj.committer = person
-      # obj.tree = tree
-      # obj.write
-      # rm_loose(obj.oid)
-
-      commit = Rugged::Commit.create(rugged,
-        :message => msg,
-        :committer => person,
-        :author => person,
-        :parents => parents,
-        :tree => tree)
-
-      rm_loose(commit.oid)
-      # command(:commit, ['-m', msg])
     end
 
 

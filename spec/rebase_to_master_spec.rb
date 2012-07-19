@@ -6,6 +6,11 @@ require 'json'
 describe GitProc::RebaseToMaster do
   include GitRepoHelper
 
+  def log_level
+    Logger::DEBUG
+  end
+
+
   before(:each) do
     create_files(['.gitignore'])
     gitprocess.commit('initial')
@@ -24,23 +29,20 @@ describe GitProc::RebaseToMaster do
 
   describe "rebase to master" do
 
-    def log_level
-      Logger::ERROR
-    end
-
-
     it "should work easily for a simple rebase" do
       gitprocess.checkout('fb', :new_branch => 'master')
-      change_file_and_commit('a', '')
+
+      change_file_and_commit('a', 'aaa')
 
       commit_count.should == 2
 
       gitprocess.checkout('master')
-      change_file_and_commit('b', '')
+
+      change_file_and_commit('b', 'bbb')
 
       gitprocess.checkout('fb')
 
-      gitprocess.run
+      gitprocess.runner
 
       commit_count.should == 3
     end
@@ -105,11 +107,6 @@ describe GitProc::RebaseToMaster do
 
     describe "closing the pull request" do
 
-      def log_level
-        Logger::ERROR
-      end
-
-
       it "should work for an existing pull request" do
         gitprocess.branch('fb', :base_branch => 'master')
         clone('fb') do |gp|
@@ -162,11 +159,6 @@ describe GitProc::RebaseToMaster do
 
   describe "custom integration branch" do
 
-    def log_level
-      Logger::ERROR
-    end
-
-
     it "should use the 'gitProcess.integrationBranch' configuration" do
       gitprocess.checkout('int-br', :new_branch => 'master') do
         change_file_and_commit('a', '')
@@ -203,11 +195,6 @@ describe GitProc::RebaseToMaster do
 
 
   describe "remove current feature branch" do
-
-    def log_level
-      Logger::ERROR
-    end
-
 
     describe "when handling the parking branch" do
 

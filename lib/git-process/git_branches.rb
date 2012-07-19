@@ -12,6 +12,7 @@
 
 require 'set'
 require 'git-process/git_branch'
+require 'rugged'
 
 module GitProc
 
@@ -20,10 +21,15 @@ module GitProc
 
     def initialize(lib)
       @lib = lib
-      branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
+      # branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
+      # @items = SortedSet.new
+      # branch_lines.each do |bl|
+      #   @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)
+      # end
       @items = SortedSet.new
-      branch_lines.each do |bl|
-        @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)
+      Rugged::RefList.new(lib.rugged).each do |ref|
+        lib.logger.debug { "ref: #{ref.inspect}" }
+        @items << GitBranch.new(ref.name, false, lib)
       end
     end
 
