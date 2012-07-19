@@ -30,7 +30,7 @@ end
 
 module GitProc
 
-  class GitExecuteError < StandardError
+  class GitExecuteError < GitProcessError
   end
 
 
