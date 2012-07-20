@@ -41,26 +41,35 @@ module GitProc
         stat = s[0..1]
         file = s[3..-1]
         #puts "stat #{stat} - #{file}"
+        f = unquote(file)
         case stat
         when 'U ', ' U'
-          unmerged << file
+          unmerged << f
         when 'UU'
-          unmerged << file
-          modified << file
+          unmerged << f
+          modified << f
         when 'M ', ' M'
-          modified << file
+          modified << f
         when 'D ', ' D'
-          deleted << file
+          deleted << f
         when 'DU', 'UD'
-          deleted << file
-          unmerged << file
+          deleted << f
+          unmerged << f
         when 'A ', ' A'
-          added << file
+          added << f
         when 'AA'
-          added << file
-          unmerged << file
+          added << f
+          unmerged << f
         when '??'
-          unknown << file
+          unknown << f
+        when 'R '
+          old_file, new_file = file.split(' -> ')
+          deleted << unquote(old_file)
+          added << unquote(new_file)
+        when 'C '
+          old_file, new_file = file.split(' -> ')
+          added << unquote(old_file)
+          added << unquote(new_file)
         else
           raise "Do not know what to do with status #{stat} - #{file}"
         end
@@ -71,6 +80,11 @@ module GitProc
       @deleted = deleted.sort.uniq.freeze
       @added = added.sort.uniq.freeze
       @unknown = unknown.sort.uniq.freeze
+    end
+
+
+    def unquote(file)
+      file.match(/^"?(.*?)"?$/)[1]
     end
 
 
