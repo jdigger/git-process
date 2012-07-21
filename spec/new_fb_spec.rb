@@ -30,7 +30,7 @@ describe GitProc::NewFeatureBranch do
 
     it "should create the named branch against origin/master" do
       clone do |gp|
-        new_branch = gp.run
+        new_branch = gp.runner
 
         new_branch.name.should == 'test_branch'
         new_branch.sha.should == gp.branches['origin/master'].sha

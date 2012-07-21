@@ -28,7 +28,7 @@ module GitProc
 
       if on_parking
         new_branch = checkout(@branch_name, :new_branch => '_parking_')
-        mybranches.parking.delete
+        mybranches.parking.delete!
         new_branch
       else
         checkout(@branch_name, :new_branch => integration_branch)

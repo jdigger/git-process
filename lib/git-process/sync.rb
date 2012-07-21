@@ -46,9 +46,9 @@ module GitProc
       fetch(server_name)
 
       if @do_rebase
-        proc_rebase(remote_master_branch)
+        proc_rebase(integration_branch)
       else
-        proc_merge(remote_master_branch)
+        proc_merge(integration_branch)
       end
 
       if @local

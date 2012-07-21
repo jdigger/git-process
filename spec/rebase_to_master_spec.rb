@@ -6,6 +6,11 @@ require 'json'
 describe GitProc::RebaseToMaster do
   include GitRepoHelper
 
+  def log_level
+    Logger::ERROR
+  end
+
+
   before(:each) do
     create_files(['.gitignore'])
     gitprocess.commit('initial')
@@ -23,11 +28,6 @@ describe GitProc::RebaseToMaster do
 
 
   describe "rebase to master" do
-
-    def log_level
-      Logger::ERROR
-    end
-
 
     it "should work easily for a simple rebase" do
       gitprocess.checkout('fb', :new_branch => 'master')
@@ -105,54 +105,51 @@ describe GitProc::RebaseToMaster do
 
     describe "closing the pull request" do
 
-      def log_level
-        Logger::ERROR
-      end
-
-
       it "should work for an existing pull request" do
-        gitprocess.branch('fb', :base_branch => 'master')
-        clone('fb') do |gp|
-          stub_request(:get, /test_repo\/pulls\?access_token=/).
-            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'open', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
-          stub_request(:patch, /test_repo\/pulls\/987\?access_token=/).
-            with(:body => JSON({:state => 'closed'})).
-            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
-          gp.config('gitProcess.github.authToken', 'test-token')
-          gp.config('remote.origin.url', 'git@github.com:test_repo.git')
-          gp.config('github.user', 'test_user')
-          gp.stub(:fetch)
-          gp.stub(:push)
+        stub_request(:get, /test_repo\/pulls\?access_token=/).
+          to_return(:status => 200, :body => JSON([{:number => 987, :state => 'open', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
+        stub_request(:patch, /test_repo\/pulls\/987\?access_token=/).
+          with(:body => JSON({:state => 'closed'})).
+          to_return(:status => 200, :body => JSON([{:number => 987, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
 
-          gp.runner
-        end
+        gitprocess.branch('fb', :base_branch => 'master')
+
+        gp = clone('fb')
+        gp.config('gitProcess.github.authToken', 'test-token')
+        gp.config('remote.origin.url', 'git@github.com:test_repo.git')
+        gp.config('github.user', 'test_user')
+
+        rtm = GitProc::RebaseToMaster.new(gp.workdir, {:log_level => log_level})
+        rtm.stub(:fetch)
+        rtm.stub(:push)
+        rtm.runner
       end
 
 
       it "should not try when there is no auth token" do
         gitprocess.branch('fb', :base_branch => 'master')
-        clone('fb') do |gp|
-          gp.config('gitProcess.github.authToken', '')
-          gp.config('remote.origin.url', 'git@github.com:test_repo.git')
-          gp.config('github.user', 'test_user')
-          gp.stub(:fetch)
-          gp.stub(:push)
+        gp = clone('fb')
+        gp.config('gitProcess.github.authToken', '')
+        gp.config('remote.origin.url', 'git@github.com:test_repo.git')
+        gp.config('github.user', 'test_user')
 
-          gp.runner
-        end
+        rtm = GitProc::RebaseToMaster.new(gp.workdir, {:log_level => log_level})
+        rtm.stub(:fetch)
+        rtm.stub(:push)
+        rtm.runner
       end
 
 
       it "should not try when there is a file:// origin url" do
         gitprocess.branch('fb', :base_branch => 'master')
-        clone('fb') do |gp|
-          gp.config('gitProcess.github.authToken', 'test-token')
-          gp.config('github.user', 'test_user')
-          gp.stub(:fetch)
-          gp.stub(:push)
+        gp = clone('fb')
+        gp.config('gitProcess.github.authToken', 'test-token')
+        gp.config('github.user', 'test_user')
 
-          gp.runner
-        end
+        rtm = GitProc::RebaseToMaster.new(gp.workdir, {:log_level => log_level})
+        rtm.stub(:fetch)
+        rtm.stub(:push)
+        rtm.runner
       end
 
     end
@@ -162,52 +159,41 @@ describe GitProc::RebaseToMaster do
 
   describe "custom integration branch" do
 
-    def log_level
-      Logger::ERROR
-    end
-
-
     it "should use the 'gitProcess.integrationBranch' configuration" do
-      gitprocess.checkout('int-br', :new_branch => 'master') do
-        change_file_and_commit('a', '')
-      end
-      gitprocess.checkout('fb', :new_branch => 'master') do
-        change_file_and_commit('b', '')
-      end
-      gitprocess.branches['master'].delete
+      gitprocess.checkout('int-br', :new_branch => 'master')
+      change_file_and_commit('a', '')
 
-      clone('int-br') do |gl|
-        gl.config('gitProcess.integrationBranch', 'int-br')
+      gitprocess.checkout('fb', :new_branch => 'master')
+      change_file_and_commit('b', '')
 
-        gl.checkout('ab', :new_branch => 'origin/int-br')
+      gitprocess.branches['master'].delete!
 
-        branches = gl.branches
-        branches.include?('origin/master').should be_false
-        branches['ab'].sha.should == branches['origin/int-br'].sha
+      gl = clone('int-br')
+      gl.config('gitProcess.integrationBranch', 'int-br')
 
-        gl.stub(:repo_name).and_return('test_repo')
+      gl.checkout('ab', :new_branch => 'origin/int-br')
 
-        change_file_and_commit('c', '', gl)
+      my_branches = gl.branches
+      my_branches.include?('origin/master').should be_false
+      my_branches['ab'].sha.should == my_branches['origin/int-br'].sha
 
-        branches = gl.branches
-        branches['ab'].sha.should_not == branches['origin/int-br'].sha
+      gl.stub(:repo_name).and_return('test_repo')
 
-        gl.run
+      change_file_and_commit('c', '', gl)
 
-        branches = gl.branches
-        branches['HEAD'].sha.should == branches['origin/int-br'].sha
-      end
+      my_branches = gl.branches
+      my_branches['ab'].sha.should_not == my_branches['origin/int-br'].sha
+
+      GitProc::RebaseToMaster.new(gl.workdir, {:log_level => log_level}).runner
+
+      my_branches = gl.branches
+      my_branches['HEAD'].sha.should == my_branches['origin/int-br'].sha
     end
 
   end
 
 
   describe "remove current feature branch" do
-
-    def log_level
-      Logger::ERROR
-    end
-
 
     describe "when handling the parking branch" do
 

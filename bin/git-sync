@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 
+# require "rubygems"
+# require "bundler/setup"
+# $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
+
 require 'git-process/git_process_options'
 require 'git-process/sync'
+
 
 class SyncOptions
   include GitProc::GitProcessOptions

@@ -27,12 +27,12 @@ module GitProc
 
       if has_a_remote?
         fetch(server_name)
-        proc_rebase(remote_master_branch)
+        proc_rebase(integration_branch)
         push(server_name, branches.current, master_branch)
         close_pull_request
         remove_feature_branch
       else
-        proc_rebase(master_branch)
+        proc_rebase(integration_branch)
       end
     end
 
@@ -42,6 +42,7 @@ module GitProc
 
       remote_master = mybranches[remote_master_branch]
       current_branch = mybranches.current
+      logger.debug { "Removing feature branch (#{current_branch})" }
 
       unless remote_master.contains_all_of(current_branch.name)
         raise GitProcessError.new("Branch '#{current_branch.name}' has not been merged into '#{remote_master_branch}'")
@@ -56,12 +57,12 @@ module GitProc
 
           logger.warn {bad_parking_branch_msg}
         else
-          parking_branch.delete
+          parking_branch.delete!
         end
       end
       remote_master.checkout_to_new('_parking_', :no_track => true)
 
-      current_branch.delete(true)
+      current_branch.delete!(true)
       if mybranches["#{server_name}/#{current_branch.name}"]
         push(server_name, nil, nil, :delete => current_branch.name)
       end

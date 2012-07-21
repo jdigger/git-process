@@ -70,7 +70,7 @@ module GitProc
     end
 
 
-    def delete(force = false)
+    def delete!(force = false)
       if local?
         @lib.branch(@name, :force => force, :delete => true)
       else

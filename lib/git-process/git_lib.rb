@@ -28,6 +28,13 @@ class String
 end
 
 
+class NilClass
+  def to_boolean
+    false
+  end
+end
+
+
 module GitProc
 
   class GitExecuteError < GitProcessError
@@ -44,7 +51,7 @@ module GitProc
   module GitLib
 
     def logger
-      unless @logger
+      if @logger.nil?
         @logger = Logger.new(STDOUT)
         @logger.level = log_level || Logger::WARN
         @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
@@ -77,26 +84,31 @@ module GitProc
 
 
     def add(file)
+      logger.info { "Adding #{[*file].join(', ')}" }
       command(:add, ['--', file])
     end
 
 
     def commit(msg)
+      logger.info "Committing changes"
       command(:commit, ['-m', msg])
     end
 
 
     def rebase(base)
+      logger.info { "Rebasing #{branches.current.name} against #{base}" }
       command('rebase', base)
     end
 
 
     def merge(base)
+      logger.info { "Merging #{branches.current.name} with #{base}" }
       command(:merge, [base])
     end
 
 
     def fetch(name = remote_name)
+      logger.info "Fetching the latest changes from the server"
       command(:fetch, ['-p', name])
     end
 
@@ -248,6 +260,9 @@ module GitProc
     def config_hash
       @config_hash ||= {}
     end
+
+
+    private :config_hash
 
 
     def config(key = nil, value = nil, global = false)
