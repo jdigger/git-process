@@ -48,8 +48,11 @@ module GitProc
         when 'UU'
           unmerged << f
           modified << f
-        when 'M ', ' M'
+        when 'M ', ' M', 'MM'
           modified << f
+        when 'MD'
+          modified << f
+          deleted << f
         when 'D ', ' D'
           deleted << f
         when 'DU', 'UD'
@@ -57,6 +60,9 @@ module GitProc
           unmerged << f
         when 'A ', ' A'
           added << f
+        when 'AD'
+          added << f
+          deleted << f
         when 'AA'
           added << f
           unmerged << f

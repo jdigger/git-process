@@ -14,6 +14,7 @@ require 'git-process/git_process'
 require 'git-process/git_rebase_error'
 require 'git-process/git_process_error'
 require 'git-process/parked_changes_error'
+require 'git-process/uncommitted_changes_error'
 require 'git-process/github_pull_request'
 
 
@@ -21,10 +22,15 @@ module GitProc
 
   class RebaseToMaster < Process
 
-    def runner
+    def verify_preconditions
+      super
+
       raise UncommittedChangesError.new unless status.clean?
       raise ParkedChangesError.new(self) if is_parked?
+    end
 
+
+    def runner
       if has_a_remote?
         fetch(server_name)
         proc_rebase(integration_branch)

@@ -30,12 +30,14 @@ module GitProc
 
     def run
       begin
-        verify_state
+        verify_preconditions
 
         runner
       rescue GitProc::GitProcessError => exp
         puts exp.message
         exit(-1)
+      ensure
+        cleanup
       end
     end
 
@@ -86,12 +88,17 @@ module GitProc
     end
 
 
-    def verify_state
+    def verify_preconditions
       if should_remove_master
         if ask_about_removing_master
           branches[master_branch].delete!
         end
       end
+    end
+
+
+    def cleanup
+      # extension point
     end
 
 

@@ -44,7 +44,7 @@ describe GitProc::NewFeatureBranch do
       change_file_and_commit('a', '')
       change_file_and_commit('b', '')
 
-      new_branch = gitprocess.run
+      new_branch = gitprocess.runner
 
       new_branch.name.should == 'test_branch'
       Dir.chdir(gitprocess.workdir) do |dir|
@@ -59,7 +59,7 @@ describe GitProc::NewFeatureBranch do
     it "should use 'integration_branch' instead of 'remote_master_branch'" do
       change_file_and_commit('a', '')
 
-      new_branch = gitprocess.run
+      new_branch = gitprocess.runner
 
       new_branch.name.should == 'test_branch'
     end
@@ -72,7 +72,7 @@ describe GitProc::NewFeatureBranch do
       change_file_and_add('b', '')
       change_file('c', '')
 
-      new_branch = gitprocess.run
+      new_branch = gitprocess.runner
 
       new_branch.name.should == 'test_branch'
       Dir.chdir(gitprocess.workdir) do |dir|

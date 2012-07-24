@@ -89,9 +89,9 @@ module GitProc
     end
 
 
-    def commit(msg)
+    def commit(msg = nil)
       logger.info "Committing changes"
-      command(:commit, ['-m', msg])
+      command(:commit, msg.nil? ? nil : ['-m', msg])
     end
 
 
@@ -223,6 +223,21 @@ module GitProc
     end
 
 
+    def stash_save
+      command(:stash, ['save'])
+    end
+
+
+    def stash_pop
+      command(:stash, ['pop'])
+    end
+
+
+    def show(refspec)
+      command(:show, refspec)
+    end
+
+
     def checkout(branch_name, opts = {}, &block)
       args = []
       args << '--no-track' if opts[:no_track]
@@ -249,10 +264,10 @@ module GitProc
     end
 
 
-    def remove(file, opts = {})
+    def remove(files, opts = {})
       args = []
       args << '-f' if opts[:force]
-      args << file
+      args << [*files]
       command(:rm, args)
     end
 

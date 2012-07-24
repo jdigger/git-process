@@ -14,11 +14,13 @@ require 'git-process/git_lib'
 require 'git-process/git_process'
 require 'git-process/parked_changes_error'
 require 'git-process/uncommitted_changes_error'
+require 'git-process/changed_file_helper'
 
 
 module GitProc
 
   class Sync < Process
+    include ChangeFileHelper
 
     def initialize(dir, opts)
       opts[:force] = true if opts[:rebase]
@@ -36,10 +38,23 @@ module GitProc
     end
 
 
-    def runner
-      raise UncommittedChangesError.new unless status.clean?
-      raise ParkedChangesError.new(self) if is_parked?
+    def verify_preconditions
+      super
 
+      if not status.clean?
+        offer_to_help_uncommitted_changes
+      end
+
+      raise ParkedChangesError.new(self) if is_parked?
+    end
+
+
+    def cleanup
+      stash_pop if @stash_pushed
+    end
+
+
+    def runner
       @current_branch ||= branches.current
       @remote_branch ||= "#{server_name}/#{@current_branch}"
 

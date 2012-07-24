@@ -39,6 +39,33 @@ describe GitProc::Process do
   end
 
 
+  describe "run lifecycle" do
+
+    it "should call the standard hooks" do
+      proc = GitProc::Process.new(tmpdir)
+      proc.should_receive(:verify_preconditions)
+      proc.should_receive(:runner)
+      proc.should_receive(:cleanup)
+      proc.should_not_receive(:exit)
+
+      proc.run
+    end
+
+
+    it "should call 'cleanup' even if there's an error" do
+      proc = GitProc::Process.new(tmpdir)
+      proc.should_receive(:verify_preconditions)
+      proc.should_receive(:runner).and_raise(GitProc::GitProcessError.new("Error!"))
+      proc.should_receive(:cleanup)
+      proc.should_receive(:exit)
+      proc.should_receive(:puts).with("Error!")
+
+      proc.run
+    end
+
+  end
+
+
   describe "validate local integration branch" do
 
     it "should use remove the int-branch if not on it and not blocked" do
@@ -47,7 +74,7 @@ describe GitProc::Process do
 
       gp.stub(:ask_about_removing_master).and_return(true)
 
-      gp.verify_state
+      gp.verify_preconditions
 
       gp.branches.include?('master').should be_false
     end
@@ -59,7 +86,7 @@ describe GitProc::Process do
 
       gp.should_receive(:ask_about_removing_master).and_return(true)
 
-      gp.verify_state
+      gp.verify_preconditions
 
       gp.branches.include?('master').should be_false
     end
@@ -71,7 +98,7 @@ describe GitProc::Process do
 
       gp.should_receive(:ask_about_removing_master).and_return(false)
 
-      gp.verify_state
+      gp.verify_preconditions
 
       gp.branches.include?('master').should be_true
     end
@@ -80,7 +107,7 @@ describe GitProc::Process do
     it "should not remove the int-branch if on it" do
       gp = clone('master')
 
-      gp.verify_state
+      gp.verify_preconditions
 
       gp.branches.include?('master').should be_true
     end
@@ -91,7 +118,7 @@ describe GitProc::Process do
       gp.config('gitProcess.keepLocalIntegrationBranch', 'true')
       gp.checkout('fb', :new_branch => 'master')
 
-      gp.verify_state
+      gp.verify_preconditions
 
       gp.branches.include?('master').should be_true
     end
@@ -114,7 +141,7 @@ describe GitProc::Process do
         gp.checkout('fb', :new_branch => 'master')
 
         gp.fetch
-        gp.verify_state
+        gp.verify_preconditions
 
         gp.branches.include?('master').should be_true
       end
@@ -129,7 +156,7 @@ describe GitProc::Process do
         gp.checkout('fb', :new_branch => 'master')
 
         gp.fetch
-        gp.verify_state
+        gp.verify_preconditions
 
         gp.branches.include?('master').should be_false
       end
@@ -143,7 +170,7 @@ describe GitProc::Process do
         gp.checkout('fb', :new_branch => 'master')
 
         gp.fetch
-        gp.verify_state
+        gp.verify_preconditions
 
         gp.branches.include?('master').should be_true
       end
@@ -158,7 +185,7 @@ describe GitProc::Process do
         gp.stub(:ask_about_removing_master).and_return(true)
 
         gp.fetch
-        gp.verify_state
+        gp.verify_preconditions
 
         gp.branches.include?('master').should be_false
       end
@@ -170,7 +197,7 @@ describe GitProc::Process do
       gitprocess.config('gitProcess.keepLocalIntegrationBranch', 'false')
       gitprocess.checkout('fb', :new_branch => 'master')
 
-      gitprocess.verify_state
+      gitprocess.verify_preconditions
 
       gitprocess.branches.include?('master').should be_true
     end

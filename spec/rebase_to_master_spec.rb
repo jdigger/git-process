@@ -98,7 +98,7 @@ describe GitProc::RebaseToMaster do
         gitprocess.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
-        expect {gitprocess.runner}.should raise_error GitProc::ParkedChangesError
+        expect {gitprocess.verify_preconditions}.should raise_error GitProc::ParkedChangesError
       end
     end
 
