@@ -1,0 +1,269 @@
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
+  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/script.js"></script>
+
+  <title>Git-Process</title>
+  <meta name="description" content="Scripts to help work with a good Git process">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">Git-Process</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">Scripts to help work with a good Git process</p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          <a href="https://github.com/jdigger/git-process/tarball/master" class="download-button tar"><span>Download</span></a>
+          <a href="https://github.com/jdigger/git-process/zipball/master" class="download-button zip"><span>Download</span></a>
+          <a href="https://github.com/jdigger/git-process" class="code">View Git-Process on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <h1>Purpose</h1>
+
+<p>This provides an easy way to work with a sane git workflow process that encourages using highly-focussed branches to encourage collaboration, enable fearless changes, and improve team communication.</p>
+
+<p>See the F.A.Q. for a much more complete explanation for the thoughts and assumptions that motivates this project.</p>
+
+<h1>Installation</h1>
+
+<pre><code>$ sudo gem install git-process
+</code></pre>
+
+<p>Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "<code>sudo gem update --system</code>" to fix.</p>
+
+<h1>Overview</h1>
+
+<h2>Anticipated Use Cases</h2>
+
+<ol>
+<li>User creates new local branch for focussed work.</li>
+<li>User pushes local branch to remote (as feature branch) by merging/rebasing with the integration branch, then pushing to the branch to remote.</li>
+<li>User closes local branch by rebasing integration branch first, then pushing local to integration.</li>
+<li>User initiates GitHub "pull request" to ease collaboration.</li>
+</ol><h2>Command List</h2>
+
+<ul>
+<li>
+<code>git new-fb</code> - Create a new feature branch based on the integration branch.</li>
+<li>
+<code>git sync</code> - Gets the latest changes that have happened on the integration branch, then pushes your changes to a "private" branch on the server.</li>
+<li>
+<code>git pull-request</code> - Creates a Pull Request for the current branch.</li>
+<li>
+<code>git to-master</code> - Rebase against the integration branch, then pushes to it.</li>
+</ul><p><strong>All commands are well documented within themselves: Use the "-h" switch to see the full documentation.</strong> (e.g., "<code>git sync -h</code>")</p>
+
+<h1>Workflow</h1>
+
+<p><em>The following assumes that the integration branch is "origin/master".</em></p>
+
+<h2>Code Review Using Pull Requests</h2>
+
+<ol>
+<li>When starting work on a new feature, use "<code>git new-fb feature-name</code>".
+
+<ul>
+<li>This creates a new branch called "<code>feature-name</code>" based on "<code>origin/master</code>".</li>
+</ul>
+</li>
+<li>After making some changes, if you want to pick up any changes other people have made, as well
+as save your work on the server, do "<code>git sync</code>".
+
+<ul>
+<li>That will merge in the changes that have occurred in "<code>origin/master</code>" and then push the
+result to the "<code>feature_branch</code>" branch to the server.</li>
+</ul>
+</li>
+<li>When you feel your work is ready for others to look at, do another "<code>git sync</code>" to post your
+changes to the server, and then "<code>git pull-request</code>" to ask someone to review your changes.</li>
+<li>If you get the thumbs up from the code-review, use "<code>git to-master</code>".
+
+<ul>
+<li>This will merge and push your changes into "<code>origin/master</code>", closing the pull request.</li>
+</ul>
+</li>
+<li>If you still need to make changes, do so and use "<code>git sync</code>" to keep your branch on the
+server for that feature updated with your work until all issues have been resolved.</li>
+</ol><pre><code>$ git new-fb my-feature      # 1
+# do work                    # 2
+$ git commit                 # 3
+$ git sync                   # 4
+# repeat #2-#4 as necessary  # 5
+$ git pull-request           # 6
+# repeat #2-#4 as necessary  # 7
+$ git to-master              # 8
+</code></pre>
+
+<h2>Working Alone or When Pairing</h2>
+
+<ol>
+<li>When starting work on a new feature, use "<code>git new-fb feature-name</code>".
+
+<ul>
+<li>This creates a new branch called "<code>feature-name</code>" based on "<code>origin/master</code>".</li>
+</ul>
+</li>
+<li>After making some changes, if you want to pick up any changes other people have made, as well
+as save your work on the server, do "<code>git sync</code>".
+
+<ul>
+<li>That will merge in the changes that have occurred in "<code>origin/master</code>" and then push the
+result to the "<code>feature_branch</code>" branch to the server.</li>
+</ul>
+</li>
+<li>When you are ready to merge your work into the mainline, "<code>git to-master</code>".
+
+<ul>
+<li>This will merge and push your changes into "<code>origin/master</code>"</li>
+</ul>
+</li>
+</ol><pre><code>$ git new-fb my-feature      # 1
+# do work                    # 2
+$ git commit                 # 3
+$ git sync                   # 4
+# repeat #2-#4 as necessary  # 5
+$ git to-master              # 6
+</code></pre>
+
+<h1>Assumptions</h1>
+
+<ul>
+<li>You should <strong><em>never</em></strong> do any work directly on "<code>master</code>" (or whatever you define the mainline branch as): everything is done on a feature branch.  This is a much safer and more flexible practice than doing everything on the same branch, but may seem odd to people used to old VCSs. In addition to being a much better way of working in general (see the F.A.Q. for more information), it is also a requirement to take advantage of Pull Request functionality.</li>
+<li>When working on a branch, you should be integrating with "<code>master</code>" as often as possible.
+
+<ul>
+<li>"<code>git sync</code>" makes it extremely easy for you to get any changes that are made in "<code>master</code>" into your branch so you can react to it immediately. "<code>git to-master</code>" then makes it easy to cleanly integrate the changes you have made, along with encouraging code-review/sign-off, and doing various house-keeping duties.</li>
+</ul>
+</li>
+<li>The process that you use should be essentially the same, regardless of whether you are working alone, or on a large distributed team.
+
+<ul>
+<li>The exception here is "<code>git pull-request</code>" since you do not use pull requests when working solo or when pair-programming.</li>
+</ul>
+</li>
+</ul><h1>Notes</h1>
+
+<ul>
+<li>After publishing changes to the main integration branch (i.e., "<code>git to-master</code>") the old feature branch is removed as part of cleanup. Git is then "parked" on a "<code>_parking_</code>" branch until a new feature branch is created. Work is not expected to be done on this branch, but any that is done is brought over to a newly created feature branch (i.e., "<code>git new-fb</code>").</li>
+<li>If there is a problem (such as a merge conflict), this will try to resolve such errors for you as much as it can do safely. When it can't do so in an automated way, it will try to tell you the process for doing so manually.</li>
+<li>The first time you use a GitHub feature (e.g., "<code>git pull-request</code>"), this will ask for your username and password. It does not store them, but instead uses them to get an OAuth2 token, which is stored in "<code>git config gitProcess.github.authToken</code>".</li>
+<li>If you want to use a different integration branch other than "<code>master</code>", set the "<code>gitProcess.integrationBranch</code>" configuration value. (e.g., "<code>git config gitProcess.integrationBranch my-integ-branch</code>")</li>
+<li>This tries to respond "intelligently" to the use of 'rerere'.</li>
+</ul><h1>F.A.Q.</h1>
+
+<h2>Q: How is this different from git-flow or GitHub flow?</h2>
+
+<p><a href="http://nvie.com/posts/a-successful-git-branching-model/">"git-flow"</a> is designed around having a very strongly defined process around keeping new development, hotfixes, release process changes, etc. all clearly separated. The problem I have with it is that it's too much "process" for not enough gain. (It has a waterfall feel to it, very much against the more modern <a href="http://continuousdelivery.com/">Continuous Delivery</a> approach.)</p>
+
+<p><a href="http://scottchacon.com/2011/08/31/github-flow.html">"GitHub Flow"</a> is a lot cleaner, but relies too heavily (IMHO) on web-based tools and on merging instead of rebasing. It is also focussed very tightly on a Continuous Deployment process, which is great for them, but not practical for everyone.</p>
+
+<h2>Q: Wait, I heard "branches are evil." Why should I do something evil?</h2>
+
+<p>Branches are extremely powerful tools that allow for clean organization/modularization of development.</p>
+
+<ul>
+<li>
+<p>Branches make it easy to sandbox changes while they are in a state of flux, while at the same time allowing you to be very fearless about making potentially breaking changes.</p>
+
+<ul>
+<li>For example, I commit "green to green": Doing <a href="http://en.wikipedia.org/wiki/Test-driven_development">TDD</a>, I commit every time I have a newly passing test case. So, assuming I'm in a regular development flow, I'm committing my changes every five minutes. Tiny commits, but lots of them. What that means is that if I make a "less than wise choice" at some point, it's trivial to rewind to before I'd made the mistake, potentially keep the throw-away code in another branch while I do my cleanup, and generally use the full power of a revision control system to make my life safer and easier. The branch(es) are pretty chaotic, but that's not a problem because before integrating with the mainline, I take a moment to cleanup: Squash related commits together, write clearer commit messages (since now I know what "the answer" is), and generally move from my drafts to a more finished result. (See below on objections related to "lying with rebase.") That may just be me, though, because I'm very paranoid when it comes to computers. I tend to automatically hit Cmd/Ctl-S every time I type a period when I'm writing, or when I close a block when I'm programming. I have a minimum of three copies/backups around the world of all my important documents. And I "<code>git sync</code>" frequently to make sure my machine isn't the only place where all my hard work is being stored. Have I mentioned I don't trust computers?</li>
+</ul>
+</li>
+<li>
+<p>Branches allow for focused collaboration. Because a branch is about exactly one thing, it means that a team can collaborate around a feature/bug (especially when used in conjunction with a "pull request"), and keep such changes sandboxed until such time that they are ready to bring a larger audience into the mix.</p>
+
+<ul>
+<li>Branches encourage being less "shy" about your code. I have heard, on a number of occasions, developers say "I'm not ready to push this to the server yet because [it's still rough (and embarrassing)]/[it may break other people]/etc." All of those reasons for "hoarding" code are moot with branches.</li>
+</ul>
+</li>
+</ul><p>Jez Humble, a brilliant Principle at ThoughtWorks Studios, talks a lot about how "branches are evil." Unfortunately, people hear that, know how smart he is, and simply repeat it without really understanding what his objections are. Fortunately, he <a href="http://continuousdelivery.com/2011/07/on-dvcs-continuous-integration-and-feature-branches/">posted clarification about what's really meant by that</a>. He essentially says that the problem is that developers abuse branches by not merging with mainline (i.e., "master") on a regular basis. Not constantly getting changes <em>from</em> mainline makes life rough when it comes time to integrate. Not putting your changes <em>into</em> mainline means that your changes are not being validated (via <a href="http://martinfowler.com/articles/continuousIntegration.html">Continuous Integration</a>, or -- better -- with <a href="http://continuousdelivery.com/">Continuous Delivery</a>). Both are, in fact, sins akin to not doing automated testing.</p>
+
+<p>Making it "easier to do things right than wrong" (i.e., using branches and keeping them synced with mainline) was the primary motivation for this project. This should be especially evident in the "<code>git sync</code>" and "<code>git to-master</code>" commands.</p>
+
+<h2>Q: Why so much emphasis on rebasing? Isn't rebasing a dangerous lie?</h2>
+
+<p>Like any powerful tool, "<code>git rebase</code>" is "dangerous" if used incorrectly, just like "<code>rm</code>"/"<code>del</code>". You simply need to know when and how to use it safely. And in the world of version control systems, "rebasing" is easily one of the most <em><strong>useful</strong></em> tools to come around since the "<code>commit</code>" command.</p>
+
+<p><a href="http://paul.stadig.name/2010/12/thou-shalt-not-lie-git-rebase-ammend.html">A famous article</a> that people have been parroting in various forms for a while makes the case that rebasing (and its various forms, such as squashing, amending commits, etc.) is a "lie." As with so many things, context is everything.</p>
+
+<p>You almost certainly should <em>not</em> rebase things that you have "published." Generally this really means "Don't rebase the 'master' branch!" Fortunately, these scripts make it impossible to rebase the mainline by accident. By default "<code>git sync</code>" uses "merge" instead of "rebase" to encourage collaboration. (Though you can easily use "-r" if you know no one else is working on the branch.) When it's time to actually merge your work into the mainline (and thus no one is working against it except in the context of mainline), that's when it gets rebased in.</p>
+
+<p>Rebasing "your" code is an extremely useful way of communicating clearly. In the "green to green" scenario above about branches, a lot of noise is generated. If someone wants to review my code, or cherry-pick in my changes, it's too much of a mess to effectively do so. Also, as part of the process of squashing, I have the opportunity to write clearer commit message based upon my newly enhanced understanding. The intermediate commits were my "drafts" and I'm now submitting my cleaned up copy.</p>
+
+<p>If you have ever seen an "active" project that uses a process like "git-flow" that encourages a lot of branching and merging, you've seen how hard it can be to follow a particular line of development. Branch lines are flying around everywhere, and half the commits are pretty much pure noise. (e.g., "Merge branch 'develop' of ... into develop".) It's also hard to follow the order in which commits actually impacted the mainline. In many ways, in practice merges turn into "a truth effectively being a lie (because it's buried in the noise)" versus rebases that are "a lie (changed from it's 'original' form) to tell an effective truth (clean and very clear about its impact)."</p>
+
+<p>This project is trying to promote clear communication about reality as it applies to the code, over micro-management over no-longer-relevant history. Thus rational for the judicious use of rebase.</p>
+
+<h2>Configurables</h2>
+
+<p>See notes for more details</p>
+
+<ul>
+<li>GitHub authentication token</li>
+<li>The name of the integration branch (defaults to <code>origin/master</code>, but can be set to <code>develop</code> or other)</li>
+</ul><h1>Contributing</h1>
+
+<h2>Coding Setup</h2>
+
+<ol>
+<li>Fork it</li>
+<li>Create your feature branch (<code>git checkout -b my-new-feature</code>)</li>
+<li>Commit your changes (<code>git commit -am 'Added some feature'</code>)</li>
+<li>Push to the branch (<code>git push origin my-new-feature</code>)</li>
+<li>Create new Pull Request</li>
+</ol><p>The tests are written for RSpec 2.</p>
+
+<h2>License</h2>
+
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p><a href="http://www.apache.org/licenses/LICENSE-2.0" title="License Link">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+        </article>
+      </div>
+    </div>
+    <footer>
+      <div class="owner">
+      <p><a href="https://github.com/jdigger" class="avatar"><img src="https://secure.gravatar.com/avatar/710ad4f9b2239db0ad7e6b20201b4f9e?s=30&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-140.png" width="48" height="48"/></a> <a href="https://github.com/jdigger">jdigger</a> maintains <a href="https://github.com/jdigger/git-process">Git-Process</a></p>
+
+
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br/>theme by <a href="http://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="https://github.com/jdigger/git-process/tarball/master" class="tar">tar</a><a href="https://github.com/jdigger/git-process/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
+
+  
+</body>
+</html>
