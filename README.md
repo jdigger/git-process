@@ -11,6 +11,8 @@ See the F.A.Q. for a much more complete explanation for the thoughts and assumpt
 
     $ sudo gem install git-process
 
+Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "`sudo gem update --system`" to fix.
+
 
 # Overview #
 
