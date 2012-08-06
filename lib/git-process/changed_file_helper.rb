@@ -54,8 +54,11 @@ module GitProc
       if not stat.modified.empty? or not stat.added.empty? or not stat.deleted.empty?
         resp = ask_how_to_handle_changed_files(stat)
         if resp == :commit
-          add((stat.added + stat.modified - stat.deleted).sort.uniq)
-          remove(stat.deleted)
+          changed_files = (stat.added + stat.modified - stat.deleted).sort.uniq
+
+          add(changed_files) unless changed_files.empty?
+          remove(stat.deleted) unless stat.deleted.empty?
+
           commit(nil)
         else
           stash_save

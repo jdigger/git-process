@@ -88,6 +88,7 @@ describe GitProc::ChangeFileHelper do
         change_file_and_commit('modified file.txt', 'start')
         change_file_and_commit('modified file2.txt', 'start')
         change_file_and_commit('modified file3.txt', 'start')
+        change_file_and_commit('modified file4.txt', 'start')
         change_file_and_commit('removed file.txt', 'content')
         change_file_and_add('added file.txt', '')
         change_file('modified file.txt', 'modified')
@@ -95,6 +96,7 @@ describe GitProc::ChangeFileHelper do
         change_file_and_add('modified file3.txt', 'modified')
         change_file('modified file2.txt', 'modified again')
         change_file_and_add('removed file2.txt', 'content')
+        change_file_and_add('modified file4.txt', 'content')
         File.delete(File.join(gitprocess.workdir, 'removed file.txt'))
         File.delete(File.join(gitprocess.workdir, 'removed file2.txt'))
         File.delete(File.join(gitprocess.workdir, 'modified file3.txt'))
@@ -104,6 +106,7 @@ describe GitProc::ChangeFileHelper do
         #  M "modified file.txt"
         # MM "modified file2.txt"
         # MD "modified file3.txt"
+        # M  "modified file4.txt"
         #  D "removed file.txt"
         # AD "removed file2.txt"
 
@@ -113,7 +116,7 @@ describe GitProc::ChangeFileHelper do
 
       it 'should ask about modified files, then commit them' do
         gitprocess.stub(:ask).and_return('c')
-        gitprocess.should_receive(:add).with(["added file.txt", "modified file.txt", "modified file2.txt"])
+        gitprocess.should_receive(:add).with(["added file.txt", "modified file.txt", "modified file2.txt", "modified file4.txt"])
         gitprocess.should_receive(:remove).with(["modified file3.txt", "removed file.txt", "removed file2.txt"])
         gitprocess.should_receive(:commit).with(nil)
 
@@ -132,7 +135,7 @@ describe GitProc::ChangeFileHelper do
 
         stat = gitprocess.status
         stat.added.should == ["added file.txt", "removed file2.txt"]
-        stat.modified.should == ["modified file.txt", "modified file2.txt"]
+        stat.modified.should == ["modified file.txt", "modified file2.txt", "modified file4.txt"]
         stat.deleted.should == ["modified file3.txt", "removed file.txt"]
       end
 
