@@ -297,4 +297,19 @@ describe GitProc::RebaseToMaster do
 
   end
 
+
+  describe ":keep option" do
+
+    it "should not try to close a pull request or remove remote branch" do
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      rtm = GitProc::RebaseToMaster.new(clone('fb').workdir, {:log_level => log_level, :keep => true})
+      rtm.should_receive(:fetch)
+      rtm.should_receive(:push).with('origin', rtm.branches.current, 'master')
+      rtm.should_not_receive(:push).with('origin', nil, nil, :delete => 'fb')
+      rtm.runner
+    end
+
+  end
+
 end

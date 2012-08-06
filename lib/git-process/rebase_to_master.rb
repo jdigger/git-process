@@ -22,6 +22,12 @@ module GitProc
 
   class RebaseToMaster < Process
 
+    def initialize(dir, opts)
+      @keep = opts[:keep]
+      super
+    end
+
+
     def verify_preconditions
       super
 
@@ -35,8 +41,11 @@ module GitProc
         fetch(server_name)
         proc_rebase(integration_branch)
         push(server_name, branches.current, master_branch)
-        close_pull_request
-        remove_feature_branch
+
+        if not @keep
+          close_pull_request
+          remove_feature_branch
+        end
       else
         proc_rebase(integration_branch)
       end

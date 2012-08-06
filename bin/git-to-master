@@ -46,7 +46,7 @@ for you:
   $ git rebase origin/master
   $ git push origin interesting_changes:master
   # close pull request
-  $ git co -b _parking_ origin/master
+  $ git checkout -b _parking_ origin/master
   $ git branch -d interesting_changes
   $ git push origin :interesting_changes
 
@@ -57,6 +57,13 @@ NOTES
   "git config gitProcess.integrationBranch my-integ-branch")
 
 DESC
+  end
+
+
+  def extend_opts(parser)
+    parser.opt :keep,  "Don't do any \"cleanup.\" It keeps the current local "+
+                       "and remote branches, and does not close any "+
+                       "outstanding pull requests.", :short => :k, :default => false
   end
 
 end
