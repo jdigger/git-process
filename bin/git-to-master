@@ -20,7 +20,8 @@ the integration branch, pushes to the integration branch, then does \
 housecleaning.
 
 If there is a problem, such as a merge conflict, this tries to \
-resolve it automatically. If it can not do so in an automated way, \
+resolve it automatically (including responding appropriately to
+"rerere" merges). If it can not do so in an automated way, \
 if tells you the steps involved for doing so manually.
 
 "Housecleaning" includes such things as closing any \
@@ -28,7 +29,7 @@ Pull Request that may exist for the branch, removing the (now obsolete) \
 local and remote feature branches, and then "parking" on the \
 special "_parking_" branch.
 
-Work is not expected to be done on the "parking" branch, but any that is \
+Work is not expected to be done on the "_parking_" branch, but any that is \
 done is brought over to a newly created feature branch when you do \
 "git new-fb".
 
@@ -49,6 +50,8 @@ for you:
   $ git checkout -b _parking_ origin/master
   $ git branch -d interesting_changes
   $ git push origin :interesting_changes
+
+If you use the --keep option, then the process stops after the first "push".
 
 NOTES
 

@@ -84,13 +84,23 @@ $ git to-master              # 6
 ```
 
 
+## Configurables ##
+
+(See Notes for more details)
+
+* `gitProcess.integrationBranch` : The name of the integration branch. Defaults to `master`, but can be set to `develop` or other.
+* `gitProcess.keepLocalIntegrationBranch` : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).
+
+
 # Assumptions #
 
 * You should **_never_** do any work directly on "`master`" (or whatever you define the mainline branch as): everything is done on a feature branch.  This is a much safer and more flexible practice than doing everything on the same branch, but may seem odd to people used to old VCSs. In addition to being a much better way of working in general (see the F.A.Q. for more information), it is also a requirement to take advantage of Pull Request functionality.
 * When working on a branch, you should be integrating with "`master`" as often as possible.
-  * "`git sync`" makes it extremely easy for you to get any changes that are made in "`master`" into your branch so you can react to it immediately. "`git to-master`" then makes it easy to cleanly integrate the changes you have made, along with encouraging code-review/sign-off, and doing various house-keeping duties.
+  * "`git sync`" makes it extremely easy for you to get any changes that are made in "`master`" into your branch so you can react to it immediately.
+  * "`git to-master`" then makes it easy to cleanly integrate the changes you have made. If you need to keep the current branch open, use the `--keep` option. Otherwise it closes the branch along with various other house-keeping duties.
 * The process that you use should be essentially the same, regardless of whether you are working alone, or on a large distributed team.
   * The exception here is "`git pull-request`" since you do not use pull requests when working solo or when pair-programming.
+
 
 # Notes #
 
@@ -140,23 +150,24 @@ If you have ever seen an "active" project that uses a process like "git-flow" th
 This project is trying to promote clear communication about reality as it applies to the code, over micro-management over no-longer-relevant history. Thus rational for the judicious use of rebase.
 
 
-## Configurables ##
-See notes for more details
-
-* GitHub authentication token
-* The name of the integration branch (defaults to `origin/master`, but can be set to `develop` or other)
-
 # Contributing #
 
 ## Coding Setup ##
 
 1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
+2. Create your feature branch (`git checkout -b my-new-feature origin/master`)
+3. Commit your changes (`git commit`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-The tests are written for RSpec 2.
+or, if using these scripts:
+
+1. Fork it
+2. `git new-fb my-new-feature
+3. `git commit`
+4. `git sync`
+5. `git pull-request`
+
 
 ## License ##
 
