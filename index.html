@@ -1,42 +1,37 @@
-<!doctype html>
-<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
-<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
-  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/script.js"></script>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Git-Process : Scripts to help work with a streamlined Git process" />
 
-  <title>Git-Process</title>
-  <meta name="description" content="Scripts to help work with a good Git process">
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Git-Process</title>
+  </head>
 
-</head>
+  <body>
 
-<body>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/jdigger/git-process">View on GitHub</a>
 
-  <div class="wrapper">
-    <header>
-      <h1 class="title">Git-Process</h1>
-    </header>
-    <div id="container">
-      <p class="tagline">Scripts to help work with a good Git process</p>
-      <div id="main" role="main">
-        <div class="download-bar">
-        <div class="inner">
-          <a href="https://github.com/jdigger/git-process/tarball/master" class="download-button tar"><span>Download</span></a>
-          <a href="https://github.com/jdigger/git-process/zipball/master" class="download-button zip"><span>Download</span></a>
-          <a href="https://github.com/jdigger/git-process" class="code">View Git-Process on GitHub</a>
-        </div>
-        <span class="blc"></span><span class="trc"></span>
-        </div>
-        <article class="markdown-body">
-          <h1>Purpose</h1>
+          <h1 id="project_title">Git-Process</h1>
+          <h2 id="project_tagline">Scripts to help work with a streamlined Git process</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/jdigger/git-process/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/jdigger/git-process/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>Purpose</h1>
 
 <p>This provides an easy way to work with a sane git workflow process that encourages using highly-focussed branches to encourage collaboration, enable fearless changes, and improve team communication.</p>
 
@@ -143,14 +138,24 @@ $ git sync                   # 4
 $ git to-master              # 6
 </code></pre>
 
-<h1>Assumptions</h1>
+<h2>Configurables</h2>
+
+<p>(See Notes for more details)</p>
+
+<ul>
+<li>
+<code>gitProcess.integrationBranch</code> : The name of the integration branch. Defaults to <code>master</code>, but can be set to <code>develop</code> or other.</li>
+<li>
+<code>gitProcess.keepLocalIntegrationBranch</code> : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).</li>
+</ul><h1>Assumptions</h1>
 
 <ul>
 <li>You should <strong><em>never</em></strong> do any work directly on "<code>master</code>" (or whatever you define the mainline branch as): everything is done on a feature branch.  This is a much safer and more flexible practice than doing everything on the same branch, but may seem odd to people used to old VCSs. In addition to being a much better way of working in general (see the F.A.Q. for more information), it is also a requirement to take advantage of Pull Request functionality.</li>
 <li>When working on a branch, you should be integrating with "<code>master</code>" as often as possible.
 
 <ul>
-<li>"<code>git sync</code>" makes it extremely easy for you to get any changes that are made in "<code>master</code>" into your branch so you can react to it immediately. "<code>git to-master</code>" then makes it easy to cleanly integrate the changes you have made, along with encouraging code-review/sign-off, and doing various house-keeping duties.</li>
+<li>"<code>git sync</code>" makes it extremely easy for you to get any changes that are made in "<code>master</code>" into your branch so you can react to it immediately.</li>
+<li>"<code>git to-master</code>" then makes it easy to cleanly integrate the changes you have made. If you need to keep the current branch open, use the <code>--keep</code> option. Otherwise it closes the branch along with various other house-keeping duties.</li>
 </ul>
 </li>
 <li>The process that you use should be essentially the same, regardless of whether you are working alone, or on a large distributed team.
@@ -212,26 +217,25 @@ $ git to-master              # 6
 
 <p>This project is trying to promote clear communication about reality as it applies to the code, over micro-management over no-longer-relevant history. Thus rational for the judicious use of rebase.</p>
 
-<h2>Configurables</h2>
-
-<p>See notes for more details</p>
-
-<ul>
-<li>GitHub authentication token</li>
-<li>The name of the integration branch (defaults to <code>origin/master</code>, but can be set to <code>develop</code> or other)</li>
-</ul><h1>Contributing</h1>
+<h1>Contributing</h1>
 
 <h2>Coding Setup</h2>
 
 <ol>
 <li>Fork it</li>
-<li>Create your feature branch (<code>git checkout -b my-new-feature</code>)</li>
-<li>Commit your changes (<code>git commit -am 'Added some feature'</code>)</li>
+<li>Create your feature branch (<code>git checkout -b my-new-feature origin/master</code>)</li>
+<li>Commit your changes (<code>git commit</code>)</li>
 <li>Push to the branch (<code>git push origin my-new-feature</code>)</li>
 <li>Create new Pull Request</li>
-</ol><p>The tests are written for RSpec 2.</p>
+</ol><p>or, if using these scripts:</p>
 
-<h2>License</h2>
+<ol>
+<li>Fork it</li>
+<li>`git new-fb my-new-feature</li>
+<li><code>git commit</code></li>
+<li><code>git sync</code></li>
+<li><code>git pull-request</code></li>
+</ol><h2>License</h2>
 
 <p>Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -244,26 +248,28 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.</p>
-        </article>
-      </div>
+      </section>
     </div>
-    <footer>
-      <div class="owner">
-      <p><a href="https://github.com/jdigger" class="avatar"><img src="https://secure.gravatar.com/avatar/710ad4f9b2239db0ad7e6b20201b4f9e?s=30&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-140.png" width="48" height="48"/></a> <a href="https://github.com/jdigger">jdigger</a> maintains <a href="https://github.com/jdigger/git-process">Git-Process</a></p>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Git-Process maintained by <a href="https://github.com/jdigger">jdigger</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-34241405-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
 
 
-      </div>
-      <div class="creds">
-        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br/>theme by <a href="http://twitter.com/jonrohan/">Jon Rohan</a></small>
-      </div>
-    </footer>
-  </div>
-  <div class="current-section">
-    <a href="#top">Scroll to top</a>
-    <a href="https://github.com/jdigger/git-process/tarball/master" class="tar">tar</a><a href="https://github.com/jdigger/git-process/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
-    <p class="name"></p>
-  </div>
-
-  
-</body>
+  </body>
 </html>
