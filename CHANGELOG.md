@@ -1,4 +1,14 @@
-# CHANGELOG - 1.0.1 #
+# CHANGELOG - 1.0.2 #
+
+### Since 1.0.1 ###
+
+* Changes to dependencies to allow this to work on both Ruby 1.8 and 1.9
+
+### Since 0.9.7 ###
+
+* Adds --keep option to git-to-master
+* Fixes problem trying to add/remove an empty list of files
+* Documentation updates
 
 ### Since 0.9.7 ###
 
