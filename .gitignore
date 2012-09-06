@@ -17,3 +17,4 @@ tmp
 *.iml
 *.ipr
 *.iws
+.rakeTasks
