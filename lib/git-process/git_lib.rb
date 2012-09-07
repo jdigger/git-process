@@ -65,7 +65,7 @@ module GitProc
 
 
     def server_name
-      @server_name ||= remote_name
+      @server_name ||= config('gitProcess.remoteName') || remote_name
     end
 
 
