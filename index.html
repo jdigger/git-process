@@ -39,12 +39,26 @@
 
 <h1>Installation</h1>
 
+<h2>Unix-based OS (OSX, Linux, etc.) Installation</h2>
+
 <pre><code>$ sudo gem install git-process
 </code></pre>
 
 <p>Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "<code>sudo gem update --system</code>" to fix.</p>
 
-<h1>Overview</h1>
+<h2>Windows Installation</h2>
+
+<ol>
+<li>Run <a href="http://cygwin.com/setup.exe">http://cygwin.com/setup.exe</a>
+</li>
+<li>Go through the various prompts and then select to install "git", "curl", "ruby" and "openssh" (along with their dependencies)</li>
+<li>Open a Cygwin terminal</li>
+<li><code>curl -L -O http://production.cf.rubygems.org/rubygems/rubygems-1.8.24.tgz</code></li>
+<li><code>tar xfz rubygems-1.8.24.tgz</code></li>
+<li><code>cd rubygems-1.8.24</code></li>
+<li><code>ruby setup.rb</code></li>
+<li><code>gem install git-process</code></li>
+</ol><h1>Overview</h1>
 
 <h2>Anticipated Use Cases</h2>
 
@@ -147,6 +161,8 @@ $ git to-master              # 6
 <code>gitProcess.integrationBranch</code> : The name of the integration branch. Defaults to <code>master</code>, but can be set to <code>develop</code> or other.</li>
 <li>
 <code>gitProcess.keepLocalIntegrationBranch</code> : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).</li>
+<li>
+<code>gitProcess.remoteName</code> : Explicitly sets the remote server name to use.</li>
 </ul><h1>Assumptions</h1>
 
 <ul>
@@ -172,6 +188,7 @@ $ git to-master              # 6
 <li>The first time you use a GitHub feature (e.g., "<code>git pull-request</code>"), this will ask for your username and password. It does not store them, but instead uses them to get an OAuth2 token, which is stored in "<code>git config gitProcess.github.authToken</code>".</li>
 <li>If you want to use a different integration branch other than "<code>master</code>", set the "<code>gitProcess.integrationBranch</code>" configuration value. (e.g., "<code>git config gitProcess.integrationBranch my-integ-branch</code>")</li>
 <li>This tries to respond "intelligently" to the use of 'rerere'.</li>
+<li>By default the first server name reported by <code>git remote</code> is used as the server/remote name. Since most projects only have a single remote (i.e., "origin") this works most of the time. But if you have multiple remotes and want to explicitly set it, use the <code>gitProcess.remoteName</code> configuration option.</li>
 </ul><h1>F.A.Q.</h1>
 
 <h2>Q: How is this different from git-flow or GitHub flow?</h2>
