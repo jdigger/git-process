@@ -17,11 +17,11 @@ describe GitProc::GitLib do
 
       @workdir = workdir
       if workdir
-        unless File.directory?(File.join(workdir, '.git'))
+        if File.directory?(File.join(workdir, '.git'))
+          logger.debug { "Opening existing repository at #{workdir}" }
+        else
           logger.info { "Initializing new repository at #{workdir}" }
           command(:init)
-        else
-          logger.debug { "Opening existing repository at #{workdir}" }
         end
       end
     end
@@ -173,6 +173,17 @@ describe GitProc::GitLib do
       clone('master', 'a_remote') do |gl|
         gl.remote_name.should == 'a_remote'
         gl.branches.include?('a_remote/master').should be_true
+      end
+    end
+
+
+    it "should work with an overridden remote name" do
+      change_file_and_commit('a', '')
+
+      clone('master', 'a_remote') do |gl|
+        gl.config('gitProcess.remoteName', 'something_else')
+
+        gl.remote_name.should == 'something_else'
       end
     end
 

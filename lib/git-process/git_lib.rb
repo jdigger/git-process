@@ -65,7 +65,7 @@ module GitProc
 
 
     def server_name
-      @server_name ||= config('gitProcess.remoteName') || remote_name
+      @server_name ||= remote_name
     end
 
 
@@ -321,10 +321,13 @@ module GitProc
 
     def remote_name
       unless @remote_name
-        remote_str = command(:remote)
-        unless remote_str == nil or remote_str.empty?
-          @remote_name = remote_str.split(/\n/)[0]
-          raise "!@remote_name.is_a? String" unless @remote_name.is_a? String
+        @remote_name = config('gitProcess.remoteName')
+        if @remote_name.nil? or @remote_name.empty?
+          remote_str = command(:remote)
+          unless remote_str == nil or remote_str.empty?
+            @remote_name = remote_str.split(/\n/)[0]
+            raise "!@remote_name.is_a? String" unless @remote_name.is_a? String
+          end
         end
         logger.debug {"Using remote name of '#{@remote_name}'"}
       end

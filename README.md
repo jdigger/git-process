@@ -90,6 +90,7 @@ $ git to-master              # 6
 
 * `gitProcess.integrationBranch` : The name of the integration branch. Defaults to `master`, but can be set to `develop` or other.
 * `gitProcess.keepLocalIntegrationBranch` : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).
+* `gitProcess.remoteName` : Explicitly sets the remote server name to use.
 
 
 # Assumptions #
@@ -109,6 +110,7 @@ $ git to-master              # 6
 * The first time you use a GitHub feature (e.g., "`git pull-request`"), this will ask for your username and password. It does not store them, but instead uses them to get an OAuth2 token, which is stored in "`git config gitProcess.github.authToken`".
 * If you want to use a different integration branch other than "`master`", set the "`gitProcess.integrationBranch`" configuration value. (e.g., "`git config gitProcess.integrationBranch my-integ-branch`")
 * This tries to respond "intelligently" to the use of 'rerere'.
+* By default the first server name reported by `git remote` is used as the server/remote name. Since most projects only have a single remote (i.e., "origin") this works most of the time. But if you have multiple remotes and want to explicitly set it, use the `gitProcess.remoteName` configuration option.
 
 
 # F.A.Q. #
