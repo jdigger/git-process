@@ -9,9 +9,22 @@ See the F.A.Q. for a much more complete explanation for the thoughts and assumpt
 
 # Installation #
 
+## Unix-based OS (OSX, Linux, etc.) Installation ##
+
     $ sudo gem install git-process
 
 Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "`sudo gem update --system`" to fix.
+
+## Windows Installation ##
+
+1. Run http://cygwin.com/setup.exe
+2. Go through the various prompts and then select to install "git", "curl", "ruby" and "openssh" (along with their dependencies)
+3. Open a Cygwin terminal
+4. `curl -L -O http://production.cf.rubygems.org/rubygems/rubygems-1.8.24.tgz`
+5. `tar xfz rubygems-1.8.24.tgz`
+6. `cd rubygems-1.8.24`
+7. `ruby setup.rb`
+8. `gem install git-process`
 
 
 # Overview #

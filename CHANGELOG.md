@@ -1,4 +1,10 @@
-# CHANGELOG - 1.0.2 #
+# CHANGELOG - 1.0.3 #
+
+### Since 1.0.2 ###
+
+* Removes the last of the gem dependencies that require native code. This makes it fully compatible
+  with systems like Windows.
+* Adds an option to explicitly set the remote server name.
 
 ### Since 1.0.1 ###
 
