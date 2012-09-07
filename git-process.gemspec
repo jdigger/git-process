@@ -12,7 +12,6 @@ gemspec = Gem::Specification.new do |gem|
   gem.add_dependency "json", "~> 1.7.3"
   gem.add_dependency "trollop", "~> 1.16.2" # CLI options parser
   gem.add_dependency "highline", "~> 1.6.12" # user CLI interaction
-  gem.add_dependency "ruby-termios", "~> 0.9.4"  # used by highline to make things a little nicer
 
   gem.files         = `git ls-files`.split($\).delete_if{|f| f =~ /^\./}
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
