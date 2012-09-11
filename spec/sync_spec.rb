@@ -65,7 +65,7 @@ describe GitProc::Sync do
 
     expect {
       GitProc::Sync.new(gp.workdir, {:rebase => false, :force => false, :log_level => log_level}).runner
-    }.should raise_error GitProc::GitExecuteError
+    }.to raise_error GitProc::GitExecuteError
   end
 
 
@@ -88,7 +88,7 @@ describe GitProc::Sync do
 
       expect {
         GitProc::Sync.new(dir, opts.merge({:rebase => false, :force => true, :log_level => log_level})).runner
-      }.should_not raise_error GitProc::GitExecuteError
+      }.to_not raise_error GitProc::GitExecuteError
     end
 
   end
@@ -111,7 +111,7 @@ describe GitProc::Sync do
           change_file_and_commit('a', 'hello', gitprocess)
         end
 
-        expect {gp.runner}.should_not raise_error GitProc::GitExecuteError
+        expect {gp.runner}.to_not raise_error GitProc::GitExecuteError
       end
     end
 
@@ -163,7 +163,7 @@ describe GitProc::Sync do
     gitprocess.checkout('_parking_', :new_branch => 'master')
     change_file_and_commit('a', '')
 
-    expect {gitprocess.verify_preconditions}.should raise_error GitProc::ParkedChangesError
+    expect {gitprocess.verify_preconditions}.to raise_error GitProc::ParkedChangesError
   end
 
 end
