@@ -98,7 +98,7 @@ describe GitProc::RebaseToMaster do
         gitprocess.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
-        expect {gitprocess.verify_preconditions}.should raise_error GitProc::ParkedChangesError
+        expect {gitprocess.verify_preconditions}.to raise_error GitProc::ParkedChangesError
       end
     end
 
@@ -276,7 +276,7 @@ describe GitProc::RebaseToMaster do
 
         gp.branches.include?('fb').should be_true
 
-        expect {gp.remove_feature_branch}.should raise_error GitProc::GitProcessError
+        expect {gp.remove_feature_branch}.to raise_error GitProc::GitProcessError
       end
     end
 
