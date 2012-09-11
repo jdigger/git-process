@@ -58,7 +58,7 @@ module GitProc
       @current_branch ||= branches.current
       @remote_branch ||= "#{server_name}/#{@current_branch}"
 
-      fetch(server_name)
+      fetch(server_name) if has_a_remote?
 
       if @do_rebase
         proc_rebase(integration_branch)
@@ -68,6 +68,8 @@ module GitProc
 
       if @local
         logger.debug("Not pushing to the server because the user selected local-only.")
+      elsif not has_a_remote?
+        logger.debug("Not pushing to the server because there is no remote.")
       elsif @current_branch == master_branch
         logger.warn("Not pushing to the server because the current branch is the mainline branch.")
       else

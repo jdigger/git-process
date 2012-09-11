@@ -145,6 +145,28 @@ describe GitProc::Sync do
   end
 
 
+  describe "when there is no remote" do
+
+    def create_process(dir, opts)
+      GitProc::Sync.new(dir, opts.merge({:rebase => true, :force => false, :local => false}))
+    end
+
+
+    it "should not try to fetch or push" do
+      change_file_and_commit('a', '')
+
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      sp = GitProc::Sync.new(gitprocess.workdir, {:rebase => true, :force => false, :local => true, :log_level => log_level})
+      sp.should_not_receive(:fetch)
+      sp.should_not_receive(:push)
+
+      sp.runner
+    end
+
+  end
+
+
   it "should work with a different remote server name than 'origin'" do
     change_file_and_commit('a', '')
 
