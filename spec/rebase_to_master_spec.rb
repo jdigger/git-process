@@ -7,7 +7,7 @@ describe GitProc::RebaseToMaster do
   include GitRepoHelper
 
   def log_level
-    Logger::ERROR
+    Logger::DEBUG
   end
 
 
@@ -40,7 +40,7 @@ describe GitProc::RebaseToMaster do
 
       gitprocess.checkout('fb')
 
-      gitprocess.run
+      gitprocess.runner
 
       commit_count.should == 3
     end
@@ -308,6 +308,32 @@ describe GitProc::RebaseToMaster do
       rtm.should_receive(:push).with('origin', rtm.branches.current, 'master')
       rtm.should_not_receive(:push).with('origin', nil, nil, :delete => 'fb')
       rtm.runner
+    end
+
+  end
+
+
+  describe "when there is not a remote" do
+
+    it "should not try fetch/push" do
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      rtm = GitProc::RebaseToMaster.new(gitprocess.workdir, {:log_level => log_level, :keep => false})
+      rtm.should_not_receive(:fetch)
+      rtm.should_not_receive(:push)
+      rtm.runner
+    end
+
+
+    it "should clean up the local branch" do
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      rtm = GitProc::RebaseToMaster.new(gitprocess.workdir, {:log_level => log_level, :keep => false})
+      rtm.should_not_receive(:fetch)
+      rtm.should_not_receive(:push)
+      rtm.runner
+      rtm.branches.include?('fb').should be_false
+      rtm.branches.current.name.should == '_parking_'
     end
 
   end

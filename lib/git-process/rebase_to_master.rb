@@ -42,25 +42,24 @@ module GitProc
         proc_rebase(integration_branch)
         push(server_name, branches.current, master_branch)
 
-        if not @keep
-          close_pull_request
-          remove_feature_branch
-        end
+        close_pull_request unless @keep
       else
         proc_rebase(integration_branch)
       end
+
+      remove_feature_branch unless @keep
     end
 
 
     def remove_feature_branch
       mybranches = branches
 
-      remote_master = mybranches[remote_master_branch]
+      remote_master = mybranches[integration_branch]
       current_branch = mybranches.current
       logger.debug { "Removing feature branch (#{current_branch})" }
 
-      unless remote_master.contains_all_of(current_branch.name)
-        raise GitProcessError.new("Branch '#{current_branch.name}' has not been merged into '#{remote_master_branch}'")
+      if not remote_master.contains_all_of(current_branch.name)
+        raise GitProcessError.new("Branch '#{current_branch.name}' has not been merged into '#{remote_master}'")
       end
 
       parking_branch = mybranches['_parking_']
