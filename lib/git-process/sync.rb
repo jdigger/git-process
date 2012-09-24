@@ -60,7 +60,15 @@ module GitProc
       @current_branch ||= branches.current
       @remote_branch ||= "#{server_name}/#@current_branch"
 
+      # if the remote branch has changed, merge those changes in before
+      #   doing anything with the integration branch
+      old_sha = rev_parse(@remote_branch) rescue ''
       fetch(server_name) if has_a_remote?
+      new_sha = rev_parse(@remote_branch) rescue ''
+      unless old_sha == new_sha
+        logger.info('There have been changes on this remote branch, so will merge them in.')
+        proc_merge(@remote_branch)
+      end
 
       if @do_rebase
         proc_rebase(integration_branch)

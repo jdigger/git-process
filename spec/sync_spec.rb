@@ -53,22 +53,6 @@ describe GitProc::Sync do
   end
 
 
-  it "should fail when pushing with non-fast-forward and no force" do
-    change_file_and_commit('a', '')
-
-    gitprocess.branch('fb', :base_branch => 'master')
-
-    gp = clone('fb')
-    gitprocess.checkout('fb') do
-      change_file_and_commit('a', 'hello', gitprocess)
-    end
-
-    expect {
-      GitProc::Sync.new(gp.workdir, {:rebase => false, :force => false, :log_level => log_level}).runner
-    }.to raise_error GitProc::GitExecuteError
-  end
-
-
   describe "when forcing the push" do
 
     def create_process(dir, opts)
@@ -81,14 +65,42 @@ describe GitProc::Sync do
 
       gitprocess.branch('fb', :base_branch => 'master')
 
-      clone('fb')
-      gitprocess.checkout('fb') do
-        change_file_and_commit('a', 'hello', gitprocess)
-      end
+      clone('fb') do |gp|
+        gitprocess.checkout('fb') do
+          change_file_and_commit('a', 'hello', gitprocess)
+        end
 
-      expect {
-        GitProc::Sync.new(dir, opts.merge({:rebase => false, :force => true, :log_level => log_level})).runner
-      }.to_not raise_error GitProc::GitExecuteError
+        expect {
+          GitProc::Sync.new(gp.workdir, {:rebase => false, :force => true, :log_level => log_level}).runner
+        }.to_not raise_error GitProc::GitExecuteError
+      end
+    end
+
+  end
+
+
+  describe "when changes are made upstream" do
+
+    def create_process(dir, opts)
+      GitProc::Sync.new(dir, opts.merge({:rebase => false, :force => false}))
+    end
+
+
+    it "should work when pushing with non-fast-forward by merging" do
+      change_file_and_commit('a', '')
+
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      clone('fb') do |gp|
+
+        gitprocess.checkout('fb') do
+          change_file_and_commit('a', 'hello', gitprocess)
+        end
+
+        expect {
+          gp.runner
+        }.to_not raise_error GitProc::GitExecuteError
+      end
     end
 
   end
