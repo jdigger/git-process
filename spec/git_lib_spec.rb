@@ -6,12 +6,13 @@ describe GitProc::GitLib do
   class GLStub
     include GitProc::GitLib
 
+
     def initialize(workdir, log_level)
       @logger = Logger.new(STDOUT)
       @logger.level = log_level || Logger::WARN
       @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
       f = Logger::Formatter.new
-      @logger.formatter = proc do |severity, datetime, progname, msg|
+      @logger.formatter = proc do |_, _, _, msg|
         "#{msg}\n"
       end
 
@@ -31,6 +32,7 @@ describe GitProc::GitLib do
       @workdir
     end
 
+
     def logger
       @logger
     end
@@ -46,14 +48,14 @@ describe GitProc::GitLib do
     include GitRepoHelper
 
     it "list all the branches" do
-      create_files(['.gitignore'])
+      create_files(%w(.gitignore))
       gitlib.commit('initial')
 
       gitlib.branch('ba', :base_branch => 'master')
       gitlib.branch('bb', :base_branch => 'master')
       gitlib.branch('origin/master', :base_branch => 'master')
 
-      gitlib.branches.names.should == ['ba', 'bb', 'master', 'origin/master']
+      gitlib.branches.names.should == %w(ba bb master origin/master)
     end
 
   end
@@ -68,25 +70,25 @@ describe GitProc::GitLib do
 
 
     it "should create a branch with default base" do
-      lib.stub(:command).with(:branch, ['test_branch', 'master'])
+      lib.stub(:command).with(:branch, %w(test_branch master))
       lib.branch('test_branch')
     end
 
 
     it "should create a branch with explicit base" do
-      lib.stub(:command).with(:branch, ['test_branch', 'other_branch'])
+      lib.stub(:command).with(:branch, %w(test_branch other_branch))
       lib.branch('test_branch', :base_branch => 'other_branch')
     end
 
 
     it "should delete a branch without force" do
-      lib.stub(:command).with(:branch, ['-d', 'test_branch'])
+      lib.stub(:command).with(:branch, %w(-d test_branch))
       lib.branch('test_branch', :delete => true)
     end
 
 
     it "should delete a branch with force" do
-      lib.stub(:command).with(:branch, ['-D', 'test_branch'])
+      lib.stub(:command).with(:branch, %w(-D test_branch))
       lib.branch('test_branch', :delete => true, :force => true)
     end
 
@@ -107,15 +109,15 @@ describe GitProc::GitLib do
 
 
     it "should push local branch to remote" do
-      lib.should_receive(:command).with(:push, ['remote', 'local_branch:test_branch'])
+      lib.should_receive(:command).with(:push, %w(remote local_branch:test_branch))
 
       lib.push('remote', 'local_branch', 'test_branch')
     end
 
 
     it "should push current branch to remote" do
-      lib.stub(:command).with(:branch, ['-a', '--no-color']).and_return("* my_branch\n")
-      lib.should_receive(:command).with(:push, ['remote', 'my_branch:my_branch'])
+      lib.stub(:command).with(:branch, %w(-a --no-color)).and_return("* my_branch\n")
+      lib.should_receive(:command).with(:push, %w(remote my_branch:my_branch))
 
       lib.push('remote', 'my_branch', nil)
     end
@@ -124,7 +126,7 @@ describe GitProc::GitLib do
     it "should remove named branch on remote" do
       lib.stub(:remote_name).and_return('remote')
       lib.stub(:config).and_return('master')
-      lib.should_receive(:command).with(:push, ['remote', '--delete', 'my_branch'])
+      lib.should_receive(:command).with(:push, %w(remote --delete my_branch))
 
       lib.push('remote', 'my_branch', nil, :delete => true)
     end
@@ -133,7 +135,7 @@ describe GitProc::GitLib do
     it "should remove current branch on remote" do
       lib.stub(:remote_name).and_return('remote')
       lib.stub(:config).and_return('master')
-      lib.should_receive(:command).with(:push, ['remote', '--delete', 'my_branch'])
+      lib.should_receive(:command).with(:push, %w(remote --delete my_branch))
 
       lib.push('remote', nil, nil, :delete => 'my_branch')
     end
@@ -143,7 +145,7 @@ describe GitProc::GitLib do
       lib.stub(:remote_name).and_return('remote')
       lib.stub(:config).and_return('master')
 
-      expect {lib.push('remote', nil, nil, :delete => 'master')}.should raise_error GitProc::GitProcessError
+      expect { lib.push('remote', nil, nil, :delete => 'master') }.should raise_error GitProc::GitProcessError
     end
 
   end
@@ -151,6 +153,7 @@ describe GitProc::GitLib do
 
   describe "#remote_name" do
     include GitRepoHelper
+
 
     def log_level
       Logger::ERROR

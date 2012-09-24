@@ -11,6 +11,7 @@ require 'rspec/mocks/mock'
 class GHS
   include GitHubService
 
+
   def initialize(user = nil, password = nil, site = nil)
     @user = user
     @password = password
@@ -23,6 +24,7 @@ class GHS
     @lib = RSpec::Mocks::Mock.new('lib')
     @lib.stub(:logger).and_return(logger)
   end
+
 
   def lib
     @lib
@@ -52,7 +54,7 @@ describe GitHubService do
       ghs.lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
 
       stub_request(:post, /api.github.com\/authorizations/).
-        to_return(:status => 200, :body => JSON({:token => test_token}))
+          to_return(:status => 200, :body => JSON({:token => test_token}))
 
       ghs.create_authorization().should == test_token
     end
@@ -60,7 +62,7 @@ describe GitHubService do
 
     it "should 401 for bad password" do
       stub_request(:post, /api.github.com\/authorizations/).
-        to_return(:status => 401)
+          to_return(:status => 401)
 
       lambda { ghs.create_authorization() }.should raise_error Octokit::Unauthorized
     end
@@ -88,7 +90,7 @@ describe GitHubService do
       ghs.lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
 
       stub_request(:post, /api.github.com\/authorizations/).
-        to_return(:status => 200, :body => JSON({:token => test_token}))
+          to_return(:status => 200, :body => JSON({:token => test_token}))
 
       ghs.auth_token.should == test_token
     end
@@ -130,7 +132,7 @@ describe GitHubService do
       ghs.lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
 
       stub_request(:post, /myco.com\/api\/v3\/authorizations/).
-        to_return(:status => 200, :body => JSON({:token => test_token}))
+          to_return(:status => 200, :body => JSON({:token => test_token}))
 
       ghs.create_authorization().should == test_token
     end
@@ -167,14 +169,14 @@ describe GitHubService do
     it "site should raise an error if remote.origin.url not set" do
       ghs.lib.stub(:config).with('remote.origin.url').and_return('')
 
-      lambda {ghs.site}.should raise_error GitHubService::NoRemoteRepository
+      lambda { ghs.site }.should raise_error GitHubService::NoRemoteRepository
     end
 
 
     it "site should not work for a garbase url address" do
       ghs.lib.stub(:config).with('remote.origin.url').and_return('garbage')
 
-      lambda {ghs.site}.should raise_error URI::InvalidURIError
+      lambda { ghs.site }.should raise_error URI::InvalidURIError
     end
 
 
@@ -196,8 +198,8 @@ describe GitHubService do
       ghs.lib.stub(:config).with('remote.origin.url').and_return('mygithub:jdigger/git-process.git')
 
       content = "\nHost mygithub\n"+
-        "  User git\n"+
-        "  HostName github.myco.com\n"
+          "  User git\n"+
+          "  HostName github.myco.com\n"
 
       in_tempfile(content) do |file|
         ghs.site(:ssh_config_file => file.path).should == 'http://github.myco.com'

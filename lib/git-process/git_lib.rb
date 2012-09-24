@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'logger'
 require 'git-process/git_branch'
@@ -55,8 +55,7 @@ module GitProc
         @logger = Logger.new(STDOUT)
         @logger.level = log_level || Logger::WARN
         @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
-        f = Logger::Formatter.new
-        @logger.formatter = proc do |severity, datetime, progname, msg|
+        @logger.formatter = proc do |_, _, _, msg|
           "#{msg}\n"
         end
       end
@@ -135,22 +134,22 @@ module GitProc
     def branch(branch_name, opts = {})
       args = []
       if opts[:delete]
-        logger.info { "Deleting local branch '#{branch_name}'."} unless branch_name == '_parking_'
+        logger.info { "Deleting local branch '#{branch_name}'." } unless branch_name == '_parking_'
 
         args << (opts[:force] ? '-D' : '-d')
         args << branch_name
       elsif opts[:rename]
-        logger.info { "Renaming branch '#{branch_name}' to '#{opts[:rename]}'."}
+        logger.info { "Renaming branch '#{branch_name}' to '#{opts[:rename]}'." }
 
         args << '-m' << branch_name << opts[:rename]
       elsif branch_name
         if opts[:force]
           raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless opts[:base_branch]
-          logger.info { "Changing branch '#{branch_name}' to point to '#{opts[:base_branch]}'."}
+          logger.info { "Changing branch '#{branch_name}' to point to '#{opts[:base_branch]}'." }
 
           args << '-f' << branch_name << opts[:base_branch]
         else
-          logger.info { "Creating new branch '#{branch_name}' based on '#{opts[:base_branch]}'."}
+          logger.info { "Creating new branch '#{branch_name}' based on '#{opts[:base_branch]}'." }
 
           args << branch_name
           args << (opts[:base_branch] ? opts[:base_branch] : 'master')
@@ -197,7 +196,7 @@ module GitProc
           raise GitProc::GitProcessError.new("Can not delete the integration branch '#{int_branch}'")
         end
 
-        logger.info { "Deleting remote branch '#{rb}' on '#{remote_name}'."}
+        logger.info { "Deleting remote branch '#{rb}' on '#{remote_name}'." }
         args << '--delete' << rb
       else
         local_branch ||= branches.current
@@ -224,12 +223,12 @@ module GitProc
 
 
     def stash_save
-      command(:stash, ['save'])
+      command(:stash, %w(save))
     end
 
 
     def stash_pop
-      command(:stash, ['pop'])
+      command(:stash, %w(pop))
     end
 
 
@@ -238,7 +237,7 @@ module GitProc
     end
 
 
-    def checkout(branch_name, opts = {}, &block)
+    def checkout(branch_name, opts = {})
       args = []
       args << '--no-track' if opts[:no_track]
       args << '-b' if opts[:new_branch]
@@ -282,7 +281,7 @@ module GitProc
 
     def config(key = nil, value = nil, global = false)
       if key and value
-        args = global ? ['--global'] : []
+        args = global ? %w(--global) : []
         args << key << value
         command(:config, args)
         config_hash[key] = value unless config_hash.empty?
@@ -329,7 +328,7 @@ module GitProc
             raise "!@remote_name.is_a? String" unless @remote_name.is_a? String
           end
         end
-        logger.debug {"Using remote name of '#{@remote_name}'"}
+        logger.debug { "Using remote name of '#@remote_name'" }
       end
       @remote_name
     end
@@ -414,30 +413,30 @@ module GitProc
       ENV['GIT_WORK_TREE'] = workdir
       path = workdir
 
-      opts = [opts].flatten.map {|s| escape(s) }.join(' ')
+      opts = [opts].flatten.map { |s| escape(s) }.join(' ')
       git_cmd = "git #{cmd} #{opts} #{redirect} 2>&1"
 
       out = nil
       if chdir and (Dir.getwd != path)
-        Dir.chdir(path) { out = run_command(git_cmd, &block) } 
+        Dir.chdir(path) { out = run_command(git_cmd, &block) }
       else
         out = run_command(git_cmd, &block)
       end
-      
+
       if logger
         logger.debug(git_cmd)
         logger.debug(out)
       end
-            
+
       if $?.exitstatus > 0
         if $?.exitstatus == 1 && out == ''
           return ''
         end
-        raise GitProc::GitExecuteError.new(git_cmd + ':' + out.to_s) 
+        raise GitProc::GitExecuteError.new(git_cmd + ':' + out.to_s)
       end
       out
     end
-    
+
 
     def run_command(git_cmd, &block)
       if block_given?

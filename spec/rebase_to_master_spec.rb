@@ -6,6 +6,7 @@ require 'json'
 describe GitProc::RebaseToMaster do
   include GitRepoHelper
 
+
   def log_level
     Logger::ERROR
   end
@@ -67,7 +68,7 @@ describe GitProc::RebaseToMaster do
       # Merge in the new branch; don't error-out because will auto-fix.
       gitprocess.checkout('fb') do
         gitprocess.merge('master') rescue
-        change_file_and_commit('a', 'merged')
+            change_file_and_commit('a', 'merged')
       end
 
       # Make another change on master
@@ -98,7 +99,7 @@ describe GitProc::RebaseToMaster do
         gitprocess.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
 
-        expect {gitprocess.verify_preconditions}.should raise_error GitProc::ParkedChangesError
+        expect { gitprocess.verify_preconditions }.should raise_error GitProc::ParkedChangesError
       end
     end
 
@@ -107,10 +108,10 @@ describe GitProc::RebaseToMaster do
 
       it "should work for an existing pull request" do
         stub_request(:get, /test_repo\/pulls\?access_token=/).
-          to_return(:status => 200, :body => JSON([{:number => 987, :state => 'open', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
+            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'open', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
         stub_request(:patch, /test_repo\/pulls\/987\?access_token=/).
-          with(:body => JSON({:state => 'closed'})).
-          to_return(:status => 200, :body => JSON([{:number => 987, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
+            with(:body => JSON({:state => 'closed'})).
+            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
 
         gitprocess.branch('fb', :base_branch => 'master')
 
@@ -276,7 +277,7 @@ describe GitProc::RebaseToMaster do
 
         gp.branches.include?('fb').should be_true
 
-        expect {gp.remove_feature_branch}.should raise_error GitProc::GitProcessError
+        expect { gp.remove_feature_branch }.should raise_error GitProc::GitProcessError
       end
     end
 

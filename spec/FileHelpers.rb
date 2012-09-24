@@ -4,6 +4,7 @@ include FileUtils
 module FileHelpers
   TEST_DIR = File.dirname(__FILE__)
 
+
   def dir_files(dir)
     Dir.entries(dir).grep(/^[^.]/)
   end

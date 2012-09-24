@@ -52,13 +52,14 @@ describe GitProc::AbstractMergeErrorBuilder do
 
     builder.resolved_files.should == []
     builder.unresolved_files.should == ['a', 'b c']
-    match_commands [
-      'git config --global rerere.enabled true',
-      'git mergetool a b\ c',
-      '# Verify \'a\' merged correctly.',
-      '# Verify \'b c\' merged correctly.',
-      'git add a b\ c',
+    c = [
+        'git config --global rerere.enabled true',
+        'git mergetool a b\ c',
+        '# Verify \'a\' merged correctly.',
+        '# Verify \'b c\' merged correctly.',
+        'git add a b\ c',
     ]
+    match_commands c
   end
 
 
@@ -67,14 +68,15 @@ describe GitProc::AbstractMergeErrorBuilder do
     status.stub(:modified).and_return(['a', 'b c'])
     builder.stub(:error_message).and_return("\nResolved 'a' using previous resolution.\n")
 
-    builder.resolved_files.should == ['a']
+    builder.resolved_files.should == %w(a)
     builder.unresolved_files.should == ['b c']
-    match_commands [
-      '# Verify that \'rerere\' did the right thing for \'a\'.',
-      'git mergetool b\ c',
-      '# Verify \'b c\' merged correctly.',
-      'git add b\ c',
+    c = [
+        '# Verify that \'rerere\' did the right thing for \'a\'.',
+        'git mergetool b\ c',
+        '# Verify \'b c\' merged correctly.',
+        'git add b\ c',
     ]
+    match_commands c
   end
 
 
@@ -84,30 +86,32 @@ describe GitProc::AbstractMergeErrorBuilder do
     status.stub(:modified).and_return(['a', 'b c'])
     builder.stub(:error_message).and_return("\nResolved 'a' using previous resolution.\n")
 
-    builder.resolved_files.should == ['a']
+    builder.resolved_files.should == %w(a)
     builder.unresolved_files.should == ['b c']
-    match_commands [
-      '# Verify that \'rerere\' did the right thing for \'a\'.',
-      'git add a',
-      'git mergetool b\ c',
-      '# Verify \'b c\' merged correctly.',
-      'git add b\ c',
+    c = [
+        '# Verify that \'rerere\' did the right thing for \'a\'.',
+        'git add a',
+        'git mergetool b\ c',
+        '# Verify \'b c\' merged correctly.',
+        'git add b\ c',
     ]
+    match_commands c
   end
 
 
   it "merged with a file added in both branches" do
     lib.stub(:rerere_autoupdate?).and_return(false)
-    status.stub(:unmerged).and_return(['a'])
-    status.stub(:modified).and_return(['b'])
-    status.stub(:added).and_return(['a', 'c'])
+    status.stub(:unmerged).and_return(%w(a))
+    status.stub(:modified).and_return(%w(b))
+    status.stub(:added).and_return(%w(a c))
 
-    builder.resolved_files.should == []
-    builder.unresolved_files.should == ['a']
-    match_commands [
-      '# \'a\' was added in both branches; Fix the conflict.',
-      'git add a',
+    builder.resolved_files.should == %w()
+    builder.unresolved_files.should == %w(a)
+    c = [
+        '# \'a\' was added in both branches; Fix the conflict.',
+        'git add a',
     ]
+    match_commands c
   end
 
 end

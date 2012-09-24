@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'git-process/git_process_error'
 
@@ -18,6 +18,7 @@ module GitProc
     include GitProc::AbstractErrorBuilder
 
     attr_reader :error_message, :lib
+
 
     def initialize(lib)
       @lib = lib

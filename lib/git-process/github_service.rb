@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'highline/import'
 require 'git-process/github_client'
@@ -21,7 +21,7 @@ module GitHubService
     if @client.nil?
       auth_token
       logger.debug { "Creating GitHub client for user #{user} using token '#{auth_token}'" }
-      @client = GitHubClient.new(:login => user, :oauth_token=> auth_token)
+      @client = GitHubClient.new(:login => user, :oauth_token => auth_token)
       @client.site = site
     end
     @client
@@ -38,8 +38,8 @@ module GitHubService
 
     raise GitHubService::NoRemoteRepository.new("There is no value set for 'remote.origin.url'") if origin_url.empty?
 
-    if /^git\@/ =~ origin_url
-      host = origin_url.sub(/^git\@(.*?):.*$/, '\1')
+    if /^git@/ =~ origin_url
+      host = origin_url.sub(/^git@(.*?):.*$/, '\1')
       site = host_to_site(host, false)
     else
       uri = URI.parse(origin_url)
@@ -68,10 +68,10 @@ module GitHubService
       in_host_section = false
       host_name = nil
 
-      sections = config_lines.each do |line|
+      config_lines.each do |line|
         line.chop!
         if /^\s*Host\s+#{host_alias}\s*$/ =~ line
-            in_host_section = true
+          in_host_section = true
           next
         end
         if in_host_section and (/^\s*HostName\s+\S+\s*$/ =~ line)
@@ -141,7 +141,7 @@ module GitHubService
 
   def create_authorization
     logger.info("Authorizing #{user} to work with #{site}.")
-    auth = pw_client.create_authorization(:scopes => ['repo', 'user', 'gist'],
+    auth = pw_client.create_authorization(:scopes => %w(repo user gist),
                                           :note => 'Git-Process',
                                           :note_url => 'http://jdigger.github.com/git-process')
     config_auth_token = auth['token']

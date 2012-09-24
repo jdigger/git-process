@@ -34,7 +34,7 @@ module GitRepoHelper
   def create_files(file_names)
     Dir.chdir(gitprocess.workdir) do |dir|
       file_names.each do |fn|
-        gitprocess.logger.debug {"Creating #{dir}/#{fn}"}
+        gitprocess.logger.debug { "Creating #{dir}/#{fn}" }
         FileUtils.touch fn
       end
     end
@@ -44,7 +44,7 @@ module GitRepoHelper
 
   def change_file(filename, contents, lib = gitprocess)
     Dir.chdir(lib.workdir) do
-      File.open(filename, 'w') {|f| f.puts contents}
+      File.open(filename, 'w') { |f| f.puts contents }
     end
   end
 
@@ -69,7 +69,7 @@ module GitRepoHelper
   def clone(branch='master', remote_name = 'origin', &block)
     td = Dir.mktmpdir
 
-    logger.debug {"Cloning '#{tmpdir}' to '#{td}'"}
+    logger.debug { "Cloning '#{tmpdir}' to '#{td}'" }
 
     opts = {}
     opts[:quiet] = true if log_level == Logger::ERROR

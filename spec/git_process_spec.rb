@@ -5,13 +5,14 @@ require 'fileutils'
 describe GitProc::Process do
   include GitRepoHelper
 
+
   def log_level
     Logger::ERROR
   end
 
 
   before(:each) do
-    create_files(['.gitignore'])
+    create_files(%w(.gitignore))
     gitprocess.commit('initial')
   end
 

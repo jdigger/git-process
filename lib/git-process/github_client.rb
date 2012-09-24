@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'octokit'
 
@@ -23,19 +23,16 @@ module Octokit
     def connection(authenticate=true, raw=false, version=3, force_urlencoded=false)
       if site
         url = site
+      elsif version == 2
+        url = "https://github.com"
       else
-        case version
-        when 2
-          url = "https://github.com"
-        when 3
-          url = "https://api.github.com"
-        end
+        url = "https://api.github.com"
       end
 
       options = {
-        :proxy => proxy,
-        :ssl => { :verify => false },
-        :url => url,
+          :proxy => proxy,
+          :ssl => {:verify => false},
+          :url => url,
       }
 
       options.merge!(:params => {:access_token => oauth_token}) if oauthed? && !authenticated?
@@ -74,6 +71,7 @@ class GitHubClient < Octokit::Client
 
 
   alias :old_request :request
+
 
   def request(method, path, options, version, authenticate, raw, force_urlencoded)
     if /api.github.com/ !~ site

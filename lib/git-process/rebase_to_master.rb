@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'git-process/git_process'
 require 'git-process/git_rebase_error'
@@ -36,6 +36,7 @@ module GitProc
     end
 
 
+    #noinspection RubyControlFlowConversionInspection
     def runner
       if has_a_remote?
         fetch(server_name)
@@ -65,12 +66,12 @@ module GitProc
 
       parking_branch = mybranches['_parking_']
       if parking_branch
-        if (parking_branch.is_ahead_of(remote_master.name) and
-            !current_branch.contains_all_of(parking_branch.name))
+        if parking_branch.is_ahead_of(remote_master.name) and
+            !current_branch.contains_all_of(parking_branch.name)
 
           parking_branch.rename('_parking_OLD_')
 
-          logger.warn {bad_parking_branch_msg}
+          logger.warn { bad_parking_branch_msg }
         else
           parking_branch.delete!
         end
@@ -114,11 +115,11 @@ module GitProc
     def bad_parking_branch_msg
       hl = HighLine.new
       hl.color("\n***********************************************************************************************\n\n"+
-               "There is an old '_parking_' branch with unacounted changes in it.\n"+
-               "It has been renamed to '_parking_OLD_'.\n"+
-               "Please rename the branch to what the changes are about (`git branch -m _parking_OLD_ my_fb_name`),\n"+
-               " or remove it altogher (`git branch -D _parking_OLD_`).\n\n"+
-               "***********************************************************************************************\n", :red, :bold)
+                   "There is an old '_parking_' branch with unacounted changes in it.\n"+
+                   "It has been renamed to '_parking_OLD_'.\n"+
+                   "Please rename the branch to what the changes are about (`git branch -m _parking_OLD_ my_fb_name`),\n"+
+                   " or remove it altogher (`git branch -D _parking_OLD_`).\n\n"+
+                   "***********************************************************************************************\n", :red, :bold)
     end
 
   end

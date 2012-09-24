@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'git-process/git_lib'
 require 'git-process/git_rebase_error'
@@ -20,6 +20,7 @@ module GitProc
 
   class Process
     include GitLib
+
 
     def initialize(dir, opts = {})
       @log_level = Process.log_level(opts)
@@ -48,7 +49,7 @@ module GitProc
 
 
     def set_workdir(dir)
-      if !dir.nil?
+      unless dir.nil?
         @workdir = find_workdir(dir)
         if @workdir.nil?
           @workdir = dir
@@ -105,10 +106,10 @@ module GitProc
     def should_remove_master
       my_branches = branches()
       has_a_remote? and
-      my_branches.include?(master_branch) and
-      my_branches.current.name != master_branch and
-      !keep_local_integration_branch? and
-      my_branches[integration_branch].contains_all_of(master_branch)
+          my_branches.include?(master_branch) and
+          my_branches.current.name != master_branch and
+          !keep_local_integration_branch? and
+          my_branches[integration_branch].contains_all_of(master_branch)
     end
 
 
@@ -139,6 +140,7 @@ module GitProc
     private
 
 
+    #noinspection RubyInstanceMethodNamingConvention
     def keep_local_integration_branch_config_value
       config('gitProcess.keepLocalIntegrationBranch')
     end

@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 module GitProc
 
@@ -28,6 +28,7 @@ module GitProc
   class GitStatus
     attr_reader :unmerged, :modified, :deleted, :added, :unknown
 
+
     def initialize(lib)
       unmerged = []
       modified = []
@@ -43,41 +44,41 @@ module GitProc
         #puts "stat #{stat} - #{file}"
         f = unquote(file)
         case stat
-        when 'U ', ' U'
-          unmerged << f
-        when 'UU'
-          unmerged << f
-          modified << f
-        when 'M ', ' M', 'MM'
-          modified << f
-        when 'MD'
-          modified << f
-          deleted << f
-        when 'D ', ' D'
-          deleted << f
-        when 'DU', 'UD'
-          deleted << f
-          unmerged << f
-        when 'A ', ' A'
-          added << f
-        when 'AD'
-          added << f
-          deleted << f
-        when 'AA'
-          added << f
-          unmerged << f
-        when '??'
-          unknown << f
-        when 'R '
-          old_file, new_file = file.split(' -> ')
-          deleted << unquote(old_file)
-          added << unquote(new_file)
-        when 'C '
-          old_file, new_file = file.split(' -> ')
-          added << unquote(old_file)
-          added << unquote(new_file)
-        else
-          raise "Do not know what to do with status #{stat} - #{file}"
+          when 'U ', ' U'
+            unmerged << f
+          when 'UU'
+            unmerged << f
+            modified << f
+          when 'M ', ' M', 'MM'
+            modified << f
+          when 'MD'
+            modified << f
+            deleted << f
+          when 'D ', ' D'
+            deleted << f
+          when 'DU', 'UD'
+            deleted << f
+            unmerged << f
+          when 'A ', ' A'
+            added << f
+          when 'AD'
+            added << f
+            deleted << f
+          when 'AA'
+            added << f
+            unmerged << f
+          when '??'
+            unknown << f
+          when 'R '
+            old_file, new_file = file.split(' -> ')
+            deleted << unquote(old_file)
+            added << unquote(new_file)
+          when 'C '
+            old_file, new_file = file.split(' -> ')
+            added << unquote(old_file)
+            added << unquote(new_file)
+          else
+            raise "Do not know what to do with status #{stat} - #{file}"
         end
       end
 

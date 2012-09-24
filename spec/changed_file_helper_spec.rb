@@ -20,7 +20,7 @@ describe GitProc::ChangeFileHelper do
   include GitRepoHelper
 
   before(:each) do
-    create_files(['.gitignore'])
+    create_files(%w(.gitignore))
     gitprocess.commit('initial')
   end
 
@@ -52,7 +52,7 @@ describe GitProc::ChangeFileHelper do
 
       gp.merge('origin/master') rescue ''
 
-      expect {gp.offer_to_help_uncommitted_changes}.should raise_error GitProc::UncommittedChangesError
+      expect { gp.offer_to_help_uncommitted_changes }.should raise_error GitProc::UncommittedChangesError
     end
 
 

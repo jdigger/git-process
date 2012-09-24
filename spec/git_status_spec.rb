@@ -5,6 +5,7 @@ require 'fileutils'
 describe GitProc::GitStatus do
   include GitRepoHelper
 
+
   def log_level
     Logger::ERROR
   end
@@ -39,7 +40,7 @@ describe GitProc::GitStatus do
 
     gitprocess.merge('fb') rescue
 
-    status = gitprocess.status
+        status = gitprocess.status
     status.unmerged.should == ['a']
     status.modified.should == ['a']
   end
@@ -54,7 +55,7 @@ describe GitProc::GitStatus do
 
     gitprocess.merge('fb') rescue
 
-    status = gitprocess.status
+        status = gitprocess.status
     status.unmerged.should == ['a']
     status.added.should == ['a']
   end
@@ -72,7 +73,7 @@ describe GitProc::GitStatus do
 
     gitprocess.merge('fb') rescue
 
-    status = gitprocess.status
+        status = gitprocess.status
     status.unmerged.should == ['a']
     status.deleted.should == ['a']
   end
@@ -90,7 +91,7 @@ describe GitProc::GitStatus do
 
     gitprocess.merge('fb') rescue
 
-    status = gitprocess.status
+        status = gitprocess.status
     status.unmerged.should == ['a']
     status.deleted.should == ['a']
   end

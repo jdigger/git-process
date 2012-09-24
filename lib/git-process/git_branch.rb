@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 module GitProc
 
@@ -17,8 +17,9 @@ module GitProc
 
     attr_reader :name
 
+
     def initialize(name, current, lib)
-      if (/^remotes\// =~ name)
+      if /^remotes\// =~ name
         @name = name[8..-1]
         @remote = true
       else

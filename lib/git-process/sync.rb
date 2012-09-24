@@ -8,7 +8,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.require 'shellwords'
+# limitations under the License.
 
 require 'git-process/git_lib'
 require 'git-process/git_process'
@@ -21,6 +21,7 @@ module GitProc
 
   class Sync < Process
     include ChangeFileHelper
+
 
     def initialize(dir, opts)
       opts[:force] = true if opts[:rebase]
@@ -38,6 +39,7 @@ module GitProc
     end
 
 
+    #noinspection RubyControlFlowConversionInspection
     def verify_preconditions
       super
 
@@ -56,7 +58,7 @@ module GitProc
 
     def runner
       @current_branch ||= branches.current
-      @remote_branch ||= "#{server_name}/#{@current_branch}"
+      @remote_branch ||= "#{server_name}/#@current_branch"
 
       fetch(server_name) if has_a_remote?
 
@@ -89,8 +91,8 @@ module GitProc
       fetch(server_name)
       new_sha = rev_parse(@remote_branch) rescue ''
       unless old_sha == new_sha
-        logger.warn("'#{@current_branch}' changed on '#{server_name}'"+
-                    " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+        logger.warn("'#@current_branch' changed on '#{server_name}'"+
+                        " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
         runner # try again
       end
     end

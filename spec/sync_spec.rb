@@ -5,7 +5,7 @@ describe GitProc::Sync do
   include GitRepoHelper
 
   before(:each) do
-    create_files(['.gitignore'])
+    create_files(%w(.gitignore))
     gitprocess.commit('initial')
   end
 
@@ -81,7 +81,7 @@ describe GitProc::Sync do
 
       gitprocess.branch('fb', :base_branch => 'master')
 
-      gp = clone('fb')
+      clone('fb')
       gitprocess.checkout('fb') do
         change_file_and_commit('a', 'hello', gitprocess)
       end
@@ -111,7 +111,7 @@ describe GitProc::Sync do
           change_file_and_commit('a', 'hello', gitprocess)
         end
 
-        expect {gp.runner}.to_not raise_error GitProc::GitExecuteError
+        expect { gp.runner }.to_not raise_error GitProc::GitExecuteError
       end
     end
 
@@ -185,7 +185,7 @@ describe GitProc::Sync do
     gitprocess.checkout('_parking_', :new_branch => 'master')
     change_file_and_commit('a', '')
 
-    expect {gitprocess.verify_preconditions}.to raise_error GitProc::ParkedChangesError
+    expect { gitprocess.verify_preconditions }.to raise_error GitProc::ParkedChangesError
   end
 
 end
