@@ -1,4 +1,14 @@
-# CHANGELOG - 1.0.3 #
+# CHANGELOG - 1.0.5 #
+
+### Since 1.0.4 ###
+
+* Do not try to fetch/push when doing sync if there is not remote. (GH-70)
+* git-sync now merges in upstream changes. (GH-79)
+* Simplified Windows installation instructions. (GH-76 GH-77)
+
+### Since 1.0.3 ###
+
+* Gets rid of infinate loop in Highline library. (GH-72)
 
 ### Since 1.0.2 ###
 
