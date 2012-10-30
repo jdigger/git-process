@@ -6,6 +6,7 @@ require 'git-process/git_process_options'
 class PullRequestOptions
   include GitProc::GitProcessOptions
 
+
   def summary
     "Creates a Pull Request for the current branch."
   end
@@ -56,25 +57,20 @@ DESC
   end
 
 
-  def empty_argv_ok?
-    false
-  end
-
-
   def extend_opts(parser)
-    parser.opt :base_branch,  "The branch on the server that you want this \"pulled\" into. "+
-                              "Defaults to the integration branch."
-    parser.opt :head_branch,  "The branch that you want reviewed before being \"pulled\" "+
-                              "into the base branch. Defaults to the current branch."
-    parser.opt :repo_name,    "The name of the repository to \"pull\" into. Defaults to "+
-                              "the current repository."
-    parser.opt :description,  "The description of the Pull Request. Usually includes a "+
-                              "nice description of what was changed to make things easier "+
-                              "for the reviewer.", :short => :d
-    parser.opt :user,         "Your GitHub username. Only needed the first time you connect, "+
-                              "and you will be prompted for it if needed."
-    parser.opt :password,     "Your GitHub password. Only needed the first time you connect, "+
-                              "and you will be prompted for it if needed."
+    parser.opt :base_branch, "The branch on the server that you want this \"pulled\" into. "+
+        "Defaults to the integration branch.", :type => :string
+    parser.opt :head_branch, "The branch that you want reviewed before being \"pulled\" "+
+        "into the base branch. Defaults to the current branch.", :type => :string
+    parser.opt :repo_name, "The name of the repository to \"pull\" into. Defaults to "+
+        "the current repository.", :type => :string
+    parser.opt :description, "The description of the Pull Request. Usually includes a "+
+        "nice description of what was changed to make things easier "+
+        "for the reviewer.", :short => :d, :type => :string
+    parser.opt :user, "Your GitHub username. Only needed the first time you connect, "+
+        "and you will be prompted for it if needed.", :type => :string
+    parser.opt :password, "Your GitHub password. Only needed the first time you connect, "+
+        "and you will be prompted for it if needed.", :type => :string
   end
 
 

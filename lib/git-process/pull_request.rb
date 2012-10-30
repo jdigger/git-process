@@ -23,12 +23,13 @@ module GitProc
 
     def initialize(dir, opts)
       super
+      current_branch = branches.current.name
       @title = opts[:title]
       @base_branch = opts[:base_branch] || master_branch
-      @head_branch = opts[:head_branch] || branches.current
+      @head_branch = opts[:head_branch] || current_branch
       @repo_name = opts[:repo_name] || repo_name()
-      @title = opts[:title] || ask_for_pull_title()
-      @description = opts[:description] || ask_for_pull_description()
+      @title = opts[:title] || current_branch
+      @description = opts[:description] || ''
       @user = opts[:user]
       @password = opts[:password]
     end
@@ -39,21 +40,6 @@ module GitProc
       push(server_name, current_branch, current_branch, :force => false)
       pr = GitHub::PullRequest.new(self, @repo_name, {:user => @user, :password => @password})
       pr.create(@base_branch, @head_branch, @title, @description)
-    end
-
-
-    private
-
-
-    def ask_for_pull_title
-      ask("What <%= color('title', [:bold]) %> do you want to give the pull request? ") do |q|
-        q.validate = /^\w+.*/
-      end
-    end
-
-
-    def ask_for_pull_description
-      ask("What <%= color('description', [:bold]) %> do you want to give the pull request? ")
     end
 
   end
