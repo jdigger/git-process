@@ -12,7 +12,7 @@ describe GitProc::GitStatus do
 
 
   before(:each) do
-    create_files(['.gitignore'])
+    create_files(%w(.gitignore))
     gitprocess.commit('initial')
   end
 
@@ -38,11 +38,11 @@ describe GitProc::GitStatus do
     gitprocess.checkout('master')
     change_file_and_commit('a', 'goodbye')
 
-    gitprocess.merge('fb') rescue
+    gitprocess.merge('fb') rescue ''
 
-        status = gitprocess.status
-    status.unmerged.should == ['a']
-    status.modified.should == ['a']
+    status = gitprocess.status
+    status.unmerged.should == %w(a)
+    status.modified.should == %w(a)
   end
 
 
@@ -53,11 +53,11 @@ describe GitProc::GitStatus do
     gitprocess.checkout('master')
     change_file_and_commit('a', 'goodbye')
 
-    gitprocess.merge('fb') rescue
+    gitprocess.merge('fb') rescue ''
 
-        status = gitprocess.status
-    status.unmerged.should == ['a']
-    status.added.should == ['a']
+    status = gitprocess.status
+    status.unmerged.should == %w(a)
+    status.added.should == %w(a)
   end
 
 
@@ -71,11 +71,11 @@ describe GitProc::GitStatus do
     gitprocess.checkout('master')
     change_file_and_commit('a', 'goodbye')
 
-    gitprocess.merge('fb') rescue
+    gitprocess.merge('fb') rescue ''
 
-        status = gitprocess.status
-    status.unmerged.should == ['a']
-    status.deleted.should == ['a']
+    status = gitprocess.status
+    status.unmerged.should == %w(a)
+    status.deleted.should == %w(a)
   end
 
 
@@ -89,11 +89,11 @@ describe GitProc::GitStatus do
     gitprocess.remove('a', :force => true)
     gitprocess.commit('removed a')
 
-    gitprocess.merge('fb') rescue
+    gitprocess.merge('fb') rescue ''
 
-        status = gitprocess.status
-    status.unmerged.should == ['a']
-    status.deleted.should == ['a']
+    status = gitprocess.status
+    status.unmerged.should == %w(a)
+    status.deleted.should == %w(a)
   end
 
 

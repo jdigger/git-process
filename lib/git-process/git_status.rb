@@ -54,7 +54,7 @@ module GitProc
           when 'MD'
             modified << f
             deleted << f
-          when 'D ', ' D'
+          when 'D ', ' D', 'DD'
             deleted << f
           when 'DU', 'UD'
             deleted << f
@@ -64,10 +64,13 @@ module GitProc
           when 'AD'
             added << f
             deleted << f
-          when 'AA'
+          when 'AA', 'AU', 'UA'
             added << f
             unmerged << f
-          when '??'
+          when 'AM', 'MA'
+            added << f
+            merged << f
+          when '??', '!!'
             unknown << f
           when 'R '
             old_file, new_file = file.split(' -> ')
