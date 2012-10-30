@@ -6,6 +6,7 @@ require 'git-process/rebase_to_master'
 class ToMasterOptions
   include GitProc::GitProcessOptions
 
+
   def summary
     "Rebase against the integration branch, then pushes to it."
   end
@@ -56,6 +57,8 @@ for you:
   $ git branch -d interesting_changes
   $ git push origin :interesting_changes
 
+If you use the --interactive option, then it does an interactive rebase before the first "push".
+
 If you use the --keep option, then the process stops after the first "push".
 
 NOTES
@@ -69,9 +72,10 @@ DESC
 
 
   def extend_opts(parser)
-    parser.opt :keep,  "Don't do any \"cleanup.\" It keeps the current local "+
-                       "and remote branches, and does not close any "+
-                       "outstanding pull requests.", :short => :k, :default => false
+    parser.opt :keep, "Don't do any \"cleanup.\" It keeps the current local "+
+        "and remote branches, and does not close any "+
+        "outstanding pull requests.", :short => :k, :default => false
+    parser.opt :interactive, "Do an interactive rebase before pushing to the server.", :short => :i, :default => false
   end
 
 end

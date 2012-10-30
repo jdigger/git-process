@@ -174,9 +174,9 @@ module GitProc
     end
 
 
-    def proc_rebase(base)
+    def proc_rebase(base, opts = {})
       begin
-        rebase(base)
+        rebase(base, opts)
       rescue GitExecuteError => rebase_error
         raise RebaseError.new(rebase_error.message, self)
       end

@@ -13,7 +13,7 @@ describe GitProc::RebaseToMaster do
 
 
   before(:each) do
-    create_files(['.gitignore'])
+    create_files(%w(.gitignore))
     gitprocess.commit('initial')
   end
 
@@ -83,7 +83,7 @@ describe GitProc::RebaseToMaster do
         gitprocess.runner
         raise "Should have raised RebaseError"
       rescue GitProc::RebaseError => exp
-        exp.resolved_files.should == ['a']
+        exp.resolved_files.should == %w(a)
         exp.unresolved_files.should == []
 
         exp.commands.length.should == 3
@@ -308,6 +308,23 @@ describe GitProc::RebaseToMaster do
       rtm.should_receive(:fetch)
       rtm.should_receive(:push).with('origin', rtm.branches.current, 'master')
       rtm.should_not_receive(:push).with('origin', nil, nil, :delete => 'fb')
+      rtm.runner
+    end
+
+  end
+
+
+  describe ":interactive option" do
+
+    it "should try to do an interactive rebase" do
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      rtm = GitProc::RebaseToMaster.new(clone('fb').workdir, {:log_level => log_level, :interactive => true})
+      rtm.should_receive(:fetch)
+      rtm.should_receive(:rebase).with('origin/master', {})
+      rtm.should_receive(:rebase).with('origin/master', :interactive => true)
+      rtm.should_receive(:push).with('origin', rtm.branches.current, 'master')
+      rtm.should_receive(:push).with('origin', nil, nil, :delete => 'fb')
       rtm.runner
     end
 

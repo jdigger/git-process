@@ -94,9 +94,16 @@ module GitProc
     end
 
 
-    def rebase(base)
-      logger.info { "Rebasing #{branches.current.name} against #{base}" }
-      command('rebase', base)
+    def rebase(base, opts = {})
+      args = []
+      if opts[:interactive]
+        logger.info { "Interactively rebasing #{branches.current.name} against #{base}" }
+        args << '-i'
+      else
+        logger.info { "Rebasing #{branches.current.name} against #{base}" }
+      end
+      args << base
+      command('rebase', args)
     end
 
 

@@ -24,6 +24,7 @@ module GitProc
 
     def initialize(dir, opts)
       @keep = opts[:keep]
+      @interactive = opts[:interactive]
       super
     end
 
@@ -36,14 +37,14 @@ module GitProc
     end
 
 
-    #noinspection RubyControlFlowConversionInspection
     def runner
       if has_a_remote?
         fetch(server_name)
         proc_rebase(integration_branch)
+        proc_rebase(integration_branch, :interactive => true) if @interactive
         push(server_name, branches.current, master_branch)
 
-        if not @keep
+        unless @keep
           close_pull_request
           remove_feature_branch
         end
