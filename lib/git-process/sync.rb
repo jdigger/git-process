@@ -24,8 +24,6 @@ module GitProc
 
 
     def initialize(dir, opts)
-      opts[:force] = true if opts[:rebase]
-
       if !opts[:merge].nil? and opts[:merge] == opts[:rebase]
         raise ArgumentError.new(":merge = #{opts[:merge]} and :rebase = #{opts[:rebase]}")
       end
@@ -56,23 +54,35 @@ module GitProc
     end
 
 
+    def remote_has_changed
+      old_sha = rev_parse(@remote_branch) rescue ''
+      fetch(server_name) if has_a_remote?
+      new_sha = rev_parse(@remote_branch) rescue ''
+
+      old_sha != new_sha
+    end
+
+
     def runner
       @current_branch ||= branches.current
       @remote_branch ||= "#{server_name}/#@current_branch"
 
-      # if the remote branch has changed, merge those changes in before
-      #   doing anything with the integration branch
-      old_sha = rev_parse(@remote_branch) rescue ''
-      fetch(server_name) if has_a_remote?
-      new_sha = rev_parse(@remote_branch) rescue ''
-      unless old_sha == new_sha
-        logger.info('There have been changes on this remote branch, so will merge them in.')
-        proc_merge(@remote_branch)
-      end
-
       if @do_rebase
+        if remote_has_changed
+          proc_merge(@remote_branch)
+        end
+
+        @force = true
+
         proc_rebase(integration_branch)
       else
+        # if the remote branch has changed, merge those changes in before
+        #   doing anything with the integration branch
+        if remote_has_changed
+          logger.info('There have been changes on this remote branch, so will merge them in.')
+          proc_merge(@remote_branch)
+        end
+
         proc_merge(integration_branch)
       end
 

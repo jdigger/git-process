@@ -116,15 +116,32 @@ describe GitProc::Sync do
     it "should work when pushing (non-fast-forward)" do
       change_file_and_commit('a', '')
 
-      gitprocess.branch('fb', :base_branch => 'master')
+      gp = clone
+      gp.checkout('fb', :new_branch => 'master')
 
-      clone('fb') do |gp|
-        gitprocess.checkout('fb') do
-          change_file_and_commit('a', 'hello', gitprocess)
-        end
+      expect { gp.runner }.to_not raise_error GitProc::GitExecuteError
 
-        expect { gp.runner }.to_not raise_error GitProc::GitExecuteError
-      end
+      change_file_and_commit('a', 'hello', gitprocess)
+
+      expect { gp.runner }.to_not raise_error GitProc::GitExecuteError
+    end
+
+
+    it "should merge and then rebase if remote feature branch changed" do
+      change_file_and_commit('a', '')
+
+      gitprocess.checkout('fb', :new_branch => 'master')
+
+      gp = clone
+      gp.checkout('fb', :new_branch => 'origin/master')
+
+      change_file_and_commit('b', 'hello', gp)
+      change_file_and_commit('a', 'hello', gitprocess)
+      change_file_and_commit('b', 'goodbye', gp)
+      change_file_and_commit('a', 'goodbye', gitprocess)
+      gitprocess.checkout('master')
+
+      expect { gp.runner }.to_not raise_error GitProc::GitExecuteError
     end
 
   end

@@ -67,7 +67,8 @@ module GitProc
 
 
     def is_ahead_of(base_branch_name)
-      @lib.rev_list(base_branch_name, @name, :oneline => true, :num_revs => 1) != ''
+      contains_all_of(base_branch_name) and
+          (@lib.rev_list(base_branch_name, @name, :oneline => true, :num_revs => 1) != '')
     end
 
 
