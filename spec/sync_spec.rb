@@ -196,6 +196,84 @@ describe GitProc::Sync do
   end
 
 
+  describe "when default rebase flag is used" do
+
+    def create_process(dir, opts)
+      GitProc::Sync.new(dir, opts.merge({:rebase => false, :force => false, :local => false}))
+    end
+
+
+    it "should try to rebase by flag" do
+      change_file_and_commit('a', '', gitprocess)
+
+      gitprocess.branch('fb', :base_branch => 'master')
+
+      sp = GitProc::Sync.new(gitprocess.workdir, {:rebase => true, :force => false, :local => true, :log_level => log_level})
+      sp.should_receive(:rebase)
+      sp.should_not_receive(:merge)
+
+      sp.runner
+    end
+
+
+    it "should try to rebase by config" do
+      change_file_and_commit('a', '', gitprocess)
+
+      gitprocess.branch('fb', :base_branch => 'master')
+      gitprocess.config('gitProcess.defaultRebaseSync', 'true')
+
+      sp = GitProc::Sync.new(gitprocess.workdir, {:rebase => false, :force => false, :local => true, :log_level => log_level})
+      sp.should_receive(:rebase)
+      sp.should_not_receive(:merge)
+
+      sp.runner
+    end
+
+
+    it "should not try to rebase by false config" do
+      change_file_and_commit('a', '', gitprocess)
+
+      gitprocess.branch('fb', :base_branch => 'master')
+      gitprocess.config('gitProcess.defaultRebaseSync', 'false')
+
+      sp = GitProc::Sync.new(gitprocess.workdir, {:rebase => false, :force => false, :local => true, :log_level => log_level})
+      sp.should_not_receive(:rebase)
+      sp.should_receive(:merge)
+
+      sp.runner
+    end
+
+
+    it "should not try to rebase by false config" do
+      change_file_and_commit('a', '', gitprocess)
+
+      gitprocess.branch('fb', :base_branch => 'master')
+      gitprocess.config('gitProcess.defaultRebaseSync', 'false')
+
+      sp = GitProc::Sync.new(gitprocess.workdir, {:rebase => false, :force => false, :local => true, :log_level => log_level})
+      sp.should_not_receive(:rebase)
+      sp.should_receive(:merge)
+
+      sp.runner
+    end
+
+
+    it "should try to rebase by true config" do
+      change_file_and_commit('a', '', gitprocess)
+
+      gitprocess.branch('fb', :base_branch => 'master')
+      gitprocess.config('gitProcess.defaultRebaseSync', 'true')
+
+      sp = GitProc::Sync.new(gitprocess.workdir, {:rebase => false, :force => false, :local => true, :log_level => log_level})
+      sp.should_receive(:rebase)
+      sp.should_not_receive(:merge)
+
+      sp.runner
+    end
+
+  end
+
+
   it "should work with a different remote server name than 'origin'" do
     change_file_and_commit('a', '')
 

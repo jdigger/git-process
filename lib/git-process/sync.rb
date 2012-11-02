@@ -67,25 +67,29 @@ module GitProc
       @current_branch ||= branches.current
       @remote_branch ||= "#{server_name}/#@current_branch"
 
+      # if the remote branch has changed, merge those changes in before
+      #   doing anything with the integration branch
+      if remote_has_changed
+        logger.info('There have been changes on this remote branch, so will merge them in.')
+        proc_merge(@remote_branch)
+      end
+
+      @do_rebase ||= config('gitProcess.defaultRebaseSync').to_boolean
+
       if @do_rebase
-        if remote_has_changed
-          proc_merge(@remote_branch)
-        end
-
         @force = true
-
         proc_rebase(integration_branch)
       else
-        # if the remote branch has changed, merge those changes in before
-        #   doing anything with the integration branch
-        if remote_has_changed
-          logger.info('There have been changes on this remote branch, so will merge them in.')
-          proc_merge(@remote_branch)
-        end
-
         proc_merge(integration_branch)
       end
 
+      push_to_server
+    end
+
+
+    private
+
+    def push_to_server
       if @local
         logger.debug("Not pushing to the server because the user selected local-only.")
       elsif not has_a_remote?
@@ -100,9 +104,6 @@ module GitProc
         push(server_name, @current_branch, @current_branch, :force => @force)
       end
     end
-
-
-    private
 
 
     def handle_remote_changed(old_sha)
