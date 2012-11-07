@@ -1,4 +1,12 @@
-# CHANGELOG - 1.0.5 #
+# CHANGELOG - 1.0.6 #
+
+### Since 1.0.5 ###
+
+* Adds option to make rebase the default for git-sync. (GH-82)
+* git-sync is now "safer" when working with other people on the same branch. (GH-80)
+* Interactive rebase is now option an option for git-to-master. (GH-13)
+* Simplified/improved arguments for git-pull-request (GH-86)
+* Adds some more known statuses. (GH-84, GH-88)
 
 ### Since 1.0.4 ###
 
