@@ -11,6 +11,7 @@ require 'git-process/sync'
 class SyncOptions
   include GitProc::GitProcessOptions
 
+
   def summary
     "Gets the latest changes that have happened on the integration branch, then pushes your changes to a \"private\" branch on the server."
   end
@@ -32,6 +33,8 @@ By default the first server name reported by 'git remote' is used as the server/
 Since most projects only have a single remote (i.e., "origin") this works most of the time. \
 But if you have multiple remotes and want to explicitly set it, use the \
 'gitProcess.remoteName' configuration option.
+
+Setting `gitProcess.defaultRebaseSync` to "true" causes this to default to using rebase instead of merge.
 
 EXAMPLE
 

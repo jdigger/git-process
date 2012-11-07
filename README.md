@@ -98,6 +98,7 @@ $ git to-master              # 6
 * `gitProcess.integrationBranch` : The name of the integration branch. Defaults to `master`, but can be set to `develop` or other.
 * `gitProcess.keepLocalIntegrationBranch` : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).
 * `gitProcess.remoteName` : Explicitly sets the remote server name to use.
+* `gitProcess.defaultRebaseSync`: Should `git sync` default to using rebase instead of merge?
 
 
 # Assumptions #
