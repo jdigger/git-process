@@ -1,4 +1,8 @@
-# CHANGELOG - 1.0.6 #
+# CHANGELOG - 1.0.7 #
+
+### Since 1.0.6 ###
+
+* Fixed bug caused by CLI conflict on -i. [GH-13](https://github.com/jdigger/git-process/issues/13)
 
 ### Since 1.0.5 ###
 
