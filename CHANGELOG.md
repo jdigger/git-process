@@ -2,17 +2,17 @@
 
 ### Since 1.0.5 ###
 
-* Adds option to make rebase the default for git-sync. (GH-82)
-* git-sync is now "safer" when working with other people on the same branch. (GH-80)
-* Interactive rebase is now option an option for git-to-master. (GH-13)
-* Simplified/improved arguments for git-pull-request (GH-86)
-* Adds some more known statuses. (GH-84, GH-88)
+* Adds option to make rebase the default for git-sync. [GH-82](https://github.com/jdigger/git-process/issues/82)
+* git-sync is now "safer" when working with other people on the same branch. [GH-80](https://github.com/jdigger/git-process/issues/80)
+* Interactive rebase is now an option for git-to-master. [GH-13](https://github.com/jdigger/git-process/issues/13)
+* Simplified/improved arguments for git-pull-request [GH-86](https://github.com/jdigger/git-process/issues/86)
+* Adds some more known statuses. [GH-84](https://github.com/jdigger/git-process/issues/84), [GH-88](https://github.com/jdigger/git-process/issues/88)
 
 ### Since 1.0.4 ###
 
-* Do not try to fetch/push when doing sync if there is not remote. (GH-70)
-* git-sync now merges in upstream changes. (GH-79)
-* Simplified Windows installation instructions. (GH-76 GH-77)
+* Do not try to fetch/push when doing sync if there is not remote. (#70)
+* git-sync now merges in upstream changes. (#79)
+* Simplified Windows installation instructions. (#76 #77)
 
 ### Since 1.0.3 ###
 
