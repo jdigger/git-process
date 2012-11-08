@@ -20,14 +20,30 @@ module GitHub
   class PullRequest
     include GitHubService
 
-    attr_reader :lib, :repo
+    attr_reader :lib, :repo, :remote_name, :client
 
 
-    def initialize(lib, repo, opts = {})
+    def initialize(lib, remote_name, repo, opts = {})
       @lib = lib
       @repo = repo
+      @remote_name = remote_name
       @user = opts[:user]
       @password = opts[:password]
+    end
+
+
+    def user
+      @user ||= ask_for_user
+    end
+
+
+    def password
+      @password ||= ask_for_password
+    end
+
+
+    def client
+      @client ||= create_client
     end
 
 
@@ -45,6 +61,11 @@ module GitHub
         logger.warn { "Pull request already exists. See #{pull[:html_url]}" }
         pull
       end
+    end
+
+
+    def pull_request(pr_number)
+      client.pull_request(repo, pr_number)
     end
 
 

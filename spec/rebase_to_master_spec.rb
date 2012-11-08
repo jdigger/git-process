@@ -1,10 +1,12 @@
 require 'git-process/rebase_to_master'
 require 'GitRepoHelper'
+require 'github_test_helper'
 require 'webmock/rspec'
 require 'json'
 
 describe GitProc::RebaseToMaster do
   include GitRepoHelper
+  include GitHubTestHelper
 
 
   def log_level
@@ -107,11 +109,19 @@ describe GitProc::RebaseToMaster do
     describe "closing the pull request" do
 
       it "should work for an existing pull request" do
-        stub_request(:get, /test_repo\/pulls\?access_token=/).
-            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'open', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
-        stub_request(:patch, /test_repo\/pulls\/987\?access_token=/).
-            with(:body => JSON({:state => 'closed'})).
-            to_return(:status => 200, :body => JSON([{:number => 987, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'fb'}, :base => {:ref => 'master'}}]))
+        stub_get('https://api.github.com/repos/test_repo/pulls?state=open',
+                 :body => [
+                     {:number => 987, :state => 'open', :html_url => 'test_url',
+                      :head => {:ref => 'fb'},
+                      :base => {:ref => 'master'}}
+                 ])
+        stub_patch('https://api.github.com/repos/test_repo/pulls/987',
+                   :send => JSON({:state => 'closed'}),
+                   :body => [
+                       {:number => 987, :state => 'closed', :html_url => 'test_url',
+                        :head => {:ref => 'fb'},
+                        :base => {:ref => 'master'}}
+                   ])
 
         gitprocess.branch('fb', :base_branch => 'master')
 

@@ -8,17 +8,39 @@ require 'rspec/mocks/methods'
 require 'rspec/mocks/test_double'
 require 'rspec/mocks/mock'
 require 'git_lib_stub'
+require 'github_test_helper'
 
 class GHS
   include GitHubService
 
+  attr_reader :remote_name
 
-  def initialize(user = nil, password = nil, site = nil)
+
+  def initialize(user = nil, password = nil, site = 'origin')
+    @lib = GitLibStub.new
     @user = user
     @password = password
-    @site = site
+    @remote_name = site
+  end
 
-    @lib = GitLibStub.new
+
+  def user
+    @user ||= ask_for_user
+  end
+
+
+  def password
+    @password ||= ask_for_password
+  end
+
+
+  def pw_client
+    @pw_client ||= create_pw_client
+  end
+
+
+  def client
+    @client ||= create_client
   end
 
 
@@ -29,6 +51,8 @@ end
 
 
 describe GitHubService do
+  include GitHubTestHelper
+
 
   def test_token
     'hfgkdjfgksjhdfkls'
@@ -47,16 +71,16 @@ describe GitHubService do
 
 
     it "should return an auth_token for a good request" do
-      stub_request(:post, /api.github.com\/authorizations/).
-          to_return(:status => 200, :body => JSON({:token => test_token}))
+      stub_post('https://tu:dfsdf@api.github.com/authorizations', :send => auth_json,
+                :body => {:token => test_token})
 
       ghs.create_authorization().should == test_token
     end
 
 
     it "should 401 for bad password" do
-      stub_request(:post, /api.github.com\/authorizations/).
-          to_return(:status => 401)
+      stub_post('https://tu:dfsdf@api.github.com/authorizations', :send => auth_json,
+                :status => 401)
 
       lambda { ghs.create_authorization() }.should raise_error Octokit::Unauthorized
     end
@@ -82,8 +106,8 @@ describe GitHubService do
       ghs.lib.config('github.user', 'test_user')
       ghs.lib.config('gitProcess.github.authToken', '')
 
-      stub_request(:post, /api.github.com\/authorizations/).
-          to_return(:status => 200, :body => JSON({:token => test_token}))
+      stub_post('https://test_user:dfsdf@api.github.com/authorizations', :send => auth_json,
+                :body => {:token => test_token})
 
       ghs.auth_token.should == test_token
     end
@@ -116,7 +140,7 @@ describe GitHubService do
 
     def ghs
       unless @ghs
-        @ghs = GHS.new('tu', 'dfsdf', nil)
+        @ghs = GHS.new('tu', 'dfsdf')
       end
       @ghs
     end
@@ -125,8 +149,9 @@ describe GitHubService do
     it "should use the correct server and path for a non-GitHub.com site" do
       ghs.lib.add_remote('origin', 'git@myco.com:jdigger/git-process.git')
 
-      stub_request(:post, /myco.com\/api\/v3\/authorizations/).
-          to_return(:status => 200, :body => JSON({:token => test_token}))
+      stub_post('https://tu:dfsdf@myco.com/api/v3/authorizations',
+                :send => auth_json,
+                :body => {:token => test_token})
 
       ghs.create_authorization().should == test_token
     end
@@ -139,45 +164,37 @@ describe GitHubService do
     end
 
 
-    it "site should not work for a garbase url address" do
+    it "site should not work for a garbage url address" do
       ghs.lib.add_remote('origin', 'garbage')
 
       lambda { ghs.site }.should raise_error URI::InvalidURIError
     end
 
 
-    def in_tempfile(content, &block)
-      file = Tempfile.new('ssh_config')
-      file.puts content
-      file.flush
-
-      begin
-        block.call(file)
-      ensure
-        file.close
-        file.unlink
-      end
-    end
-
-
-    it "site should work for an ssh-configged url address" do
+    it "site should work for an ssh-configured url address" do
       ghs.lib.add_remote('origin', 'git@github.myco.com:fooble')
 
-      ghs.site().should == 'http://github.myco.com'
+      ghs.site().should == 'https://github.myco.com'
     end
 
   end
 
 
   it "#git_url_to_api" do
-    ghs = GHS.new('tu', 'dfsdf', nil)
+    ghs = GHS.new('tu', 'dfsdf')
 
-    ghs.git_url_to_api('git@github.myco.com:fooble').should == 'http://github.myco.com'
+    ghs.git_url_to_api('ssh://git@github.myco.com/fooble').should == 'https://github.myco.com'
     ghs.git_url_to_api('git://myco.com/jdigger/git-process.git').should == 'https://myco.com'
     ghs.git_url_to_api('http://github.myco.com/fooble').should == 'http://github.myco.com'
     ghs.git_url_to_api('http://tu@github.myco.com/fooble').should == 'http://github.myco.com'
     ghs.git_url_to_api('https://github.myco.com/fooble').should == 'https://github.myco.com'
     ghs.git_url_to_api('https://github.com/fooble').should == 'https://api.github.com'
+  end
+
+
+  def auth_json
+    JSON({:note_url => 'http://jdigger.github.com/git-process',
+          :scopes => %w(repo user gist), :note => "Git-Process"})
   end
 
 end

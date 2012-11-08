@@ -87,12 +87,12 @@ module GitProc
 
 
     def close_pull_request
-      pr = GitHub::PullRequest.new(self, repo_name)
+      pr = GitHub::PullRequest.new(self, remote_name, repo_name)
 
       # Assume that if we haven't done something that would create the
       # GitHub auth token, then this likely isn't a GitHub-based repo.
       # (Or at least the user isn't using pull requests)
-      if pr.config_auth_token
+      if pr.get_config_auth_token
         begin
           mybranches = branches()
           pull = pr.find_pull_request(master_branch, mybranches.current.name)

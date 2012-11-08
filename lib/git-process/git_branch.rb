@@ -86,6 +86,11 @@ module GitProc
     end
 
 
+    def upstream(upstream_name)
+      @lib.branch(@name, :upstream => upstream_name)
+    end
+
+
     def contains_all_of(branch_name)
       @lib.rev_list(@name, branch_name, :oneline => true, :num_revs => 1) == ''
     end

@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+#require "rubygems"
+#require "bundler/setup"
+#$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
+
 require 'git-process/pull_request'
 require 'git-process/git_process_options'
 
@@ -8,7 +12,7 @@ class PullRequestOptions
 
 
   def summary
-    "Creates a Pull Request for the current branch."
+    "Creates or gets a Pull Request."
   end
 
 
@@ -16,12 +20,20 @@ class PullRequestOptions
     <<DESC
 DESCRIPTION
 
-This creates a Pull Request on the GitHub server associated with the current \
+This creates or gets a Pull Request on the GitHub server associated with the current \
 branch. For the reasons why Pull Requests are useful for the development process, \
 see https://help.github.com/articles/using-pull-requests
 
 The "git pull-request" command is a nice, simplified alternative to using the \
 web interface.
+
+If no name or number is provided, it is assumed that you want to create a new \
+pull request with the same name as the current branch.
+
+If a number is given, or a number with a server preceding it (e.g., "origin/23"), \
+then this assumes that the number refers to an existing pull request identified \
+by that number. In that case, the branch associated with the HEAD of the pull \
+request is checked out.
 
 EXAMPLE
 
@@ -53,7 +65,7 @@ DESC
 
 
   def usage(filename)
-    "Usage: #{filename} [ options ] pull_request_title"
+    "Usage: #{filename} [ options ] [pull_request_title | server/pull_request_number | pull_request_number]"
   end
 
 
@@ -75,7 +87,16 @@ DESC
 
 
   def post_parse(opts, argv)
-    opts[:title] = argv.shift
+    arg = argv.shift
+    if /^\d+$/ =~ arg
+      opts[:prNumber] = arg
+    elsif /^(.*)\/(\d+)$/ =~ arg
+      m = /^(.*)\/(\d+)$/.match(arg)
+      opts[:server] = m[1]
+      opts[:prNumber] = m[2]
+    else
+      opts[:title] = arg
+    end
   end
 
 end

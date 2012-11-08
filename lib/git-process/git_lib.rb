@@ -134,6 +134,7 @@ module GitProc
     # @option opts [Boolean] :all list all branches, local and remote
     # @option opts [Boolean] :no_color force not using any ANSI color codes
     # @option opts [String]  :rename the new name for the branch
+    # @option opts [String]  :upstream the new branch to track
     # @option opts [String]  :base_branch the branch to base the new branch off of;
     #   defaults to 'master'
     #
@@ -149,6 +150,10 @@ module GitProc
         logger.info { "Renaming branch '#{branch_name}' to '#{opts[:rename]}'." }
 
         args << '-m' << branch_name << opts[:rename]
+      elsif opts[:upstream]
+        logger.info { "Setting upstream/tracking for branch '#{branch_name}' to '#{opts[:upstream]}'." }
+
+        args << '--set-upstream-to' << opts[:upstream] << branch_name
       elsif branch_name
         if opts[:force]
           raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless opts[:base_branch]
@@ -318,7 +323,7 @@ module GitProc
     def repo_name
       unless @repo_name
         origin_url = config("remote.#{remote_name}.url")
-        raise GitProc::Process::GitProcessError.new("There is no #{remote_name} url set up.") if origin_url.empty?
+        raise GitProcessError.new("There is no #{remote_name} url set up.") if origin_url.nil? or origin_url.empty?
         @repo_name = origin_url.sub(/^.*:(.*?)(.git)?$/, '\1')
       end
       @repo_name
@@ -329,15 +334,27 @@ module GitProc
       unless @remote_name
         @remote_name = config('gitProcess.remoteName')
         if @remote_name.nil? or @remote_name.empty?
-          remote_str = command(:remote)
-          unless remote_str == nil or remote_str.empty?
-            @remote_name = remote_str.split(/\n/)[0]
+          remotes = remote_servers()
+          if remotes.empty?
+            @remote_name = nil
+          else
+            @remote_name = remotes[0]
             raise "!@remote_name.is_a? String" unless @remote_name.is_a? String
           end
         end
         logger.debug { "Using remote name of '#@remote_name'" }
       end
       @remote_name
+    end
+
+
+    def remote_servers
+      remote_str = command(:remote, [:show])
+      if remote_str.nil? or remote_str.empty?
+        []
+      else
+        remote_str.split(/\n/)
+      end
     end
 
 
@@ -370,14 +387,19 @@ module GitProc
     # @raise [GitHubService::NoRemoteRepository] there is not a URL set for the server name
     # @raise [URI::InvalidURIError] the retrieved URL does not have a schema
     # @raise [GitHubService::NoRemoteRepository] if could not figure out a host for the retrieved URL
-    def expanded_url(server_name = 'origin', opts = {})
-      conf_key = "remote.#{server_name}.url"
-      url = config(conf_key)
+    def expanded_url(server_name = 'origin', raw_url = nil, opts = {})
+      if raw_url.nil?
+        conf_key = "remote.#{server_name}.url"
+        url = config(conf_key)
 
-      raise GitHubService::NoRemoteRepository.new("There is no value set for '#{conf_key}'") if url.nil? or url.empty?
+        raise GitHubService::NoRemoteRepository.new("There is no value set for '#{conf_key}'") if url.nil? or url.empty?
+      else
+        raise GitHubService::NoRemoteRepository.new("There is no value set for '#{raw_url}'") if raw_url.nil? or raw_url.empty?
+        url = raw_url
+      end
 
       if /^\S+@/ =~ url
-        url
+        url.sub(/^(\S+@\S+?):(.*)$/, "ssh://\\1/\\2")
       else
         uri = URI.parse(url)
         host = uri.host
@@ -393,7 +415,7 @@ module GitProc
 
           host = rv[0]
           user = rv[1]
-          url.sub(/^\S+:(\S+)$/, "#{user}@#{host}:\\1")
+          url.sub(/^\S+:(\S+)$/, "ssh://#{user}@#{host}/\\1")
         else
           url
         end

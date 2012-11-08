@@ -164,7 +164,7 @@ describe GitProc::GitLib do
     it "should work for an ssh address" do
       gitlib.add_remote('torigin', 'tuser@github.myco.com:jdigger/git-process.git')
 
-      gitlib.expanded_url('torigin').should == 'tuser@github.myco.com:jdigger/git-process.git'
+      gitlib.expanded_url('torigin').should == 'ssh://tuser@github.myco.com/jdigger/git-process.git'
     end
 
 
@@ -182,7 +182,7 @@ describe GitProc::GitLib do
     end
 
 
-    it "should work for an ssh-configged url address" do
+    it "should work for an ssh-configured url address" do
       gitlib.add_remote('origin', 'mygithub:jdigger/git-process.git')
 
       content = "\nHost mygithub\n"+
@@ -190,7 +190,7 @@ describe GitProc::GitLib do
           "  HostName github.myco.com\n"
 
       in_tempfile('ssh_config', content) do |file|
-        gitlib.expanded_url('origin', :ssh_config_file => file.path).should == 'tuser@github.myco.com:jdigger/git-process.git'
+        gitlib.expanded_url('origin', nil, :ssh_config_file => file.path).should == 'ssh://tuser@github.myco.com/jdigger/git-process.git'
       end
     end
 
