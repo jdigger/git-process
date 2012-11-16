@@ -69,7 +69,7 @@ module GitProc
             unmerged << f
           when 'AM', 'MA'
             added << f
-            merged << f
+            modified << f
           when '??', '!!'
             unknown << f
           when 'R '
