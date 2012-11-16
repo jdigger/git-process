@@ -1,4 +1,8 @@
-# CHANGELOG - 1.0.7 #
+# CHANGELOG - 1.0.8 #
+
+### Since 1.0.7 ###
+
+* Fixed bug in git_status. [GH-93](https://github.com/jdigger/git-process/issues/93)
 
 ### Since 1.0.6 ###
 
