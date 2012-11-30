@@ -1,4 +1,5 @@
 require 'git-process/github_service'
+require 'git-process/git_lib'
 require 'webmock/rspec'
 require 'json'
 require 'octokit'
@@ -6,7 +7,7 @@ require 'tempfile'
 require 'rspec/mocks/methods'
 require 'rspec/mocks/test_double'
 require 'rspec/mocks/mock'
-
+require 'git_lib_stub'
 
 class GHS
   include GitHubService
@@ -17,12 +18,7 @@ class GHS
     @password = password
     @site = site
 
-    logger = RSpec::Mocks::Mock.new('logger')
-    logger.stub(:debug)
-    logger.stub(:info)
-
-    @lib = RSpec::Mocks::Mock.new('lib')
-    @lib.stub(:logger).and_return(logger)
+    @lib = GitLibStub.new
   end
 
 
@@ -44,15 +40,13 @@ describe GitHubService do
     def ghs
       unless @ghs
         @ghs = GHS.new('tu', 'dfsdf')
-        @ghs.lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
+        @ghs.lib.add_remote('origin', 'git@github.com:jdigger/git-process.git')
       end
       @ghs
     end
 
 
     it "should return an auth_token for a good request" do
-      ghs.lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
-
       stub_request(:post, /api.github.com\/authorizations/).
           to_return(:status => 200, :body => JSON({:token => test_token}))
 
@@ -74,9 +68,9 @@ describe GitHubService do
 
     it "should get the token from config if it exists" do
       ghs = GHS.new
-      ghs.lib.stub(:config).with('github.user').and_return('test_user')
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
-      ghs.lib.stub(:config).with('gitProcess.github.authToken').and_return(test_token)
+      ghs.lib.add_remote('origin', 'git@github.com:jdigger/git-process.git')
+      ghs.lib.config('github.user', 'test_user')
+      ghs.lib.config('gitProcess.github.authToken', test_token)
 
       ghs.auth_token.should == test_token
     end
@@ -84,10 +78,9 @@ describe GitHubService do
 
     it "should get the token from the server if it does not exist in config" do
       ghs = GHS.new(nil, 'dfsdf')
-      ghs.lib.stub(:config).with('github.user').and_return('test_user')
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
-      ghs.lib.stub(:config).with('gitProcess.github.authToken').and_return('')
-      ghs.lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
+      ghs.lib.add_remote('origin', 'git@github.com:jdigger/git-process.git')
+      ghs.lib.config('github.user', 'test_user')
+      ghs.lib.config('gitProcess.github.authToken', '')
 
       stub_request(:post, /api.github.com\/authorizations/).
           to_return(:status => 200, :body => JSON({:token => test_token}))
@@ -102,7 +95,7 @@ describe GitHubService do
 
     it "should get the value from config" do
       ghs = GHS.new(nil, 'dfsdf')
-      ghs.lib.stub(:config).with('github.user').and_return('test_user')
+      ghs.lib.config('github.user', 'test_user')
 
       ghs.user.should == 'test_user'
     end
@@ -110,8 +103,7 @@ describe GitHubService do
 
     it "should prompt the user and store it in the config" do
       ghs = GHS.new(nil, 'dfsdf')
-      ghs.lib.stub(:config).with('github.user').and_return('')
-      ghs.lib.stub(:config).with('github.user', anything).once
+      ghs.lib.config('github.user', '')
 
       ghs.stub(:ask).with(/username/).and_return('test_user')
       ghs.user.should == 'test_user'
@@ -123,13 +115,15 @@ describe GitHubService do
   describe "using GHE instead of GitHub.com" do
 
     def ghs
-      @ghs ||= GHS.new('tu', 'dfsdf', nil)
+      unless @ghs
+        @ghs = GHS.new('tu', 'dfsdf', nil)
+      end
+      @ghs
     end
 
 
     it "should use the correct server and path for a non-GitHub.com site" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
-      ghs.lib.should_receive(:config).with('gitProcess.github.authToken', anything).once
+      ghs.lib.add_remote('origin', 'git@myco.com:jdigger/git-process.git')
 
       stub_request(:post, /myco.com\/api\/v3\/authorizations/).
           to_return(:status => 200, :body => JSON({:token => test_token}))
@@ -138,43 +132,15 @@ describe GitHubService do
     end
 
 
-    it "site should work for git@... ssh address" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
-
-      ghs.site.should == 'http://myco.com'
-    end
-
-
-    it "site should work for https address" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('https://myco.com/jdigger/git-process.git')
-
-      ghs.site.should == 'https://myco.com'
-    end
-
-
-    it "site should work for http address" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('http://jdigger@myco.com/jdigger/git-process.git')
-
-      ghs.site.should == 'http://myco.com'
-    end
-
-
-    it "site should work for git://myco.com/ address" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('git://myco.com/jdigger/git-process.git')
-
-      ghs.site.should == 'http://myco.com'
-    end
-
-
     it "site should raise an error if remote.origin.url not set" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('')
+      ghs.lib.config('remote.origin.url', '')
 
       lambda { ghs.site }.should raise_error GitHubService::NoRemoteRepository
     end
 
 
     it "site should not work for a garbase url address" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('garbage')
+      ghs.lib.add_remote('origin', 'garbage')
 
       lambda { ghs.site }.should raise_error URI::InvalidURIError
     end
@@ -195,17 +161,23 @@ describe GitHubService do
 
 
     it "site should work for an ssh-configged url address" do
-      ghs.lib.stub(:config).with('remote.origin.url').and_return('mygithub:jdigger/git-process.git')
+      ghs.lib.add_remote('origin', 'git@github.myco.com:fooble')
 
-      content = "\nHost mygithub\n"+
-          "  User git\n"+
-          "  HostName github.myco.com\n"
-
-      in_tempfile(content) do |file|
-        ghs.site(:ssh_config_file => file.path).should == 'http://github.myco.com'
-      end
+      ghs.site().should == 'http://github.myco.com'
     end
 
+  end
+
+
+  it "#git_url_to_api" do
+    ghs = GHS.new('tu', 'dfsdf', nil)
+
+    ghs.git_url_to_api('git@github.myco.com:fooble').should == 'http://github.myco.com'
+    ghs.git_url_to_api('git://myco.com/jdigger/git-process.git').should == 'https://myco.com'
+    ghs.git_url_to_api('http://github.myco.com/fooble').should == 'http://github.myco.com'
+    ghs.git_url_to_api('http://tu@github.myco.com/fooble').should == 'http://github.myco.com'
+    ghs.git_url_to_api('https://github.myco.com/fooble').should == 'https://github.myco.com'
+    ghs.git_url_to_api('https://github.com/fooble').should == 'https://api.github.com'
   end
 
 end

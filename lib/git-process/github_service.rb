@@ -34,68 +34,33 @@ module GitHubService
 
 
   def compute_site(opts = {})
-    origin_url = lib.config('remote.origin.url')
+    url = lib.expanded_url('origin')
+    git_url_to_api(url)
+  end
 
-    raise GitHubService::NoRemoteRepository.new("There is no value set for 'remote.origin.url'") if origin_url.empty?
 
-    if /^git@/ =~ origin_url
-      host = origin_url.sub(/^git@(.*?):.*$/, '\1')
-      site = host_to_site(host, false)
+  def git_url_to_api(url)
+    if /^git@/ =~ url
+      host = url.sub(/^git@(.*?):.*$/, '\1')
+
+      if /github.com$/ =~ host
+        'https://api.github.com'
+      else
+        "http://#{host}"
+      end
     else
-      uri = URI.parse(origin_url)
+      uri = URI.parse(url)
       host = uri.host
-      scheme = uri.scheme
 
-      raise URI::InvalidURIError.new("Need a scheme in URI: '#{origin_url}'") unless scheme
-
-      if host.nil?
-        # assume that the 'scheme' is the named configuration in ~/.ssh/config
-        host = hostname_from_ssh_config(scheme, opts[:ssh_config_file] ||= "#{ENV['HOME']}/.ssh/config")
+      if /github.com$/ =~ host
+        'https://api.github.com'
+      else
+        scheme = uri.scheme
+        scheme = 'https' if scheme == 'git'
+        "#{scheme}://#{host}"
       end
-
-      raise GitHubService::NoRemoteRepository.new("Could not determine a host from #{origin_url}") if host.nil?
-
-      site = host_to_site(host, scheme == 'https')
-    end
-    site
-  end
-
-
-  def hostname_from_ssh_config(host_alias, config_file)
-    if File.exists?(config_file)
-      config_lines = File.new(config_file).readlines
-
-      in_host_section = false
-      host_name = nil
-
-      config_lines.each do |line|
-        line.chop!
-        if /^\s*Host\s+#{host_alias}\s*$/ =~ line
-          in_host_section = true
-          next
-        end
-        if in_host_section and (/^\s*HostName\s+\S+\s*$/ =~ line)
-          host_name = line.sub(/^\s*HostName\s+(\S+)\s*$/, '\1')
-          break
-        end
-      end
-      host_name
-    else
-      nil
     end
   end
-
-
-  def host_to_site(host, ssl)
-    if /github.com$/ =~ host
-      'https://api.github.com'
-    else
-      "http#{ssl ? 's' : ''}://#{host}"
-    end
-  end
-
-
-  private :host_to_site, :compute_site
 
 
   def pw_client

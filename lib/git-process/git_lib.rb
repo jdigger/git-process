@@ -356,6 +356,84 @@ module GitProc
     end
 
 
+    #
+    # Expands the git configuration server name to a url.
+    #
+    # Takes into account further expanding an SSH uri that uses SSH aliasing in .ssh/config
+    #
+    # @param [String] server_name the git configuration server name; defaults to 'origin'
+    #
+    # @option opts [String] :ssh_config_file the SSH config file to use; defaults to ~/.ssh/config
+    #
+    # @return the fully expanded URL; never nil
+    #
+    # @raise [GitHubService::NoRemoteRepository] there is not a URL set for the server name
+    # @raise [URI::InvalidURIError] the retrieved URL does not have a schema
+    # @raise [GitHubService::NoRemoteRepository] if could not figure out a host for the retrieved URL
+    def expanded_url(server_name = 'origin', opts = {})
+      conf_key = "remote.#{server_name}.url"
+      url = config(conf_key)
+
+      raise GitHubService::NoRemoteRepository.new("There is no value set for '#{conf_key}'") if url.nil? or url.empty?
+
+      if /^\S+@/ =~ url
+        url
+      else
+        uri = URI.parse(url)
+        host = uri.host
+        scheme = uri.scheme
+
+        raise URI::InvalidURIError.new("Need a scheme in URI: '#{url}'") unless scheme
+
+        if host.nil?
+          # assume that the 'scheme' is the named configuration in ~/.ssh/config
+          rv = hostname_and_user_from_ssh_config(scheme, opts[:ssh_config_file] ||= "#{ENV['HOME']}/.ssh/config")
+
+          raise GitHubService::NoRemoteRepository.new("Could not determine a host from #{url}") if rv.nil?
+
+          host = rv[0]
+          user = rv[1]
+          url.sub(/^\S+:(\S+)$/, "#{user}@#{host}:\\1")
+        else
+          url
+        end
+      end
+    end
+
+
+    #noinspection RubyInstanceMethodNamingConvention
+    def hostname_and_user_from_ssh_config(host_alias, config_file)
+      if File.exists?(config_file)
+        config_lines = File.new(config_file).readlines
+
+        in_host_section = false
+        host_name = nil
+        user_name = nil
+
+        config_lines.each do |line|
+          line.chop!
+          if /^\s*Host\s+#{host_alias}\s*$/ =~ line
+            in_host_section = true
+            next
+          end
+
+          if in_host_section and (/^\s*HostName\s+\S+\s*$/ =~ line)
+            host_name = line.sub(/^\s*HostName\s+(\S+)\s*$/, '\1')
+            break unless user_name.nil?
+          elsif in_host_section and (/^\s*User\s+\S+\s*$/ =~ line)
+            user_name = line.sub(/^\s*User\s+(\S+)\s*$/, '\1')
+            break unless host_name.nil?
+          elsif in_host_section and (/^\s*Host\s+.*$/ =~ line)
+            break
+          end
+        end
+        host_name.nil? ? nil : [host_name, user_name]
+      else
+        nil
+      end
+    end
+
+
     def reset(rev_name, opts = {})
       args = []
       args << '--hard' if opts[:hard]

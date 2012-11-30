@@ -1,5 +1,6 @@
 require 'git-process/pull_request'
 require 'GitRepoHelper'
+require 'git_lib_stub'
 require 'webmock/rspec'
 require 'json'
 require 'octokit'
@@ -12,8 +13,7 @@ describe GitHub::PullRequest do
 
   def lib
     unless @lib
-      @lib = double('lib')
-      @lib.stub(:logger).and_return(logger)
+      @lib = GitLibStub.new
     end
     @lib
   end
@@ -30,8 +30,8 @@ describe GitHub::PullRequest do
 
 
   before(:each) do
-    lib.stub(:config).with('gitProcess.github.authToken').and_return(test_token)
-    lib.stub(:config).with('remote.origin.url').and_return('git@github.com:jdigger/git-process.git')
+    lib.config('gitProcess.github.authToken', test_token)
+    lib.add_remote('origin', 'git@github.com:jdigger/git-process.git')
   end
 
 
