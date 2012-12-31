@@ -1,4 +1,4 @@
-[![Build Status](https://secure.travis-ci.org/jdigger/git-process.png)](http://travis-ci.org/jdigger/git-process)
+[![Build Status](https://travis-ci.org/jdigger/git-process.png?branch=master)](https://travis-ci.org/jdigger/git-process)
 
 # Purpose #
 
