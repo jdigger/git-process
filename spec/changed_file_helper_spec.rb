@@ -1,21 +1,6 @@
 require 'git-process/sync'
 require 'GitRepoHelper'
 
-module GitProc
-
-  class CFHStub < Process
-    include ChangeFileHelper
-
-
-    def cleanup
-      stash_pop if @stash_pushed
-    end
-
-  end
-
-end
-
-
 describe GitProc::ChangeFileHelper do
   include GitRepoHelper
 
@@ -36,7 +21,12 @@ describe GitProc::ChangeFileHelper do
 
 
   def create_process(dir, opts)
-    GitProc::CFHStub.new(dir, opts)
+    GitProc::Process.new(dir, opts)
+  end
+
+
+  def cfh
+    @cfh ||= GitProc::ChangeFileHelper.new(gitprocess)
   end
 
 
@@ -52,7 +42,7 @@ describe GitProc::ChangeFileHelper do
 
       gp.merge('origin/master') rescue ''
 
-      expect { gp.offer_to_help_uncommitted_changes }.should raise_error GitProc::UncommittedChangesError
+      expect { GitProc::ChangeFileHelper.new(gp).offer_to_help_uncommitted_changes }.should raise_error GitProc::UncommittedChangesError
     end
 
 
@@ -65,18 +55,18 @@ describe GitProc::ChangeFileHelper do
 
 
       it 'should then add it' do
-        gitprocess.stub(:ask).and_return('a')
+        cfh.stub(:ask).and_return('a')
         gitprocess.should_receive(:add).with(['unknown file.txt'])
 
-        gitprocess.offer_to_help_uncommitted_changes
+        cfh.offer_to_help_uncommitted_changes
       end
 
 
       it 'should ignore the file' do
-        gitprocess.stub(:ask).and_return('i')
+        cfh.stub(:ask).and_return('i')
         gitprocess.should_not_receive(:add)
 
-        gitprocess.offer_to_help_uncommitted_changes
+        cfh.offer_to_help_uncommitted_changes
       end
 
     end
@@ -110,28 +100,28 @@ describe GitProc::ChangeFileHelper do
         #  D "removed file.txt"
         # AD "removed file2.txt"
 
-        gitprocess.stub(:say)
+        cfh.stub(:say)
       end
 
 
       it 'should ask about modified files, then commit them' do
-        gitprocess.stub(:ask).and_return('c')
+        cfh.stub(:ask).and_return('c')
         gitprocess.should_receive(:add).with(["added file.txt", "modified file.txt", "modified file2.txt", "modified file4.txt"])
         gitprocess.should_receive(:remove).with(["modified file3.txt", "removed file.txt", "removed file2.txt"])
         gitprocess.should_receive(:commit).with(nil)
 
-        gitprocess.offer_to_help_uncommitted_changes
+        cfh.offer_to_help_uncommitted_changes
       end
 
 
       it 'should ask about modified files, then stash them' do
-        gitprocess.stub(:ask).and_return('s')
+        cfh.stub(:ask).and_return('s')
 
-        gitprocess.offer_to_help_uncommitted_changes
+        cfh.offer_to_help_uncommitted_changes
 
         gitprocess.status.clean?.should be_true
 
-        gitprocess.cleanup
+        gitprocess.stash_pop
 
         stat = gitprocess.status
         stat.added.should == ["added file.txt", "removed file2.txt"]

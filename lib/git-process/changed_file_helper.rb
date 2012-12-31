@@ -23,16 +23,32 @@ module GitProc
   # log_level
   # workdir
   #
-  module ChangeFileHelper
-    include GitLib
+  #noinspection RubyControlFlowConversionInspection
+  #noinspection RubyInstanceMethodNamingConvention
+  class ChangeFileHelper
+
+    def initialize(gitlib)
+      raise "Need gitlib" if gitlib.nil?
+      @gitlib = gitlib
+    end
+
+
+    def gitlib
+      @gitlib
+    end
+
+
+    def logger
+      gitlib.logger
+    end
 
 
     def offer_to_help_uncommitted_changes
-      stat = status
+      stat = gitlib.status
 
       if stat.unmerged.empty?
         handle_unknown_files(stat)
-        handle_changed_files(status) # refresh status in case it changed earlier
+        handle_changed_files(gitlib.status) # refresh status in case it changed earlier
       else
         logger.info { "Can not offer to auto-add unmerged files: #{stat.unmerged.inspect}" }
         raise UncommittedChangesError.new
@@ -44,7 +60,7 @@ module GitProc
       if not stat.unknown.empty?
         resp = ask_how_to_handle_unknown_files(stat)
         if resp == :add
-          add(stat.unknown)
+          gitlib.add(stat.unknown)
         end
       end
     end
@@ -56,13 +72,12 @@ module GitProc
         if resp == :commit
           changed_files = (stat.added + stat.modified - stat.deleted).sort.uniq
 
-          add(changed_files) unless changed_files.empty?
-          remove(stat.deleted) unless stat.deleted.empty?
+          gitlib.add(changed_files) unless changed_files.empty?
+          gitlib.remove(stat.deleted) unless stat.deleted.empty?
 
-          commit(nil)
+          gitlib.commit(nil)
         else
-          stash_save
-          @stash_pushed = true
+          gitlib.stash_save
         end
       end
     end

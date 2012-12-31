@@ -20,8 +20,6 @@ require 'git-process/changed_file_helper'
 module GitProc
 
   class Sync < Process
-    include ChangeFileHelper
-
 
     def initialize(dir, opts)
       if !opts[:merge].nil? and opts[:merge] == opts[:rebase]
@@ -33,6 +31,7 @@ module GitProc
       @do_rebase = opts[:rebase]
       @force = opts[:force]
       @local = opts[:local]
+      @change_file_helper = ChangeFileHelper.new(self)
       super
     end
 
@@ -42,7 +41,7 @@ module GitProc
       super
 
       if not status.clean?
-        offer_to_help_uncommitted_changes
+        @change_file_helper.offer_to_help_uncommitted_changes
       end
 
       raise ParkedChangesError.new(self) if is_parked?
