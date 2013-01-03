@@ -23,15 +23,15 @@ module GitProc
 
 
     def runner
-      mybranches = branches()
+      mybranches = gitlib.branches()
       on_parking = (mybranches.parking == mybranches.current)
 
       if on_parking
-        new_branch = checkout(@branch_name, :new_branch => '_parking_')
+        new_branch = gitlib.checkout(@branch_name, :new_branch => '_parking_')
         mybranches.parking.delete!
         new_branch
       else
-        checkout(@branch_name, :new_branch => integration_branch)
+        gitlib.checkout(@branch_name, :new_branch => config.integration_branch)
       end
     end
 

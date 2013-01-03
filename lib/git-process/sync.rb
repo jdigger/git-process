@@ -21,7 +21,7 @@ module GitProc
 
   class Sync < Process
 
-    def initialize(dir, opts)
+    def initialize(base, opts)
       if !opts[:merge].nil? and opts[:merge] == opts[:rebase]
         raise ArgumentError.new(":merge = #{opts[:merge]} and :rebase = #{opts[:rebase]}")
       end
@@ -31,8 +31,11 @@ module GitProc
       @do_rebase = opts[:rebase]
       @force = opts[:force]
       @local = opts[:local]
-      @change_file_helper = ChangeFileHelper.new(self)
+
       super
+
+      @change_file_helper = ChangeFileHelper.new(gitlib)
+      self
     end
 
 
@@ -40,7 +43,7 @@ module GitProc
     def verify_preconditions
       super
 
-      if not status.clean?
+      if not gitlib.status.clean?
         @change_file_helper.offer_to_help_uncommitted_changes
       end
 
@@ -49,37 +52,35 @@ module GitProc
 
 
     def cleanup
-      stash_pop if @stash_pushed
+      gitlib.stash_pop if @stash_pushed
     end
 
 
-    def remote_has_changed
-      old_sha = rev_parse(@remote_branch) rescue ''
-      fetch(server_name) if has_a_remote?
-      new_sha = rev_parse(@remote_branch) rescue ''
+    def remote_branch_sha
+      gitlib.rev_parse(@remote_branch) rescue ''
+    end
 
-      old_sha != new_sha
+
+    def current_branch
+      @current_branch ||= gitlib.branches.current
     end
 
 
     def runner
-      @current_branch ||= branches.current
-      @remote_branch ||= "#{server_name}/#@current_branch"
+      @remote_branch ||= "#{remote.name}/#{current_branch}"
 
       # if the remote branch has changed, merge those changes in before
       #   doing anything with the integration branch
-      if remote_has_changed
+      if remote_has_changed?
         logger.info('There have been changes on this remote branch, so will merge them in.')
         proc_merge(@remote_branch)
       end
 
-      @do_rebase ||= config('gitProcess.defaultRebaseSync').to_boolean
-
-      if @do_rebase
+      if do_rebase?
         @force = true
-        proc_rebase(integration_branch)
+        proc_rebase(config.integration_branch)
       else
-        proc_merge(integration_branch)
+        proc_merge(config.integration_branch)
       end
 
       push_to_server
@@ -88,28 +89,43 @@ module GitProc
 
     private
 
+
+    def remote_has_changed?
+      old_sha = remote_branch_sha
+      fetch_remote_changes
+      new_sha = remote_branch_sha
+
+      old_sha != new_sha
+    end
+
+
+    def do_rebase?
+      @do_rebase ||= config['gitProcess.defaultRebaseSync'].to_boolean
+    end
+
+
     def push_to_server
       if @local
         logger.debug("Not pushing to the server because the user selected local-only.")
-      elsif not has_a_remote?
+      elsif not gitlib.has_a_remote?
         logger.debug("Not pushing to the server because there is no remote.")
-      elsif @current_branch == master_branch
+      elsif @current_branch == config.master_branch
         logger.warn("Not pushing to the server because the current branch is the mainline branch.")
       else
-        old_sha = rev_parse(@remote_branch) rescue ''
+        handle_remote_changed
 
-        handle_remote_changed(old_sha)
-
-        push(server_name, @current_branch, @current_branch, :force => @force)
+        gitlib.push(remote.name, @current_branch, @current_branch, :force => @force)
       end
     end
 
 
-    def handle_remote_changed(old_sha)
-      fetch(server_name)
-      new_sha = rev_parse(@remote_branch) rescue ''
+    def handle_remote_changed
+      old_sha = remote_branch_sha
+      fetch_remote_changes
+      new_sha = remote_branch_sha
+
       unless old_sha == new_sha
-        logger.warn("'#@current_branch' changed on '#{server_name}'"+
+        logger.warn("'#@current_branch' changed on '#{config.server_name}'"+
                         " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
         runner # try again
       end

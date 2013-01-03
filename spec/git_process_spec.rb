@@ -13,37 +13,19 @@ describe GitProc::Process do
 
   before(:each) do
     create_files(%w(.gitignore))
-    gitprocess.commit('initial')
+    gitlib.commit('initial')
   end
 
 
   after(:each) do
-    rm_rf(tmpdir)
-  end
-
-
-  describe "workdir" do
-
-    it "should use the passed in directory when the top level is a git workdir" do
-      proc = GitProc::Process.new(tmpdir)
-      proc.workdir.should == tmpdir
-    end
-
-
-    it "should find the parent git workdir" do
-      dir = "#{tmpdir}/a/b/c/d/e/f/g"
-      mkdir_p dir
-      proc = GitProc::Process.new(dir)
-      proc.workdir.should == tmpdir
-    end
-
+    rm_rf(gitlib.workdir)
   end
 
 
   describe "run lifecycle" do
 
     it "should call the standard hooks" do
-      proc = GitProc::Process.new(tmpdir)
+      proc = GitProc::Process.new(gitlib)
       proc.should_receive(:verify_preconditions)
       proc.should_receive(:runner)
       proc.should_receive(:cleanup)
@@ -54,7 +36,7 @@ describe GitProc::Process do
 
 
     it "should call 'cleanup' even if there's an error" do
-      proc = GitProc::Process.new(tmpdir)
+      proc = GitProc::Process.new(gitlib)
       proc.should_receive(:verify_preconditions)
       proc.should_receive(:runner).and_raise(GitProc::GitProcessError.new("Error!"))
       proc.should_receive(:cleanup)
@@ -70,137 +52,155 @@ describe GitProc::Process do
   describe "validate local integration branch" do
 
     it "should use remove the int-branch if not on it and not blocked" do
-      gp = clone('master')
-      gp.checkout('fb', :new_branch => 'master')
+      clone_repo('master') do |gl|
+        gl.checkout('fb', :new_branch => 'master')
 
-      gp.stub(:ask_about_removing_master).and_return(true)
+        gp = GitProc::Process.new(gl)
+        gp.stub(:ask_about_removing_master).and_return(true)
 
-      gp.verify_preconditions
+        gp.verify_preconditions
 
-      gp.branches.include?('master').should be_false
+        gl.branches.include?('master').should be_false
+      end
     end
 
 
     it "should ask use remove the int-branch if not on it and not blocked" do
-      gp = clone('master')
-      gp.checkout('fb', :new_branch => 'master')
+      clone_repo('master') do |gl|
+        gl.checkout('fb', :new_branch => 'master')
 
-      gp.should_receive(:ask_about_removing_master).and_return(true)
+        gp = GitProc::Process.new(gl)
+        gp.should_receive(:ask_about_removing_master).and_return(true)
 
-      gp.verify_preconditions
+        gp.verify_preconditions
 
-      gp.branches.include?('master').should be_false
+        gl.branches.include?('master').should be_false
+      end
     end
 
 
     it "should ask use remove the int-branch if not on it and not blocked and not remove if answered no" do
-      gp = clone('master')
-      gp.checkout('fb', :new_branch => 'master')
+      clone_repo('master') do |gl|
+        gl.checkout('fb', :new_branch => 'master')
 
-      gp.should_receive(:ask_about_removing_master).and_return(false)
+        gp = GitProc::Process.new(gl)
+        gp.should_receive(:ask_about_removing_master).and_return(false)
 
-      gp.verify_preconditions
+        gp.verify_preconditions
 
-      gp.branches.include?('master').should be_true
+        gl.branches.include?('master').should be_true
+      end
     end
 
 
     it "should not remove the int-branch if on it" do
-      gp = clone('master')
+      clone_repo('master') do |gl|
+        gp = GitProc::Process.new(gl)
+        gp.verify_preconditions
 
-      gp.verify_preconditions
-
-      gp.branches.include?('master').should be_true
+        gl.branches.include?('master').should be_true
+      end
     end
 
 
     it "should not remove the int-branch if blocked" do
-      gp = clone('master')
-      gp.config('gitProcess.keepLocalIntegrationBranch', 'true')
-      gp.checkout('fb', :new_branch => 'master')
+      clone_repo('master') do |gl|
+        gl.config['gitProcess.keepLocalIntegrationBranch'] = 'true'
+        gl.checkout('fb', :new_branch => 'master')
 
-      gp.verify_preconditions
+        gp = GitProc::Process.new(gl)
+        gp.verify_preconditions
 
-      gp.branches.include?('master').should be_true
+        gl.branches.include?('master').should be_true
+      end
     end
 
 
     describe "local vs remote branch status" do
 
       before(:each) do
-        change_file_and_commit('a.txt', 'a content', gitprocess)
-        change_file_and_commit('b.txt', 'b content', gitprocess)
+        change_file_and_commit('a.txt', 'a content', gitlib)
+        change_file_and_commit('b.txt', 'b content', gitlib)
       end
 
 
       it "should not remove if both have changes" do
-        gp = clone('master')
+        clone_repo('master') do |gl|
+          change_file_and_commit('c.txt', 'c on origin/master', gitlib)
+          change_file_and_commit('d.txt', 'd on master', gl)
 
-        change_file_and_commit('c.txt', 'c on origin/master', gitprocess)
-        change_file_and_commit('d.txt', 'd on master', gp)
+          gl.checkout('fb', :new_branch => 'master')
 
-        gp.checkout('fb', :new_branch => 'master')
+          gl.fetch
 
-        gp.fetch
-        gp.verify_preconditions
+          gp = GitProc::Process.new(gl)
+          gp.verify_preconditions
 
-        gp.branches.include?('master').should be_true
+          gl.branches.include?('master').should be_true
+        end
       end
 
 
       it "should remove if server changed but not local" do
-        gp = clone('master')
-        gp.stub(:ask_about_removing_master).and_return(true)
+        clone_repo('master') do |gl|
+          gp = GitProc::Process.new(gl)
+          gp.stub(:ask_about_removing_master).and_return(true)
 
-        change_file_and_commit('c.txt', 'c on origin/master', gitprocess)
+          change_file_and_commit('c.txt', 'c on origin/master', gitlib)
 
-        gp.checkout('fb', :new_branch => 'master')
+          gl.checkout('fb', :new_branch => 'master')
 
-        gp.fetch
-        gp.verify_preconditions
+          gl.fetch
 
-        gp.branches.include?('master').should be_false
+          gp.verify_preconditions
+
+          gl.branches.include?('master').should be_false
+        end
       end
 
 
       it "should not remove if server did not change but local did" do
-        gp = clone('master')
+        clone_repo('master') do |gl|
+          change_file_and_commit('c.txt', 'c on master', gl)
 
-        change_file_and_commit('c.txt', 'c on master', gp)
+          gl.checkout('fb', :new_branch => 'master')
 
-        gp.checkout('fb', :new_branch => 'master')
+          gl.fetch
 
-        gp.fetch
-        gp.verify_preconditions
+          gp = GitProc::Process.new(gl)
+          gp.verify_preconditions
 
-        gp.branches.include?('master').should be_true
+          gl.branches.include?('master').should be_true
+        end
       end
 
 
       it "should remove if server and local are the same" do
-        change_file_and_commit('c.txt', 'c on origin/master', gitprocess)
+        change_file_and_commit('c.txt', 'c on origin/master', gitlib)
 
-        gp = clone('master')
+        clone_repo('master') do |gl|
+          gl.checkout('fb', :new_branch => 'master')
+          gp = GitProc::Process.new(gl)
+          gp.stub(:ask_about_removing_master).and_return(true)
 
-        gp.checkout('fb', :new_branch => 'master')
-        gp.stub(:ask_about_removing_master).and_return(true)
+          gl.fetch
+          gp.verify_preconditions
 
-        gp.fetch
-        gp.verify_preconditions
-
-        gp.branches.include?('master').should be_false
+          gl.branches.include?('master').should be_false
+        end
       end
 
     end
 
 
     it "should not remove the int-branch if not a clone" do
-      gitprocess.config('gitProcess.keepLocalIntegrationBranch', 'false')
-      gitprocess.checkout('fb', :new_branch => 'master')
+      gitlib.config['gitProcess.keepLocalIntegrationBranch'] = 'false'
+      gitlib.checkout('fb', :new_branch => 'master')
 
+      gitprocess = GitProc::Process.new(gitlib)
       gitprocess.verify_preconditions
 
-      gitprocess.branches.include?('master').should be_true
+      gitlib.branches.include?('master').should be_true
     end
 
   end

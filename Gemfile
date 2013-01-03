@@ -14,6 +14,6 @@ group :development do
 end
 
 group :test do
-  gem "rspec", "~> 2.10.0"
+  gem "rspec", "~> 2.12.0"
   gem "webmock", "~> 1.8.7" # network mocking
 end

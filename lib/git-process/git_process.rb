@@ -19,13 +19,15 @@ require 'highline/import'
 module GitProc
 
   class Process
-    include GitLib
+
+    # @param [GitLib] gitlib
+    def initialize(gitlib, opts = {})
+      @gitlib = gitlib
+    end
 
 
-    def initialize(dir, opts = {})
-      @log_level = Process.log_level(opts)
-
-      set_workdir(dir)
+    def gitlib
+      @gitlib
     end
 
 
@@ -48,51 +50,30 @@ module GitProc
     end
 
 
-    def set_workdir(dir)
-      unless dir.nil?
-        @workdir = find_workdir(dir)
-        if @workdir.nil?
-          @workdir = dir
-          logger.info { "Initializing new repository at #{workdir}" }
-          command(:init)
-        else
-          logger.debug { "Opening existing repository at #{workdir}" }
-        end
-      else
-        logger.debug "Process dir is nil"
-      end
-    end
-
-
     def workdir
-      @workdir
+      gitlib.workdir
     end
 
 
-    def log_level
-      @log_level
+    def logger
+      gitlib.logger
     end
 
 
-    def log_level=(ll)
-      @log_level = ll
+    def config
+      gitlib.config
     end
 
 
-    def remote_master_branch
-      "#{server_name}/#{master_branch}"
-    end
-
-
-    def integration_branch
-      has_a_remote? ? remote_master_branch : master_branch
+    def remote
+      gitlib.remote
     end
 
 
     def verify_preconditions
-      if should_remove_master
+      if should_remove_master?
         if ask_about_removing_master
-          branches[master_branch].delete!
+          delete_master_branch!
         end
       end
     end
@@ -103,13 +84,36 @@ module GitProc
     end
 
 
-    def should_remove_master
-      my_branches = branches()
-      has_a_remote? and
-          my_branches.include?(master_branch) and
-          my_branches.current.name != master_branch and
+    def fetch_remote_changes(remote_name = nil)
+      if remote.exists?
+        gitlib.fetch(remote_name || remote.name)
+      else
+        logger.debug "Can not fetch latest changes because there is no remote defined"
+      end
+    end
+
+
+    def is_parked?
+      mybranches = gitlib.branches
+      mybranches.parking == mybranches.current
+    end
+
+
+    private
+
+
+    def delete_master_branch!
+      gitlib.branches[config.master_branch].delete!
+    end
+
+
+    def should_remove_master?
+      my_branches = gitlib.branches()
+      gitlib.has_a_remote? and
+          my_branches.include?(config.master_branch) and
+          my_branches.current.name != config.master_branch and
           !keep_local_integration_branch? and
-          my_branches[integration_branch].contains_all_of(master_branch)
+          my_branches[config.integration_branch].contains_all_of(config.master_branch)
     end
 
 
@@ -118,31 +122,9 @@ module GitProc
     end
 
 
-    def Process.log_level(opts)
-      if opts[:log_level]
-        opts[:log_level]
-      elsif opts[:quiet]
-        Logger::ERROR
-      elsif opts[:verbose]
-        Logger::DEBUG
-      else
-        Logger::INFO
-      end
-    end
-
-
-    def is_parked?
-      mybranches = branches
-      mybranches.parking == mybranches.current
-    end
-
-
-    private
-
-
     #noinspection RubyInstanceMethodNamingConvention
     def keep_local_integration_branch_config_value
-      config('gitProcess.keepLocalIntegrationBranch')
+      gitlib.config['gitProcess.keepLocalIntegrationBranch']
     end
 
 
@@ -163,31 +145,20 @@ module GitProc
     end
 
 
-    def find_workdir(dir)
-      if dir == File::SEPARATOR
-        nil
-      elsif File.directory?(File.join(dir, '.git'))
-        dir
-      else
-        find_workdir(File.expand_path("#{dir}/.."))
-      end
-    end
-
-
     def proc_rebase(base, opts = {})
       begin
-        rebase(base, opts)
+        gitlib.rebase(base, opts)
       rescue GitExecuteError => rebase_error
-        raise RebaseError.new(rebase_error.message, self)
+        raise RebaseError.new(rebase_error.message, gitlib)
       end
     end
 
 
     def proc_merge(base)
       begin
-        merge(base)
+        gitlib.merge(base)
       rescue GitExecuteError => merge_error
-        raise MergeError.new(merge_error.message, self)
+        raise MergeError.new(merge_error.message, gitlib)
       end
     end
 

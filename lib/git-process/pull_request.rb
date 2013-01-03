@@ -19,8 +19,6 @@ require 'highline/import'
 module GitProc
 
   class PullRequest < Process
-    include GitLib
-
 
     def initialize(dir, opts)
       super
@@ -45,95 +43,93 @@ module GitProc
     end
 
 
-    alias :lib_repo_name :repo_name
-    alias :lib_remote_name :remote_name
-
-
-    def repo_name
-      if @_repo_name.nil?
-        @_repo_name = lib_repo_name
-      end
-      @_repo_name
-    end
-
-
-    def remote_name
-      if @_remote_name.nil?
-        @_remote_name = lib_remote_name
-      end
-      @_remote_name
-    end
-
-
     def create_pull_request_client(remote_name, repo_name)
-      GitHub::PullRequest.new(self, remote_name, repo_name, {:user => @user, :password => @password})
+      PullRequest.create_pull_request_client(self, remote_name, repo_name, @user, @password)
     end
 
 
     def create_pull_request
-      logger.info { "Creating #@title" }
-
-      current_branch = branches.current.name
-      base_branch = @base_branch || master_branch
+      current_branch = gitlib.branches.current.name
+      base_branch = @base_branch || config.master_branch
       head_branch = @head_branch || current_branch
       title = @title || current_branch
       description = @description || ''
 
-      if base_branch == head_branch
-        raise PullRequestError.new("Can not create a pull request where the base branch and head branch are the same: #{base_branch}")
-      end
-
-      push(server_name, current_branch, current_branch, :force => false)
-      pr = create_pull_request_client(remote_name, repo_name)
-      pr.create(base_branch, head_branch, title, description)
+      PullRequest.create_pull_request(gitlib, remote.name, remote.name, remote.repo_name, current_branch, base_branch, head_branch, title, description, logger, @user, @password)
     end
 
 
     def checkout_pull_request
-      logger.info { "Getting #@pr_number" }
-
-      fetch(remote_name)
-
-      pr = create_pull_request_client(remote_name, repo_name)
-      json = pr.pull_request(@pr_number)
-      head_branch_name = json.head.ref
-      base_branch_name = json.base.ref
-
-      remote_head_server_name = match_remote_to_pr_remote(json.head.repo.ssh_url)
-      remote_base_server_name = match_remote_to_pr_remote(json.base.repo.ssh_url)
-      checkout(head_branch_name, :new_branch => "#{remote_head_server_name}/#{head_branch_name}")
-      branch(head_branch_name, :upstream => "#{remote_base_server_name}/#{base_branch_name}")
-      #logger.info(json.to_hash)
-
-      fetch(remote_base_server_name) if remote_head_server_name != remote_base_server_name
+      PullRequest.checkout_pull_request(gitlib, @pr_number, remote.name, remote.repo_name, @user, @password, logger)
     end
 
 
-    def match_remote_to_pr_remote(pr_remote)
-      pr_url = expanded_url(nil, pr_remote)
-      servers = remote_servers()
-      server_urls = servers.collect { |s| {:server_name => s, :url => expanded_url(s)} }
+    class << self
 
-      pair = server_urls.find do |su|
-        url = su[:url]
-        uri = URI.parse(url)
-        host = uri.host
-        path = uri.path
-
-        pr_uri = URI.parse(expanded_url(nil, pr_url))
-        pr_host = pr_uri.host
-        pr_path = pr_uri.path
-
-        pr_host == host and pr_path == path
+      def create_pull_request_client(lib, remote_name, repo_name, username, password)
+        GitHub::PullRequest.new(lib, remote_name, repo_name, {:user => username, :password => password})
       end
 
-      if pair.nil?
-        raise GitHubService::NoRemoteRepository.new("Could not match pull request url (#{pr_url}) to any of the registered remote urls: #{server_urls.join(', ')}")
+
+      def create_pull_request(lib, server_name, remote_name, repo_name, current_branch, base_branch, head_branch, title, description, logger, username, password)
+        logger.info { "Creating #@title" }
+
+        if base_branch == head_branch
+          raise PullRequestError.new("Can not create a pull request where the base branch and head branch are the same: #{base_branch}")
+        end
+
+        lib.push(server_name, current_branch, current_branch, :force => false)
+        pr = create_pull_request_client(lib, remote_name, repo_name, username, password)
+        pr.create(base_branch, head_branch, title, description)
       end
 
-      pair[:server_name]
+
+      def checkout_pull_request(lib, pr_number, remote_name, repo_name, username, password, logger)
+        logger.info { "Getting #pr_number" }
+
+        lib.fetch(remote_name)
+
+        pr = create_pull_request_client(lib, remote_name, repo_name, username, password)
+        json = pr.pull_request(pr_number)
+        head_branch_name = json.head.ref
+        base_branch_name = json.base.ref
+
+        remote_head_server_name = match_remote_to_pr_remote(lib, json.head.repo.ssh_url)
+        remote_base_server_name = match_remote_to_pr_remote(lib, json.base.repo.ssh_url)
+        lib.checkout(head_branch_name, :new_branch => "#{remote_head_server_name}/#{head_branch_name}")
+        lib.branch(head_branch_name, :upstream => "#{remote_base_server_name}/#{base_branch_name}")
+        #logger.info(json.to_hash)
+
+        lib.fetch(remote_base_server_name) if remote_head_server_name != remote_base_server_name
+      end
+
+
+      def match_remote_to_pr_remote(lib, pr_remote)
+        pr_url = lib.remote.expanded_url(nil, pr_remote)
+        servers = lib.remote.remote_names
+        server_urls = servers.collect { |s| {:server_name => s, :url => lib.remote.expanded_url(s)} }
+
+        pair = server_urls.find do |su|
+          url = su[:url]
+          uri = URI.parse(url)
+          host = uri.host
+          path = uri.path
+
+          pr_uri = URI.parse(lib.remote.expanded_url(nil, pr_url))
+          pr_host = pr_uri.host
+          pr_path = pr_uri.path
+
+          pr_host == host and pr_path == path
+        end
+
+        if pair.nil?
+          raise GitHubService::NoRemoteRepository.new("Could not match pull request url (#{pr_url}) to any of the registered remote urls: #{server_urls.join(', ')}")
+        end
+
+        pair[:server_name]
+      end
+
     end
 
   end
-
 end

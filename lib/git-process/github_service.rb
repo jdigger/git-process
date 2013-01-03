@@ -49,7 +49,7 @@ module GitHubService
 
 
   def site
-    url = lib.expanded_url(remote_name)
+    url = gitlib.remote.expanded_url(remote_name)
     git_url_to_api(url)
   end
 
@@ -78,12 +78,12 @@ module GitHubService
 
 
   def ask_for_user
-    user = lib.config('github.user')
+    user = gitlib.config['github.user']
     if user.nil? or user.empty?
       user = ask("Your <%= color('GitHub', [:bold, :blue]) %> username: ") do |q|
         q.validate = /^\w\w+$/
       end
-      lib.config('github.user', user)
+      gitlib.config['github.user'] = user
     end
     user
   end
@@ -111,19 +111,19 @@ module GitHubService
         :note_url => 'http://jdigger.github.com/git-process')
 
     config_auth_token = auth['token']
-    lib.config('gitProcess.github.authToken', config_auth_token)
+    gitlib.config['gitProcess.github.authToken'] = config_auth_token
     config_auth_token
   end
 
 
   def get_config_auth_token
-    c_auth_token = lib.config('gitProcess.github.authToken')
+    c_auth_token = gitlib.config['gitProcess.github.authToken']
     (c_auth_token.nil? or c_auth_token.empty?) ? nil : c_auth_token
   end
 
 
   def logger
-    lib.logger
+    gitlib.logger
   end
 
 

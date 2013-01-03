@@ -19,27 +19,12 @@ module GitProc
   #
   # Provides support for prompting the user when the dir/index is dirty.
   #
-  # = Assumes =
-  # log_level
-  # workdir
-  #
-  #noinspection RubyControlFlowConversionInspection
-  #noinspection RubyInstanceMethodNamingConvention
+  #noinspection RubyControlFlowConversionInspection,RubyClassMethodNamingConvention,RubyInstanceMethodNamingConvention
   class ChangeFileHelper
 
+    # @param [GitLib] gitlib
     def initialize(gitlib)
-      raise "Need gitlib" if gitlib.nil?
       @gitlib = gitlib
-    end
-
-
-    def gitlib
-      @gitlib
-    end
-
-
-    def logger
-      gitlib.logger
     end
 
 
@@ -50,15 +35,16 @@ module GitProc
         handle_unknown_files(stat)
         handle_changed_files(gitlib.status) # refresh status in case it changed earlier
       else
-        logger.info { "Can not offer to auto-add unmerged files: #{stat.unmerged.inspect}" }
+        gitlib.logger.info { "Can not offer to auto-add unmerged files: #{stat.unmerged.inspect}" }
         raise UncommittedChangesError.new
       end
     end
 
 
+    #noinspection RubyControlFlowConversionInspection
     def handle_unknown_files(stat)
       if not stat.unknown.empty?
-        resp = ask_how_to_handle_unknown_files(stat)
+        resp = ChangeFileHelper.ask_how_to_handle_unknown_files(stat)
         if resp == :add
           gitlib.add(stat.unknown)
         end
@@ -68,7 +54,7 @@ module GitProc
 
     def handle_changed_files(stat)
       if not stat.modified.empty? or not stat.added.empty? or not stat.deleted.empty?
-        resp = ask_how_to_handle_changed_files(stat)
+        resp = ChangeFileHelper.ask_how_to_handle_changed_files(stat)
         if resp == :commit
           changed_files = (stat.added + stat.modified - stat.deleted).sort.uniq
 
@@ -83,7 +69,7 @@ module GitProc
     end
 
 
-    def ask_how_to_handle_unknown_files(stat)
+    def self.ask_how_to_handle_unknown_files(stat)
       show_changes(:unknown, stat)
       resp = ask("Would you like to (a)dd them or (i)gnore them? ") do |q|
         q.responses[:not_valid] = "Please respond with either (a)dd or (i)gnore. (Ctl-C to abort.) "
@@ -95,7 +81,7 @@ module GitProc
     end
 
 
-    def show_changes(type, stat)
+    def self.show_changes(type, stat)
       files = stat.send(type)
 
       if type != :deleted
@@ -108,7 +94,7 @@ module GitProc
     end
 
 
-    def ask_how_to_handle_changed_files(stat)
+    def self.ask_how_to_handle_changed_files(stat)
       [:added, :modified, :deleted].each { |t| show_changes(t, stat) }
       resp = ask("Would you like to (c)ommit them or (s)tash them? ") do |q|
         q.responses[:not_valid] = "Please respond with either (c)ommit or (s)tash. (Ctl-C to abort.) "
@@ -117,6 +103,11 @@ module GitProc
       end
 
       resp == 'c' ? :commit : :stash
+    end
+
+
+    def gitlib
+      @gitlib
     end
 
   end

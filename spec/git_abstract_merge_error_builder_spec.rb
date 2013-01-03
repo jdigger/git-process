@@ -1,38 +1,42 @@
 require 'git-process/git_abstract_merge_error_builder'
+require 'git-process/git_lib'
+require 'FileHelpers'
 
 describe GitProc::AbstractMergeErrorBuilder do
 
   def builder
-    unless @builder
-      @builder = Object.new
-      @builder.extend(GitProc::AbstractMergeErrorBuilder)
-      @builder.stub(:lib).and_return(lib)
-      @builder.stub(:continue_command).and_return(nil)
-      @builder.stub(:error_message).and_return('')
-    end
-    @builder
+    @builder ||= GitProc::AbstractMergeErrorBuilder.new(gitlib, '', nil)
   end
 
 
-  def lib
-    unless @lib
-      @lib = double('lib')
-      @lib.stub(:rerere_enabled?).and_return(true)
-      @lib.stub(:rerere_autoupdate?).and_return(true)
-      @lib.stub(:status).and_return(status)
+  after(:each) do
+    rm_rf(gitlib.workdir)
+  end
+
+
+  def gitlib
+    if @lib.nil?
+      @lib = GitProc::GitLib.new(Dir.mktmpdir, :log_level => Logger::ERROR)
+      @lib.config.rerere_enabled = true
+      @lib.config.rerere_autoupdate = true
+      mock_status(@lib)
     end
     @lib
   end
 
 
-  def status
-    unless @status
-      @status = double('status')
-      @status.stub(:unmerged).and_return([])
-      @status.stub(:modified).and_return([])
-      @status.stub(:added).and_return([])
+  def metaclass(obj)
+    class << obj
+      self
     end
-    @status
+  end
+
+
+  def mock_status(lib)
+    spec = self
+    metaclass(lib).send(:define_method, :status) do
+      @status ||= spec.double('status')
+    end
   end
 
 
@@ -46,9 +50,10 @@ describe GitProc::AbstractMergeErrorBuilder do
 
 
   it "merged with rerere.enabled false" do
-    lib.stub(:rerere_enabled?).and_return(false)
-    status.stub(:unmerged).and_return(['a', 'b c'])
-    status.stub(:modified).and_return(['a', 'b c'])
+    gitlib.config.rerere_enabled = false
+    gitlib.status.stub(:unmerged).and_return(['a', 'b c'])
+    gitlib.status.stub(:modified).and_return(['a', 'b c'])
+    gitlib.status.stub(:added).and_return([])
 
     builder.resolved_files.should == []
     builder.unresolved_files.should == ['a', 'b c']
@@ -64,8 +69,11 @@ describe GitProc::AbstractMergeErrorBuilder do
 
 
   it "merged with rerere.enabled true and auto-handled AND autoupdated a file" do
-    status.stub(:unmerged).and_return(['a', 'b c'])
-    status.stub(:modified).and_return(['a', 'b c'])
+    gitlib.config.rerere_enabled = true
+    gitlib.config.rerere_autoupdate = true
+    gitlib.status.stub(:unmerged).and_return(['a', 'b c'])
+    gitlib.status.stub(:modified).and_return(['a', 'b c'])
+    gitlib.status.stub(:added).and_return([])
     builder.stub(:error_message).and_return("\nResolved 'a' using previous resolution.\n")
 
     builder.resolved_files.should == %w(a)
@@ -81,9 +89,10 @@ describe GitProc::AbstractMergeErrorBuilder do
 
 
   it "merged with rerere.enabled true and auto-handled and not autoupdated a file" do
-    lib.stub(:rerere_autoupdate?).and_return(false)
-    status.stub(:unmerged).and_return(['a', 'b c'])
-    status.stub(:modified).and_return(['a', 'b c'])
+    gitlib.config.rerere_autoupdate = false
+    gitlib.status.stub(:unmerged).and_return(['a', 'b c'])
+    gitlib.status.stub(:modified).and_return(['a', 'b c'])
+    gitlib.status.stub(:added).and_return([])
     builder.stub(:error_message).and_return("\nResolved 'a' using previous resolution.\n")
 
     builder.resolved_files.should == %w(a)
@@ -100,10 +109,10 @@ describe GitProc::AbstractMergeErrorBuilder do
 
 
   it "merged with a file added in both branches" do
-    lib.stub(:rerere_autoupdate?).and_return(false)
-    status.stub(:unmerged).and_return(%w(a))
-    status.stub(:modified).and_return(%w(b))
-    status.stub(:added).and_return(%w(a c))
+    gitlib.config.rerere_autoupdate = false
+    gitlib.status.stub(:unmerged).and_return(%w(a))
+    gitlib.status.stub(:modified).and_return(%w(b))
+    gitlib.status.stub(:added).and_return(%w(a c))
 
     builder.resolved_files.should == %w()
     builder.unresolved_files.should == %w(a)

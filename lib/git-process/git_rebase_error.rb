@@ -15,23 +15,14 @@ require 'git-process/git_abstract_merge_error_builder'
 module GitProc
 
   class RebaseError < GitProcessError
-    include GitProc::AbstractMergeErrorBuilder
-
-    attr_reader :error_message, :lib
+    attr_reader :error_builder
 
 
-    def initialize(rebase_error_message, lib)
-      @lib = lib
-      @error_message = rebase_error_message
-
-      msg = build_message
+    def initialize(rebase_error_message, gitlib)
+      @error_builder = GitProc::AbstractMergeErrorBuilder.new(gitlib, rebase_error_message, 'git rebase --continue')
+      msg = error_builder.build_message
 
       super(msg)
-    end
-
-
-    def continue_command
-      'git rebase --continue'
     end
 
   end

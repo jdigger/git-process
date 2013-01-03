@@ -15,11 +15,17 @@ require 'shellwords'
 
 module GitProc
 
-  #
-  # Assumes that there are three attributes defined: error_message, lib, continue_command
-  #
-  module AbstractMergeErrorBuilder
+  class AbstractMergeErrorBuilder
     include GitProc::AbstractErrorBuilder
+
+    attr_reader :gitlib, :error_message, :continue_command
+
+
+    def initialize(gitlib, error_message, continue_command)
+      @gitlib = gitlib
+      @error_message = error_message
+      @continue_command = continue_command
+    end
 
 
     def resolved_files
@@ -53,7 +59,7 @@ module GitProc
         end
       end
 
-      unless lib.rerere_enabled?
+      unless config.rerere_enabled?
         msg << "\n\nConsider turning on 'rerere'.\nSee http://git-scm.com/2010/03/08/rerere.html for more information."
       end
 
@@ -70,13 +76,13 @@ module GitProc
     def build_commands
       commands = []
 
-      commands << 'git config --global rerere.enabled true' unless lib.rerere_enabled?
+      commands << 'git config --global rerere.enabled true' unless config.rerere_enabled?
 
       resolved_files.each do |file|
         commands << "# Verify that 'rerere' did the right thing for '#{file}'."
       end
 
-      unless resolved_files.empty? or lib.rerere_autoupdate?
+      unless resolved_files.empty? or config.rerere_autoupdate?
         escaped_files = shell_escaped_files(resolved_files)
         commands << "git add #{escaped_files}"
       end
@@ -103,22 +109,35 @@ module GitProc
 
 
     def unmerged
-      @unmerged ||= lib.status.unmerged
+      @unmerged ||= status.unmerged
     end
 
 
     def added
-      @added ||= lib.status.added
+      @added ||= status.added
     end
 
 
     def deleted
-      @deleted ||= lib.status.deleted
+      @deleted ||= status.deleted
     end
 
 
     def modified
-      @modified ||= lib.status.modified
+      @modified ||= status.modified
+    end
+
+
+    private
+
+
+    def config
+      gitlib.config
+    end
+
+
+    def status
+      @status ||= gitlib.status
     end
 
   end

@@ -1,17 +1,16 @@
 require 'git-process/sync'
-require 'GitRepoHelper'
+include GitProc
 
-describe GitProc::ChangeFileHelper do
-  include GitRepoHelper
+describe ChangeFileHelper do
 
   before(:each) do
     create_files(%w(.gitignore))
-    gitprocess.commit('initial')
+    gitlib.commit('initial')
   end
 
 
   after(:each) do
-    rm_rf(tmpdir)
+    rm_rf(gitlib.workdir)
   end
 
 
@@ -21,12 +20,7 @@ describe GitProc::ChangeFileHelper do
 
 
   def create_process(dir, opts)
-    GitProc::Process.new(dir, opts)
-  end
-
-
-  def cfh
-    @cfh ||= GitProc::ChangeFileHelper.new(gitprocess)
+    nil
   end
 
 
@@ -35,14 +29,21 @@ describe GitProc::ChangeFileHelper do
     it 'should fail when there are unmerged files' do
       change_file_and_commit('modified file.txt', 'start')
 
-      gp = clone
-      change_file_and_commit('modified file.txt', 'changed', gp)
-      change_file_and_commit('modified file.txt', 'conflict', gitprocess)
-      gp.fetch
+      clone_repo do |gl|
+        change_file_and_commit('modified file.txt', 'changed', gl)
+        change_file_and_commit('modified file.txt', 'conflict', gitlib)
+        gl.fetch
 
-      gp.merge('origin/master') rescue ''
+        gl.merge('origin/master') rescue ''
 
-      expect { GitProc::ChangeFileHelper.new(gp).offer_to_help_uncommitted_changes }.should raise_error GitProc::UncommittedChangesError
+        change_file_helper = ChangeFileHelper.new(gl)
+        expect { change_file_helper.offer_to_help_uncommitted_changes }.to raise_error GitProc::UncommittedChangesError
+      end
+    end
+
+
+    def change_file_helper
+      @change_file_helper ||= ChangeFileHelper.new(gitlib)
     end
 
 
@@ -50,23 +51,23 @@ describe GitProc::ChangeFileHelper do
 
       before(:each) do
         change_file('unknown file.txt', '')
-        gitprocess.stub(:say)
+        change_file_helper.stub(:say)
       end
 
 
       it 'should then add it' do
-        cfh.stub(:ask).and_return('a')
-        gitprocess.should_receive(:add).with(['unknown file.txt'])
+        ChangeFileHelper.stub(:ask_how_to_handle_unknown_files).and_return(:add)
+        change_file_helper.gitlib.should_receive(:add).with(['unknown file.txt'])
 
-        cfh.offer_to_help_uncommitted_changes
+        change_file_helper.offer_to_help_uncommitted_changes
       end
 
 
       it 'should ignore the file' do
-        cfh.stub(:ask).and_return('i')
-        gitprocess.should_not_receive(:add)
+        ChangeFileHelper.stub(:ask_how_to_handle_unknown_files).and_return(:ignore)
+        change_file_helper.should_not_receive(:add)
 
-        cfh.offer_to_help_uncommitted_changes
+        change_file_helper.offer_to_help_uncommitted_changes
       end
 
     end
@@ -87,9 +88,9 @@ describe GitProc::ChangeFileHelper do
         change_file('modified file2.txt', 'modified again')
         change_file_and_add('removed file2.txt', 'content')
         change_file_and_add('modified file4.txt', 'content')
-        File.delete(File.join(gitprocess.workdir, 'removed file.txt'))
-        File.delete(File.join(gitprocess.workdir, 'removed file2.txt'))
-        File.delete(File.join(gitprocess.workdir, 'modified file3.txt'))
+        File.delete(File.join(gitlib.workdir, 'removed file.txt'))
+        File.delete(File.join(gitlib.workdir, 'removed file2.txt'))
+        File.delete(File.join(gitlib.workdir, 'modified file3.txt'))
 
         # End state of the above is:
         # A  "added file.txt"
@@ -100,30 +101,30 @@ describe GitProc::ChangeFileHelper do
         #  D "removed file.txt"
         # AD "removed file2.txt"
 
-        cfh.stub(:say)
+        change_file_helper.stub(:say)
       end
 
 
       it 'should ask about modified files, then commit them' do
-        cfh.stub(:ask).and_return('c')
-        gitprocess.should_receive(:add).with(["added file.txt", "modified file.txt", "modified file2.txt", "modified file4.txt"])
-        gitprocess.should_receive(:remove).with(["modified file3.txt", "removed file.txt", "removed file2.txt"])
-        gitprocess.should_receive(:commit).with(nil)
+        ChangeFileHelper.stub(:ask_how_to_handle_changed_files).and_return(:commit)
+        gitlib.should_receive(:add).with(["added file.txt", "modified file.txt", "modified file2.txt", "modified file4.txt"])
+        gitlib.should_receive(:remove).with(["modified file3.txt", "removed file.txt", "removed file2.txt"])
+        gitlib.should_receive(:commit).with(nil)
 
-        cfh.offer_to_help_uncommitted_changes
+        change_file_helper.offer_to_help_uncommitted_changes
       end
 
 
       it 'should ask about modified files, then stash them' do
-        cfh.stub(:ask).and_return('s')
+        ChangeFileHelper.stub(:ask_how_to_handle_changed_files).and_return(:stash)
 
-        cfh.offer_to_help_uncommitted_changes
+        change_file_helper.offer_to_help_uncommitted_changes
 
-        gitprocess.status.clean?.should be_true
+        gitlib.status.clean?.should be_true
 
-        gitprocess.stash_pop
+        gitlib.stash_pop
 
-        stat = gitprocess.status
+        stat = gitlib.status
         stat.added.should == ["added file.txt", "removed file2.txt"]
         stat.modified.should == ["modified file.txt", "modified file2.txt", "modified file4.txt"]
         stat.deleted.should == ["modified file3.txt", "removed file.txt"]

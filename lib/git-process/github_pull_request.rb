@@ -20,11 +20,11 @@ module GitHub
   class PullRequest
     include GitHubService
 
-    attr_reader :lib, :repo, :remote_name, :client
+    attr_reader :gitlib, :repo, :remote_name, :client
 
 
     def initialize(lib, remote_name, repo, opts = {})
-      @lib = lib
+      @gitlib = lib
       @repo = repo
       @remote_name = remote_name
       @user = opts[:user]

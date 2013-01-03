@@ -1,7 +1,6 @@
 require 'git-process/pull_request'
 require 'GitRepoHelper'
 require 'github_test_helper'
-require 'git_lib_stub'
 require 'json'
 require 'octokit'
 require 'tempfile'
@@ -11,27 +10,19 @@ describe GitHub::PullRequest do
   include GitHubTestHelper
 
 
-  def lib
-    unless @lib
-      @lib = GitLibStub.new
-    end
-    @lib
-  end
-
-
   def test_token
     'hfgkdjfgksjhdfkls'
   end
 
 
   def pull_request
-    @pr ||= GitHub::PullRequest.new(lib, 'test_remote', 'test_repo', :user => 'test_user')
+    @pr ||= GitHub::PullRequest.new(gitlib, 'test_remote', 'test_repo', :user => 'test_user')
   end
 
 
   before(:each) do
-    lib.config('gitProcess.github.authToken', test_token)
-    lib.add_remote('test_remote', 'git@github.com:test_repo.git')
+    gitlib.config['gitProcess.github.authToken'] = test_token
+    gitlib.remote.add('test_remote', 'git@github.com:test_repo.git')
   end
 
 
@@ -92,7 +83,7 @@ describe GitHub::PullRequest do
     it "should complain about a missing pull request" do
       stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [{:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}])
 
-      expect { pull_request.close('test_base', 'missing_head') }.should raise_error GitHub::PullRequest::NotFoundError
+      expect { pull_request.close('test_base', 'missing_head') }.to raise_error GitHub::PullRequest::NotFoundError
     end
 
   end

@@ -14,9 +14,6 @@ require 'shellwords'
 
 module GitProc
 
-  #
-  # Assumes that there are two attributes defined: error_message, lib
-  #
   module AbstractErrorBuilder
 
     def commands
