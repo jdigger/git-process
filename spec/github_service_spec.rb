@@ -8,6 +8,7 @@ require 'rspec/mocks/methods'
 require 'rspec/mocks/test_double'
 require 'rspec/mocks/mock'
 require 'github_test_helper'
+include GitProc
 
 class GHS
   include GitHubService
@@ -33,11 +34,6 @@ class GHS
   end
 
 
-  def pw_client
-    @pw_client ||= create_pw_client
-  end
-
-
   def client
     @client ||= create_client
   end
@@ -55,6 +51,16 @@ describe GitHubService do
 
   def test_token
     'hfgkdjfgksjhdfkls'
+  end
+
+
+  after(:each) do
+    rm_rf(ghs.gitlib.workdir)
+  end
+
+
+  def ghs
+    @ghs ||= GHS.new
   end
 
 
@@ -87,10 +93,9 @@ describe GitHubService do
   end
 
 
-  describe "auth_token" do
+  describe "auth_token no username or password" do
 
     it "should get the token from config if it exists" do
-      ghs = GHS.new
       ghs.gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
       ghs.gitlib.config['github.user'] = 'test_user'
       ghs.gitlib.config['gitProcess.github.authToken'] = test_token
@@ -98,9 +103,17 @@ describe GitHubService do
       ghs.auth_token.should == test_token
     end
 
+  end
+
+
+  describe "auth_token with password but no username" do
+
+    def ghs
+      @ghs ||= GHS.new(nil, 'dfsdf')
+    end
+
 
     it "should get the token from the server if it does not exist in config" do
-      ghs = GHS.new(nil, 'dfsdf')
       ghs.gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
       ghs.gitlib.config['github.user'] = 'test_user'
       ghs.gitlib.config['gitProcess.github.authToken'] = ''
@@ -116,8 +129,12 @@ describe GitHubService do
 
   describe "user" do
 
+    def ghs
+      @ghs ||= GHS.new(nil, 'dfsdf')
+    end
+
+
     it "should get the value from config" do
-      ghs = GHS.new(nil, 'dfsdf')
       ghs.gitlib.config['github.user'] = 'test_user'
 
       ghs.user.should == 'test_user'
@@ -125,10 +142,9 @@ describe GitHubService do
 
 
     it "should prompt the user and store it in the config" do
-      ghs = GHS.new(nil, 'dfsdf')
       ghs.gitlib.config['github.user'] = ''
 
-      ghs.stub(:ask).with(/username/).and_return('test_user')
+      ghs.stub(:ask_for_user).and_return('test_user')
       ghs.user.should == 'test_user'
     end
 
@@ -138,10 +154,7 @@ describe GitHubService do
   describe "using GHE instead of GitHub.com" do
 
     def ghs
-      unless @ghs
-        @ghs = GHS.new('tu', 'dfsdf')
-      end
-      @ghs
+      @ghs ||= GHS.new('tu', 'dfsdf')
     end
 
 
@@ -159,35 +172,35 @@ describe GitHubService do
     it "site should raise an error if remote.origin.url not set" do
       ghs.gitlib.config['remote.origin.url'] = ''
 
-      expect { ghs.site }.to raise_error GitHubService::NoRemoteRepository
+      expect { ghs.base_github_api_url_for_remote }.to raise_error GitHubService::NoRemoteRepository
     end
 
 
     it "site should not work for a garbage url address" do
       ghs.gitlib.remote.add('origin', 'garbage')
 
-      expect { ghs.site }.to raise_error URI::InvalidURIError
+      expect { ghs.base_github_api_url_for_remote }.to raise_error URI::InvalidURIError
     end
 
 
     it "site should work for an ssh-configured url address" do
       ghs.gitlib.remote.add('origin', 'git@github.myco.com:fooble')
 
-      ghs.site().should == 'https://github.myco.com'
+      ghs.base_github_api_url_for_remote.should == 'https://github.myco.com'
     end
 
   end
 
 
-  it "#git_url_to_api" do
-    ghs = GHS.new('tu', 'dfsdf')
+  it "#url_to_base_github_api_url" do
+    c = GitHubService::Configuration
 
-    ghs.git_url_to_api('ssh://git@github.myco.com/fooble').should == 'https://github.myco.com'
-    ghs.git_url_to_api('git://myco.com/jdigger/git-process.git').should == 'https://myco.com'
-    ghs.git_url_to_api('http://github.myco.com/fooble').should == 'http://github.myco.com'
-    ghs.git_url_to_api('http://tu@github.myco.com/fooble').should == 'http://github.myco.com'
-    ghs.git_url_to_api('https://github.myco.com/fooble').should == 'https://github.myco.com'
-    ghs.git_url_to_api('https://github.com/fooble').should == 'https://api.github.com'
+    c.url_to_base_github_api_url('ssh://git@github.myco.com/fooble').should == 'https://github.myco.com'
+    c.url_to_base_github_api_url('git://myco.com/jdigger/git-process.git').should == 'https://myco.com'
+    c.url_to_base_github_api_url('http://github.myco.com/fooble').should == 'http://github.myco.com'
+    c.url_to_base_github_api_url('http://tu@github.myco.com/fooble').should == 'http://github.myco.com'
+    c.url_to_base_github_api_url('https://github.myco.com/fooble').should == 'https://github.myco.com'
+    c.url_to_base_github_api_url('https://github.com/fooble').should == 'https://api.github.com'
   end
 
 

@@ -50,7 +50,6 @@ module PullRequestHelper
 
 
   def api_url(remote_name, glib = gitlib)
-    url = glib.remote.expanded_url(remote_name)
     # kinda hacky, but I need to level-up my Ruby-foo to make it better
     Class.new do
       include GitHubService
@@ -60,7 +59,7 @@ module PullRequestHelper
       def initialize(lib)
         @gitlib = lib
       end
-    end.new(glib).git_url_to_api(url)
+    end.new(glib).base_github_api_url_for_remote(remote_name)
   end
 
 
