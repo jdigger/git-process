@@ -6,10 +6,11 @@
 
 require 'git-process/git_process_options'
 require 'git-process/sync'
+require 'git-process/git_lib'
 
 
 class SyncOptions
-  include GitProc::GitProcessOptions
+  include GitProcessOptions
 
 
   def summary
@@ -67,4 +68,5 @@ DESC
 
 end
 
-GitProc::Sync.new('.', SyncOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run
+opts = SyncOptions.new.parse_cli(File.basename(__FILE__), ARGV)
+GitProc::Sync.new(GitLib.new('.', opts), opts).run

@@ -1,7 +1,13 @@
 #!/usr/bin/env ruby
 
+# require "rubygems"
+# require "bundler/setup"
+# $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
+
 require 'git-process/git_process_options'
 require 'git-process/rebase_to_master'
+require 'git-process/git_lib'
+
 
 class ToMasterOptions
   include GitProc::GitProcessOptions
@@ -80,4 +86,5 @@ DESC
 
 end
 
-GitProc::RebaseToMaster.new('.', ToMasterOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run
+opts = ToMasterOptions.new.parse_cli(File.basename(__FILE__), ARGV)
+GitProc::RebaseToMaster.new(GitLib.new('.', opts), opts).run

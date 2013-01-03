@@ -4,11 +4,13 @@
 #require "bundler/setup"
 #$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
 
+require 'git-process/git_lib'
 require 'git-process/pull_request'
 require 'git-process/git_process_options'
+include GitProc
 
 class PullRequestOptions
-  include GitProc::GitProcessOptions
+  include GitProcessOptions
 
 
   def summary
@@ -101,4 +103,5 @@ DESC
 
 end
 
-GitProc::PullRequest.new('.', PullRequestOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run
+opts = PullRequestOptions.new.parse_cli(File.basename(__FILE__), ARGV)
+GitProc::PullRequest.new(GitLib.new('.', opts), opts).run

@@ -1,10 +1,17 @@
 #!/usr/bin/env ruby
 
+#require "rubygems"
+#require "bundler/setup"
+#$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
+
 require 'git-process/git_process_options'
 require 'git-process/new_fb'
+require 'git-process/git_lib'
+include GitProc
+
 
 class NewFeatureBranchOptions
-  include GitProc::GitProcessOptions
+  include GitProcessOptions
 
   def summary
     "Create a new feature branch based on the integration branch."
@@ -47,4 +54,5 @@ DESC
 
 end
 
-GitProc::NewFeatureBranch.new('.', NewFeatureBranchOptions.new.parse_cli(File.basename(__FILE__), ARGV)).run
+opts = NewFeatureBranchOptions.new.parse_cli(File.basename(__FILE__), ARGV)
+NewFeatureBranch.new(GitLib.new('.', opts), opts).run
