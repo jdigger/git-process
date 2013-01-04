@@ -141,7 +141,7 @@ describe GitHubService do
     it "site should work for git@... ssh address" do
       ghs.lib.stub(:config).with('remote.origin.url').and_return('git@myco.com:jdigger/git-process.git')
 
-      ghs.site.should == 'http://myco.com'
+      ghs.site.should == 'https://myco.com'
     end
 
 
@@ -162,7 +162,7 @@ describe GitHubService do
     it "site should work for git://myco.com/ address" do
       ghs.lib.stub(:config).with('remote.origin.url').and_return('git://myco.com/jdigger/git-process.git')
 
-      ghs.site.should == 'http://myco.com'
+      ghs.site.should == 'https://myco.com'
     end
 
 
@@ -202,7 +202,7 @@ describe GitHubService do
           "  HostName github.myco.com\n"
 
       in_tempfile(content) do |file|
-        ghs.site(:ssh_config_file => file.path).should == 'http://github.myco.com'
+        ghs.site(:ssh_config_file => file.path).should == 'https://github.myco.com'
       end
     end
 

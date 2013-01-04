@@ -40,7 +40,7 @@ module GitHubService
 
     if /^git@/ =~ origin_url
       host = origin_url.sub(/^git@(.*?):.*$/, '\1')
-      site = host_to_site(host, false)
+      site = host_to_site(host, true)
     else
       uri = URI.parse(origin_url)
       host = uri.host
@@ -55,7 +55,7 @@ module GitHubService
 
       raise GitHubService::NoRemoteRepository.new("Could not determine a host from #{origin_url}") if host.nil?
 
-      site = host_to_site(host, scheme == 'https')
+      site = host_to_site(host, !(scheme == 'http'))
     end
     site
   end
