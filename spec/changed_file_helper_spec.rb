@@ -1,18 +1,7 @@
 require 'git-process/sync'
 include GitProc
 
-describe ChangeFileHelper do
-
-  before(:each) do
-    create_files(%w(.gitignore))
-    gitlib.commit('initial')
-  end
-
-
-  after(:each) do
-    rm_rf(gitlib.workdir)
-  end
-
+describe ChangeFileHelper, :git_repo_helper do
 
   def log_level
     Logger::ERROR
