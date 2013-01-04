@@ -133,7 +133,10 @@ module GitProc
     # @raise [GitHubService::NoRemoteRepository] there is not a URL set for the server name
     # @raise [URI::InvalidURIError] the retrieved URL does not have a schema
     # @raise [GitHubService::NoRemoteRepository] if could not figure out a host for the retrieved URL
+    # @raise [::ArgumentError] if a server name is not provided
     def expanded_url(server_name = 'origin', raw_url = nil, opts = {})
+      raise ArgumentError.new("Need server_name") unless server_name
+
       if raw_url.nil?
         conf_key = "remote.#{server_name}.url"
         url = config[conf_key]
