@@ -61,30 +61,52 @@ module GitHub
     end
 
 
-    def find_pull_request(base, head)
+    #
+    # Find the pull request (PR) that matches the 'head' and 'base'.
+    #
+    # @param [String] base what the PR is merging into
+    # @param [String] head the branch of the PR
+    #
+    # @return [Hash]
+    # @raise [NotFoundError] if the pull request does not exist
+    #
+    def get_pull_request(base, head)
+      find_pull_request(base, head, true)
+    end
+
+
+    #
+    # Find the pull request (PR) that matches the 'head' and 'base'.
+    #
+    # @param [String] base what the PR is merging into
+    # @param [String] head the branch of the PR
+    # @param [boolean] error_if_missing should this error-out if the PR is not found?
+    #
+    # @return [Hash, nil]
+    # @raise [NotFoundError] if the pull request does not exist and 'error_if_missing' is true
+    #
+    def find_pull_request(base, head, error_if_missing = false)
+      logger.info { "Looking for a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
+
       json = pull_requests
-      json.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
+      pr = json.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
+
+      raise NotFoundError.new(base, head, repo, json) if error_if_missing && pr.nil?
+
+      pr
     end
 
 
     def close(*args)
-      pull_number = nil
+      pull_number = if args.size == 2
+                      get_pull_request(args[0], args[1])[:number]
+                    elsif args.size == 1
+                      args[0]
+                    else
+                      raise ArgumentError.new("close(..) needs 1 or 2 arguments")
+                    end
 
-      if args.size == 2
-        base = args[0]
-        head = args[1]
-        logger.info { "Closing a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
-
-        json = pull_requests
-        pull = json.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
-
-        raise NotFoundError.new(base, head, repo, json) if pull.nil?
-
-        pull_number = pull[:number]
-      elsif args.size == 1
-        pull_number = args[0]
-        logger.info { "Closing a pull request \##{pull_number} on #{repo}." }
-      end
+      logger.info { "Closing a pull request \##{pull_number} on #{repo}." }
 
       client.patch("repos/#{Octokit::Repository.new(repo)}/pulls/#{pull_number}", {:state => 'closed'})
     end
@@ -116,6 +138,9 @@ module GitHub
       end
 
     end
+
+    private
+
 
   end
 

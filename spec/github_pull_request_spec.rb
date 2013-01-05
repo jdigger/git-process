@@ -5,8 +5,7 @@ require 'json'
 require 'octokit'
 require 'tempfile'
 
-describe GitHub::PullRequest do
-  include GitRepoHelper
+describe GitHub::PullRequest, :git_repo_helper do
   include GitHubTestHelper
 
 
@@ -84,6 +83,12 @@ describe GitHub::PullRequest do
       stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [{:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}])
 
       expect { pull_request.close('test_base', 'missing_head') }.to raise_error GitHub::PullRequest::NotFoundError
+    end
+
+
+    it "should complain about wrong number of arguments" do
+      expect { pull_request.close() }.to raise_error ::ArgumentError
+      expect { pull_request.close('1', '2', '3') }.to raise_error ::ArgumentError
     end
 
   end
