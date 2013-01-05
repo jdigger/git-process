@@ -177,37 +177,21 @@ module GitProc
     #
     # @return [String] the output of running the git command
     def branch(branch_name, opts = {})
-      args = []
       if opts[:delete]
-        logger.info { "Deleting local branch '#{branch_name}'." } unless branch_name == '_parking_'
-
-        args << (opts[:force] ? '-D' : '-d')
-        args << branch_name
+        delete_branch(branch_name, opts[:force])
       elsif opts[:rename]
-        logger.info { "Renaming branch '#{branch_name}' to '#{opts[:rename]}'." }
-
-        args << '-m' << branch_name << opts[:rename]
+        rename_branch(branch_name, opts[:rename])
       elsif opts[:upstream]
-        logger.info { "Setting upstream/tracking for branch '#{branch_name}' to '#{opts[:upstream]}'." }
-
-        args << '--set-upstream-to' << opts[:upstream] << branch_name
+        set_upstream_branch(branch_name, opts[:upstream])
       elsif branch_name
         if opts[:force]
-          raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless opts[:base_branch]
-          logger.info { "Changing branch '#{branch_name}' to point to '#{opts[:base_branch]}'." }
-
-          args << '-f' << branch_name << opts[:base_branch]
+          change_branch(branch_name, opts[:base_branch])
         else
-          logger.info { "Creating new branch '#{branch_name}' based on '#{opts[:base_branch]}'." }
-
-          args << branch_name
-          args << (opts[:base_branch] ? opts[:base_branch] : 'master')
+          create_branch(branch_name, opts[:base_branch])
         end
       else
-        args << '-a' if opts[:all]
-        args << '--no-color' if opts[:no_color]
+        list_branches(opts[:all], opts[:no_color])
       end
-      command(:branch, args)
     end
 
 
@@ -406,6 +390,52 @@ module GitProc
     def escape(s)
       escaped = s.to_s.gsub('\'', '\'\\\'\'')
       %Q{"#{escaped}"}
+    end
+
+
+    private
+
+    def change_branch(branch_name, base_branch)
+      raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless base_branch
+      logger.info { "Changing branch '#{branch_name}' to point to '#{base_branch}'." }
+
+      command(:branch, ['-f', branch_name, base_branch])
+    end
+
+
+    def create_branch(branch_name, base_branch)
+      logger.info { "Creating new branch '#{branch_name}' based on '#{base_branch}'." }
+
+      command(:branch, [branch_name, (base_branch || 'master')])
+    end
+
+
+    def list_branches(all_branches, no_color)
+      args = []
+      args << '-a' if all_branches
+      args << '--no-color' if no_color
+      command(:branch, args)
+    end
+
+
+    def delete_branch(branch_name, force)
+      logger.info { "Deleting local branch '#{branch_name}'." } unless branch_name == '_parking_'
+
+      command(:branch, [force ? '-D' : '-d', branch_name])
+    end
+
+
+    def rename_branch(branch_name, new_name)
+      logger.info { "Renaming branch '#{branch_name}' to '#{new_name}'." }
+
+      command(:branch, ['-m', branch_name, new_name])
+    end
+
+
+    def set_upstream_branch(branch_name, upstream)
+      logger.info { "Setting upstream/tracking for branch '#{branch_name}' to '#{upstream}'." }
+
+      command(:branch, ['--set-upstream-to', upstream, branch_name])
     end
 
   end

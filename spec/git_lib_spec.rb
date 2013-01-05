@@ -2,17 +2,8 @@ require 'git-process/git_lib'
 require 'GitRepoHelper'
 include GitProc
 
-describe GitLib do
 
-  after(:each) do
-    rm_rf(gitlib.workdir)
-  end
-
-
-  def gitlib
-    @lib ||= GitLib.new(Dir.mktmpdir, :log_level => Logger::ERROR)
-  end
-
+describe GitLib, :git_repo_helper do
 
   describe "workdir" do
 
@@ -39,9 +30,6 @@ describe GitLib do
   describe "branches" do
 
     it "list all the branches" do
-      GitRepoHelper.create_files(gitlib, %w(.gitignore))
-      gitlib.commit('initial')
-
       gitlib.branch('ba', :base_branch => 'master')
       gitlib.branch('bb', :base_branch => 'master')
       gitlib.branch('origin/master', :base_branch => 'master')
@@ -61,20 +49,26 @@ describe GitLib do
 
 
     it "should create a branch with explicit base" do
-      gitlib.stub(:command).with(:branch, %w(test_branch other_branch))
+      gitlib.should_receive(:command).with(:branch, %w(test_branch other_branch))
       gitlib.branch('test_branch', :base_branch => 'other_branch')
     end
 
 
     it "should delete a branch without force" do
-      gitlib.stub(:command).with(:branch, %w(-d test_branch))
+      gitlib.should_receive(:command).with(:branch, %w(-d test_branch))
       gitlib.branch('test_branch', :delete => true)
     end
 
 
     it "should delete a branch with force" do
-      gitlib.stub(:command).with(:branch, %w(-D test_branch))
+      gitlib.should_receive(:command).with(:branch, %w(-D test_branch))
       gitlib.branch('test_branch', :delete => true, :force => true)
+    end
+
+
+    it "should rename a branch" do
+      gitlib.should_receive(:command).with(:branch, %w(-m test_branch new_branch))
+      gitlib.branch('test_branch', :rename => 'new_branch')
     end
 
   end
