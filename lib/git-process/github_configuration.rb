@@ -17,9 +17,7 @@ require 'uri'
 
 
 #
-# Provides utility methods for working with GitHub
-#
-# @abstract Override {#remote_name}, {#lib}, {#user} and {#password} to implement.
+# Provides methods related to GitHub configuration
 #
 module GitHubService
 
@@ -28,30 +26,42 @@ module GitHubService
     attr_reader :git_config
 
 
-    # @param [GitProc::GitLib] git_config
-    def initialize(git_config)
+    #
+    # @param [GitProc::GitConfig] git_config
+    # @param [Hash] opts
+    # @option opts [String] :remote_name (#remote_name) The "remote" name to use (e.g., 'origin')
+    # @option opts [String] :user the username to authenticate with
+    # @option opts [String] :password (#password) the password to authenticate with
+    #
+    # @return [String] the OAuth token
+    #
+    def initialize(git_config, opts = {})
       @git_config = git_config
+      @user = opts[:user]
+      @password = opts[:password]
+      @remote_name = opts[:remote_name]
     end
 
 
-    # @abstract The default remote name (e.g., 'origin')
     # @return [String]
     def remote_name
-      raise NotImplementedError
+      unless @remote_name
+        @remote_name = gitlib.remote.name
+        raise NoRemoteRepository.new("No remote repository is defined") unless @remote_name
+      end
+      @remote_name
     end
 
 
-    # @abstract The default user to use to connect to GitHub
     # @return [String]
     def user
-      raise NotImplementedError
+      @user ||= Configuration.ask_for_user(gitlib)
     end
 
 
-    # @abstract The default password to use to connect to GitHub
     # @return [String]
     def password
-      raise NotImplementedError
+      @password ||= Configuration.ask_for_password
     end
 
 
@@ -61,10 +71,9 @@ module GitHubService
     end
 
 
-    # @abstract the GitLib to use
     # @return [GitProc::GitLib]
     def gitlib
-      raise NotImplementedError
+      @git_config.gitlib
     end
 
 
@@ -72,7 +81,7 @@ module GitHubService
     def create_client(opts = {})
       logger.debug { "Creating GitHub client for user #{user} using token '#{auth_token}'" }
 
-      base_url = opts[:base_url] || base_github_api_url_for_remote(opts[:remote_name] || remote_name)
+      base_url = opts[:base_url] || base_github_api_url_for_remote
 
       configure_octokit(:base_url => base_url)
 
@@ -85,12 +94,11 @@ module GitHubService
     #
     # @param [Hash] opts the options to create a message with
     # @option opts [String] :base_url The base URL to use for the GitHub server
-    # @option opts [String] :remote_name (#remote_name) The "remote" name to use (e.g., 'origin')
     #
     # @return [void]
     #
     def configure_octokit(opts = {})
-      base_url = opts[:base_url] || base_github_api_url_for_remote(opts[:remote_name] || remote_name)
+      base_url = opts[:base_url] || base_github_api_url_for_remote
       Octokit.configure do |c|
         c.api_endpoint = api_endpoint(base_url)
         c.web_endpoint = web_endpoint(base_url)
@@ -139,18 +147,13 @@ module GitHubService
 
 
     #
-    # Determines the base URL for GitHub API calls based on the given remote name.
+    # Determines the base URL for GitHub API calls.
     #
-    # If the "remote" is not provided, then it assumes that this object
-    # has a "remote_name" property that it can ask.
-    #
-    # @param remote [String] the remote name (e.g., 'origin')
     # @return [String] the base GitHub API URL
     #
-    def base_github_api_url_for_remote(remote = nil)
-      remote ||= remote_name
-      url = lib.expanded_url(remote)
-      url_to_base_github_api_url(url)
+    def base_github_api_url_for_remote
+      url = gitlib.remote.expanded_url(remote_name)
+      Configuration.url_to_base_github_api_url(url)
     end
 
 
@@ -197,31 +200,6 @@ module GitHubService
     end
 
 
-    def ask_for_user
-      GitHubService.ask_for_user(lib)
-    end
-
-
-    def self.ask_for_user(lib)
-      user = lib.config('github.user')
-      if user.nil? or user.empty?
-        user = ask("Your <%= color('GitHub', [:bold, :blue]) %> username: ") do |q|
-          q.validate = /^\w\w+$/
-        end
-        lib.config('github.user', user)
-      end
-      user
-    end
-
-
-    def self.ask_for_password
-      ask("Your <%= color('GitHub', [:bold, :blue]) %> password: ") do |q|
-        q.validate = /^\S\S+$/
-        q.echo = 'x'
-      end
-    end
-
-
     #
     # Returns to OAuth token. If it's in .git/config, returns that.
     #   Otherwise it connects to GitHub to get the authorization token.
@@ -263,31 +241,54 @@ module GitHubService
       config_auth_token = auth['token']
 
       # remember it for next time
-      lib.config('gitProcess.github.authToken', config_auth_token)
+      gitlib.config['gitProcess.github.authToken'] = config_auth_token
 
-      self.config_auth_token
+      config_auth_token
     end
 
 
     # @return [String]
     def get_config_auth_token
-      c_auth_token = lib.config('gitProcess.github.authToken')
+      c_auth_token = gitlib.config['gitProcess.github.authToken']
       (c_auth_token.nil? or c_auth_token.empty?) ? nil : c_auth_token
     end
 
 
     def logger
-      lib.logger
+      gitlib.logger
     end
 
 
-    class GithubServiceError < StandardError
+    private
+
+
+    def self.ask_for_user(gitlib)
+      user = gitlib.config['github.user']
+      if user.nil? or user.empty?
+        user = ask("Your <%= color('GitHub', [:bold, :blue]) %> username: ") do |q|
+          q.validate = /^\w\w+$/
+        end
+        gitlib.config['github.user'] = user
+      end
+      user
     end
 
 
-    class NoRemoteRepository < GithubServiceError
+    def self.ask_for_password
+      ask("Your <%= color('GitHub', [:bold, :blue]) %> password: ") do |q|
+        q.validate = /^\S\S+$/
+        q.echo = 'x'
+      end
     end
 
+  end
+
+
+  class Error < ::StandardError
+  end
+
+
+  class NoRemoteRepository < Error
   end
 
 end

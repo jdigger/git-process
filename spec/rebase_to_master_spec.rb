@@ -118,48 +118,11 @@ describe RebaseToMaster do
       end
 
 
-      it "should work for an existing pull request" do
-        stub_get('https://api.github.com/repos/test_repo/pulls?state=open',
-                 :body => [pull_request])
-
-        closed_pr = pull_request.dup[:state] = 'closed'
-        stub_patch('https://api.github.com/repos/test_repo/pulls/987',
-                   :send => JSON({:state => 'closed'}),
-                   :body => [closed_pr])
-
-        gitlib.branch('fb', :base_branch => 'master')
-
-        clone_repo('fb', 'test_repo') do |gl|
-          gl.config['gitProcess.github.authToken'] = 'test-token'
-          gl.config['github.user'] = 'test_user'
-
-          rtm = RebaseToMaster.new(gl, :log_level => log_level)
-          stub_fetch(:head, rtm)
-          rtm.stub(:push)
-          rtm.runner
-        end
-      end
-
-
       it "should not try when there is no auth token" do
         gitlib.branch('fb', :base_branch => 'master')
         clone_repo('fb') do |gl|
           gl.config['gitProcess.github.authToken'] = ''
           gl.config['remote.origin.url'] = 'git@github.com:test_repo.git'
-          gl.config['github.user'] = 'test_user'
-
-          rtm = RebaseToMaster.new(gl, :log_level => log_level)
-          rtm.gitlib.stub(:fetch)
-          rtm.gitlib.stub(:push)
-          rtm.runner
-        end
-      end
-
-
-      it "should not try when there is a file:// origin url" do
-        gitlib.branch('fb', :base_branch => 'master')
-        clone_repo('fb') do |gl|
-          gl.config['gitProcess.github.authToken'] = 'test-token'
           gl.config['github.user'] = 'test_user'
 
           rtm = RebaseToMaster.new(gl, :log_level => log_level)

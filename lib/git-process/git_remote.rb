@@ -135,9 +135,9 @@ module GitProc
     # @raise [GitHubService::NoRemoteRepository] if could not figure out a host for the retrieved URL
     # @raise [::ArgumentError] if a server name is not provided
     def expanded_url(server_name = 'origin', raw_url = nil, opts = {})
-      raise ArgumentError.new("Need server_name") unless server_name
-
       if raw_url.nil?
+        raise ArgumentError.new("Need server_name") unless server_name
+
         conf_key = "remote.#{server_name}.url"
         url = config[conf_key]
 
@@ -156,7 +156,9 @@ module GitProc
 
         raise URI::InvalidURIError.new("Need a scheme in URI: '#{url}'") unless scheme
 
-        if host.nil?
+        if scheme == 'file'
+          url
+        elsif host.nil?
           # assume that the 'scheme' is the named configuration in ~/.ssh/config
           rv = GitRemote.hostname_and_user_from_ssh_config(scheme, opts[:ssh_config_file] ||= "#{ENV['HOME']}/.ssh/config")
 

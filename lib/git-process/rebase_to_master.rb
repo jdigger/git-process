@@ -92,7 +92,7 @@ module GitProc
       # Assume that if we haven't done something that would create the
       # GitHub auth token, then this likely isn't a GitHub-based repo.
       # (Or at least the user isn't using pull requests)
-      if pr.get_config_auth_token
+      if pr.configuration.get_config_auth_token
         begin
           mybranches = gitlib.branches()
           pull = pr.find_pull_request(config.master_branch, mybranches.current.name)

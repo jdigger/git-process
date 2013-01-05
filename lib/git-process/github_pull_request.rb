@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'git-process/github_service'
+require 'git-process/github_configuration'
 require 'octokit'
 require 'octokit/repository'
 
@@ -18,32 +18,19 @@ require 'octokit/repository'
 module GitHub
 
   class PullRequest
-    include GitHubService
-
-    attr_reader :gitlib, :repo, :remote_name, :client
+    attr_reader :gitlib, :repo, :remote_name, :client, :configuration
 
 
     def initialize(lib, remote_name, repo, opts = {})
       @gitlib = lib
       @repo = repo
       @remote_name = remote_name
-      @user = opts[:user]
-      @password = opts[:password]
-    end
-
-
-    def user
-      @user ||= ask_for_user
-    end
-
-
-    def password
-      @password ||= ask_for_password
+      @configuration = GitHubService::Configuration.new(gitlib.config, :user => opts[:user], :password => opts[:password])
     end
 
 
     def client
-      @client ||= create_client
+      @client ||= @configuration.create_client
     end
 
 
@@ -61,6 +48,11 @@ module GitHub
         logger.warn { "Pull request already exists. See #{pull[:html_url]}" }
         pull
       end
+    end
+
+
+    def logger
+      @gitlib.logger
     end
 
 
