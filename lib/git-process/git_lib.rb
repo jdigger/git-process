@@ -353,26 +353,45 @@ module GitProc
       ENV['GIT_WORK_TREE'] = workdir
       path = workdir
 
-      opts = [opts].flatten.map { |s| escape(s) }.join(' ')
-      git_cmd = "git #{cmd} #{opts} #{redirect} 2>&1"
+      git_cmd = create_git_command(cmd, opts, redirect)
 
-      out = nil
-      if chdir and (Dir.getwd != path)
-        Dir.chdir(path) { out = run_command(git_cmd, &block) }
-      else
-        out = run_command(git_cmd, &block)
-      end
+      out = command_git_cmd(path, git_cmd, chdir, block)
 
       if logger
         logger.debug(git_cmd)
         logger.debug(out)
       end
 
-      if $?.exitstatus > 0
-        if $?.exitstatus == 1 && out == ''
-          return ''
+      handle_exitstatus($?, git_cmd, out)
+    end
+
+
+    private
+
+
+    def create_git_command(cmd, opts, redirect)
+      opts = [opts].flatten.map { |s| escape(s) }.join(' ')
+      "git #{cmd} #{opts} #{redirect} 2>&1"
+    end
+
+
+    def command_git_cmd(path, git_cmd, chdir, block)
+      out = nil
+      if chdir and (Dir.getwd != path)
+        Dir.chdir(path) { out = run_command(git_cmd, &block) }
+      else
+        out = run_command(git_cmd, &block)
+      end
+      out
+    end
+
+
+    # @return [void]
+    def handle_exitstatus(proc_status, git_cmd, out)
+      if proc_status.exitstatus > 0
+        unless proc_status.exitstatus == 1 && out == ''
+          raise GitProc::GitExecuteError.new(git_cmd + ':' + out.to_s)
         end
-        raise GitProc::GitExecuteError.new(git_cmd + ':' + out.to_s)
       end
       out
     end
@@ -392,8 +411,6 @@ module GitProc
       %Q{"#{escaped}"}
     end
 
-
-    private
 
     def change_branch(branch_name, base_branch)
       raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless base_branch
