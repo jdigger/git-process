@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 group :default do
-  gem "octokit", "~> 1.4.0" # GitHub API
+  gem "octokit", "~> 1.22" # GitHub API
   gem "json", "~> 1.7.3"
   gem "trollop", "~> 1.16.2" # CLI options parser
   gem "highline", "1.6.13" # user CLI interaction. There is a bug in 1.6.14

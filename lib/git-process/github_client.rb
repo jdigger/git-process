@@ -73,11 +73,11 @@ class GitHubClient < Octokit::Client
   alias :old_request :request
 
 
-  def request(method, path, options, version, authenticate, raw, force_urlencoded)
+  def request(method, path, options={})
     if /api.github.com/ !~ site
       path = "/api/v3/#{path}"
     end
-    old_request(method, path, options, version, authenticate, raw, force_urlencoded)
+    old_request(method, path, options)
   end
 
 end
