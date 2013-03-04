@@ -8,7 +8,7 @@ gemspec = Gem::Specification.new do |gem|
   gem.homepage      = "http://jdigger.github.com/git-process/"
   gem.license       = 'ASL2'
 
-  gem.add_dependency "octokit", "~> 1.4.0" # GitHub API
+  gem.add_dependency "octokit", "~> 1.22.0" # GitHub API
   gem.add_dependency "json", "~> 1.7.3"
   gem.add_dependency "trollop", "~> 1.16.2" # CLI options parser
   gem.add_dependency "highline", "1.6.13" # user CLI interaction. There is a bug in 1.6.14

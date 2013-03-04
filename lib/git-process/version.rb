@@ -14,7 +14,7 @@ module GitProc
   module Version
     MAJOR = 1
     MINOR = 0
-    PATCH = 10
+    PATCH = 11
     BUILD = nil
 
     STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')

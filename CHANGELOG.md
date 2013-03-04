@@ -1,5 +1,9 @@
 # CHANGELOG - 1.0.9 #
 
+### Since 1.0.10 ###
+
+* Changed gemspec to use Octokit 1.22
+
 ### Since 1.0.8 ###
 
 * Changed to use HTTPS instead of HTTP by default for GitHub API usage.
