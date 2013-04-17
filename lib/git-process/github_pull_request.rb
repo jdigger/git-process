@@ -34,8 +34,8 @@ module GitHub
     end
 
 
-    def pull_requests
-      @pull_requests ||= client.pull_requests(repo)
+    def pull_requests(state = 'open', opts = {})
+      @pull_requests ||= client.pull_requests(repo, state, opts)
     end
 
 

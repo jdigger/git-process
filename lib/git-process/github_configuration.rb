@@ -102,6 +102,9 @@ module GitHubService
       Octokit.configure do |c|
         c.api_endpoint = api_endpoint(base_url)
         c.web_endpoint = web_endpoint(base_url)
+        c.faraday_config do |f|
+          #f.response :logger
+        end
       end
     end
 
