@@ -36,7 +36,8 @@ module GitProc
 
     def runner
       if @pr_number.nil? or @pr_number.empty?
-        create_pull_request
+        pr = create_pull_request
+        logger.info { "Created pull request at #{pr.html_url}" }
       else
         checkout_pull_request
       end
