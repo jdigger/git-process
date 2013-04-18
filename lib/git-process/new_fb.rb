@@ -27,8 +27,18 @@ module GitProc
       on_parking = (mybranches.parking == mybranches.current)
 
       if on_parking
-        new_branch = gitlib.checkout(@branch_name, :new_branch => '_parking_')
-        mybranches.parking.delete!
+        base_branch = if mybranches[config.integration_branch].contains_all_of(mybranches.parking.name)
+          config.integration_branch
+        else
+          '_parking_'
+        end
+
+        logger.info { "Creating #{@branch_name} off of #{base_branch}" }
+        new_branch = gitlib.checkout(@branch_name, :new_branch => base_branch)
+
+        branches = gitlib.branches()
+        branches[@branch_name].upstream(config.integration_branch)
+        branches.parking.delete!
         new_branch
       else
         gitlib.checkout(@branch_name, :new_branch => config.integration_branch)

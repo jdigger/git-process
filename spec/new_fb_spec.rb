@@ -33,6 +33,9 @@ describe NewFeatureBranch do
     it 'should create the named branch against origin/master' do
       clone_repo do |gl|
         gp = create_process(gl)
+        gl.checkout('other_branch', :new_branch => 'master')
+        change_file_and_commit('a', '', gl)
+        change_file_and_commit('b', '', gl)
         new_branch = gp.runner
 
         new_branch.name.should == 'test_branch'
@@ -42,21 +45,55 @@ describe NewFeatureBranch do
 
 
     it "should bring committed changes on _parking_ over to the new branch" do
-      gitlib.branch('origin/master', :base_branch => 'master')
-      gitlib.checkout('_parking_', :new_branch => 'master')
-      change_file_and_commit('a', '')
-      change_file_and_commit('b', '')
+      clone_repo do |gl|
+        gl.checkout('_parking_', :new_branch => 'master')
+        change_file_and_commit('a', '', gl)
+        change_file_and_commit('b', '', gl)
 
-      gp = gitprocess
-      new_branch = gp.runner
+        gp = create_process(gl)
+        new_branch = gp.runner
 
-      new_branch.name.should == 'test_branch'
-      Dir.chdir(gitlib.workdir) do |_|
-        File.exists?('a').should be_true
-        File.exists?('b').should be_true
+        new_branch.name.should == 'test_branch'
+        Dir.chdir(gl.workdir) do |_|
+          File.exists?('a').should be_true
+          File.exists?('b').should be_true
+        end
+
+        gl.config["branch.test_branch.remote"].should == 'origin'
+        gl.config["branch.test_branch.merge"].should == 'refs/heads/master'
+
+        gl.fetch
+        gl.branches.parking.should be_nil
+        new_branch.sha.should_not == gl.branches['origin/master'].sha
       end
 
-      gitlib.branches.parking.should be_nil
+    end
+
+
+    it "should move new branch over to the integration branch" do
+      clone_repo do |gl|
+        gl.checkout('_parking_', :new_branch => 'master')
+        change_file_and_commit('a', '', gitlib)
+        change_file_and_commit('b', '', gitlib)
+
+        gl.fetch
+        gp = create_process(gl)
+        new_branch = gp.runner
+
+        new_branch.name.should == 'test_branch'
+        Dir.chdir(gitlib.workdir) do |_|
+          File.exists?('a').should be_true
+          File.exists?('b').should be_true
+        end
+
+        gl.config["branch.test_branch.remote"].should == 'origin'
+        gl.config["branch.test_branch.merge"].should == 'refs/heads/master'
+
+        gl.fetch
+        gl.branches.parking.should be_nil
+        new_branch.sha.should == gl.branches['origin/master'].sha
+      end
+
     end
 
 
