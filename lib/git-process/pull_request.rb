@@ -36,7 +36,8 @@ module GitProc
 
     def runner
       if @pr_number.nil? or @pr_number.empty?
-        create_pull_request
+        pr = create_pull_request
+        logger.info { "Created pull request at #{pr.html_url}" }
       else
         checkout_pull_request
       end
@@ -72,8 +73,6 @@ module GitProc
 
 
       def create_pull_request(lib, server_name, remote_name, repo_name, current_branch, base_branch, head_branch, title, description, logger, username, password)
-        logger.info { "Creating #{@title}" }
-
         if base_branch == head_branch
           raise PullRequestError.new("Can not create a pull request where the base branch and head branch are the same: #{base_branch}")
         end
