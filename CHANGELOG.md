@@ -1,8 +1,32 @@
-# CHANGELOG - 1.0.9 #
+# CHANGELOG - 1.1.0 #
 
 ### Since 1.0.8 ###
 
 * Changed to use HTTPS instead of HTTP by default for GitHub API usage.
+* Adds `git pull-request {repoName}/{branchNumber}` ([GH-92](https://github.com/jdigger/git-process/issues/92))
+* `git new-fb` changes to work better with integration branch ([GH-99](https://github.com/jdigger/git-process/issues/99),
+  [GH-103](https://github.com/jdigger/git-process/issues/103) and [GH-105](https://github.com/jdigger/git-process/issues/105))
+* Added pull-request URL to `git pull-request` output ([GH-104](https://github.com/jdigger/git-process/issues/104))
+* Shows a cleaned up version of fetch's output. ([GH-85](https://github.com/jdigger/git-process/issues/85))
+* Implementation details
+    * GitProc::PullRequest has #checkout_pull_request to checkout the HEAD branch of a pull request at any "remote"
+      that has been configured, setting the upstream to the pull request's BASE branch
+    * GitHubService module no longer uses module-level instance variables, which were causing problems with testing
+    * GitHub::PullRequest can now ask for a pull request by id
+    * Adds ability to set the upstream/tracking on a branch
+    * Upgrades to Octokit 1.24 and no longer overrides the Connection class
+      ([GH-74](https://github.com/jdigger/git-process/issues/74))
+    * Adds module GitHubTestHelper
+    * Made GitLib and AbstractMergeErrorBuilder classes instead of modules
+    * Extracted GitCofig and GitRemote out of GitLib
+    * Changed to use GitLogger as a logging fascade
+    * GitProcess now takes a GitLib instead of a directory
+    * GitHubService refactoring; includes extracting GitHubService::Configuration and GitHub::CreatePullRequest.
+    * Supports RSpec default module for GitRepoHelper. Any RSpec context can declare :git_repo_helper as metadata to get
+      standard GitRepoHelper lifecycle support as part of [GH-97](https://github.com/jdigger/git-process/issues/97).
+    * Refactored GitHubService into GitHubService::Configuration
+    * Refatored GitHub::PullRequest
+    * Refatored GitLib#branch(..) and GitLib#command(..)
 
 ### Since 1.0.7 ###
 
@@ -22,13 +46,14 @@
 
 ### Since 1.0.4 ###
 
-* Do not try to fetch/push when doing sync if there is not remote. (#70)
-* git-sync now merges in upstream changes. (#79)
-* Simplified Windows installation instructions. (#76 #77)
+* Do not try to fetch/push when doing sync if there is not remote. ([GH-70](https://github.com/jdigger/git-process/issues/70))
+* git-sync now merges in upstream changes. ([GH-79](https://github.com/jdigger/git-process/issues/79))
+* Simplified Windows installation instructions. ([GH-76](https://github.com/jdigger/git-process/issues/76),
+  [GH-77](https://github.com/jdigger/git-process/issues/77))
 
 ### Since 1.0.3 ###
 
-* Gets rid of infinite loop in Highline library. (GH-72)
+* Gets rid of infinite loop in Highline library. ([GH-72](https://github.com/jdigger/git-process/issues/72))
 
 ### Since 1.0.2 ###
 

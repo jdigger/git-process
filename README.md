@@ -52,9 +52,12 @@ _The following assumes that the integration branch is "origin/master"._
    as save your work on the server, do "`git sync`".
     * That will merge in the changes that have occurred in "`origin/master`" and then push the
       result to the "`feature_branch`" branch to the server.
-3. When you feel your work is ready for others to look at, do another "`git sync`" to post your
-   changes to the server, and then "`git pull-request`" to ask someone to review your changes.
-4. If you get the thumbs up from the code-review, use "`git to-master`".
+3. When you feel your work is ready for others to look at, do "`git pull-request`" to ask someone to review your changes.
+    * If no name or number is provided, it is assumed that you want to create a new pull request with the same name as the current branch.
+    * Any changes you make via "`git sync`" are automatically reflected in the pull request.
+4. As a reviewer, to see a pull-request, do "`git pull-request ##`" (where "##" is the pull request number) to check
+   out the branch associated with the pull request in your repository.
+5. If you get the thumbs up from the code-review, use "`git to-master`".
     * This will merge and push your changes into "`origin/master`", closing the pull request.
 5. If you still need to make changes, do so and use "`git sync`" to keep your branch on the
    server for that feature updated with your work until all issues have been resolved.
@@ -119,6 +122,7 @@ $ git to-master              # 6
 * If you want to use a different integration branch other than "`master`", set the "`gitProcess.integrationBranch`" configuration value. (e.g., "`git config gitProcess.integrationBranch my-integ-branch`")
 * This tries to respond "intelligently" to the use of 'rerere'.
 * By default the first server name reported by `git remote` is used as the server/remote name. Since most projects only have a single remote (i.e., "origin") this works most of the time. But if you have multiple remotes and want to explicitly set it, use the `gitProcess.remoteName` configuration option.
+* `git pull-request` shows the URL for the pull request after creating it on the server. Most terminal programs let you click on it to open it in your browser. (e.g., Cmd-Click on OSX.)
 
 
 # F.A.Q. #
