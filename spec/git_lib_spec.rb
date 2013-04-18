@@ -5,6 +5,12 @@ include GitProc
 
 describe GitLib, :git_repo_helper do
 
+
+  def log_level
+    Logger::DEBUG
+  end
+
+
   describe 'workdir' do
 
     it 'should use the passed in directory when the top level is a git workdir' do
@@ -35,6 +41,55 @@ describe GitLib, :git_repo_helper do
       gitlib.branch('origin/master', :base_branch => 'master')
 
       gitlib.branches.names.should == %w(ba bb master origin/master)
+    end
+
+  end
+
+
+  describe 'fetch' do
+
+    it 'parse the list of changes' do
+      output = '''
+remote: Counting objects: 1028, done.
+remote: Compressing objects: 100% (301/301), done.
+remote: Total 699 (delta 306), reused 654 (delta 273)
+Receiving objects: 100% (699/699), 600.68 KiB | 686 KiB/s, done.
+Resolving deltas: 100% (306/306), completed with 84 local objects.
+From remote.system.com:tuser/test-proj
+   8e667e0..19ecc91  SITE_TOUR_MODAL -> origin/SITE_TOUR_MODAL
+ + cea75d7...d656188 WEBCMS-2014 -> origin/WEBCMS-2014  (forced update)
+ * [new branch]      WEBCMS-2047 -> origin/WEBCMS-2047
+   ca9e80e..d383005  WEBCMS-2157 -> origin/WEBCMS-2157
+   77b5d5c..f485c7f  WEBCMS-2159 -> origin/WEBCMS-2159
+ * [new branch]      WEBCMS-2166 -> origin/WEBCMS-2166
+   c648f2a..86ee15e  WEBCMS-2167 -> origin/WEBCMS-2167
+ * [new tag]         RELEASE_1.0.1.53 -> RELEASE_1.0.1.53
+ * [new tag]         RELEASE_1.0.1.54 -> RELEASE_1.0.1.54
+ x [deleted]         (none)     -> origin/WEBCMS-4650-resi-breadcrumbs
+ * [new branch]      WEBCMS-2169 -> origin/WEBCMS-2169
+ * [new branch]      base-carousel -> origin/base-carousel
+   1de9c437..7546667 develop    -> origin/develop
+   90e8d75..23ae7d1  new-ui-smoketest -> origin/new-ui-smoketest
+ * [new branch]      webcms-2023 -> origin/webcms-2023
+   b9797f8..dd24a9f  webcms-2135 -> origin/webcms-2135
+ * [new branch]      webcms-831-faq-web-service -> origin/webcms-831-faq-web-service
+ x [deleted]         (none)     -> origin/webcms-1315-masthead
+'''
+      changes = gitlib.fetch_changes(output)
+
+      changes[:new_branch].size().should == 6
+      changes[:new_tag].size().should == 2
+      changes[:deleted].size().should == 2
+      changes[:force_updated].size().should == 1
+      changes[:updated].size().should == 7
+
+      empty_changes = gitlib.fetch_changes('')
+
+      empty_changes[:new_branch].size().should == 0
+      empty_changes[:new_tag].size().should == 0
+      empty_changes[:deleted].size().should == 0
+      empty_changes[:force_updated].size().should == 0
+      empty_changes[:updated].size().should == 0
     end
 
   end

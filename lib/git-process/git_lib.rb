@@ -152,7 +152,58 @@ module GitProc
 
     def fetch(name = remote.name)
       logger.info 'Fetching the latest changes from the server'
-      command(:fetch, ['-p', name])
+      output = self.command(:fetch, ['-p', name])
+
+      log_fetch_changes(fetch_changes(output))
+
+      output
+    end
+
+
+    # @param [Hash] changes a hash of the changes that were made
+    #
+    # @return [void]
+    def log_fetch_changes(changes)
+      changes.each do |key, v|
+        unless v.empty?
+          logger.info { "  #{key.to_s.sub(/_/, ' ')}: #{v.join(', ')}" }
+        end
+      end
+    end
+
+
+    # @return [Hash]
+    def fetch_changes(output)
+      changed = output.split("\n")
+
+      changes = {:new_branch => [], :new_tag => [], :force_updated => [], :deleted => [], :updated => []}
+
+      line = changed.shift
+
+      until line.nil? do
+        case line
+          when /^\s\s\s/
+            m = /^\s\s\s(\S+)\s+(\S+)\s/.match(line)
+            changes[:updated] << "#{m[2]} (#{m[1]})"
+          when /^\s\*\s\[new branch\]/
+            m = /^\s\*\s\[new branch\]\s+(\S+)\s/.match(line)
+            changes[:new_branch] << m[1]
+          when /^\s\*\s\[new tag\]/
+            m = /^\s\*\s\[new tag\]\s+(\S+)\s/.match(line)
+            changes[:new_tag] << m[1]
+          when /^\sx\s/
+            m = /^\sx\s\[deleted\]\s+\(none\)\s+->\s+[^\/]+\/(\S+)/.match(line)
+            changes[:deleted] << m[1]
+          when /^\s\+\s/
+            m = /^\s\+\s(\S+)\s+(\S+)\s/.match(line)
+            changes[:force_updated] << "#{m[2]} (#{m[1]})"
+          else
+            # ignore the line
+        end
+        line = changed.shift
+      end
+
+      changes
     end
 
 
@@ -347,6 +398,7 @@ module GitProc
     alias sha rev_parse
 
 
+    # @return [String]
     def command(cmd, opts = [], chdir = true, redirect = '', &block)
       ENV['GIT_INDEX_FILE'] = File.join(workdir, '.git', 'index')
       ENV['GIT_DIR'] = File.join(workdir, '.git')
@@ -386,7 +438,7 @@ module GitProc
     end
 
 
-    # @return [void]
+    # @return [String]
     def handle_exitstatus(proc_status, git_cmd, out)
       if proc_status.exitstatus > 0
         unless proc_status.exitstatus == 1 && out == ''
