@@ -16,7 +16,7 @@ module GitRepoHelper
   def gitlib
     if @gitlib.nil?
       if @gitprocess.nil?
-        @gitlib = GitLib.new(Dir.mktmpdir, :log_level => log_level)
+        @gitlib = create_gitlib(Dir.mktmpdir, :log_level => log_level)
       else
         @gitlib = gitprocess.gitlib
       end
@@ -86,7 +86,10 @@ module GitRepoHelper
 
 
   def create_gitlib(dir, opts)
-    GitLib.new(dir, opts)
+    git_lib = GitLib.new(dir, opts)
+    git_lib.config['user.email'] = 'test.user@test.com'
+    git_lib.config['user.name'] = 'test user'
+    git_lib
   end
 
 
