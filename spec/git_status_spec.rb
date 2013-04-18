@@ -22,14 +22,14 @@ describe GitProc::GitStatus do
   end
 
 
-  it "should handle added files" do
+  it 'should handle added files' do
     create_files(['a', 'b file.txt', 'c'])
 
     gitlib.status.added.should == ['a', 'b file.txt', 'c']
   end
 
 
-  it "should handle a modification on both sides" do
+  it 'should handle a modification on both sides' do
     change_file_and_commit('a', '')
 
     gitlib.checkout('fb', :new_branch => 'master')

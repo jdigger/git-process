@@ -2,7 +2,7 @@
 
 # Purpose #
 
-This provides an easy way to work with a sane git workflow process that encourages using highly-focussed branches to encourage collaboration, enable fearless changes, and improve team communication.
+This provides an easy way to work with a sane git workflow process that encourages using highly-focused branches to encourage collaboration, enable fearless changes, and improve team communication.
 
 See the F.A.Q. for a much more complete explanation for the thoughts and assumptions that motivates this project.
 
@@ -25,7 +25,7 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
 
 ## Anticipated Use Cases ##
 
-1. User creates new local branch for focussed work.
+1. User creates new local branch for focused work.
 1. User pushes local branch to remote (as feature branch) by merging/rebasing with the integration branch, then pushing to the branch to remote.
 1. User closes local branch by rebasing integration branch first, then pushing local to integration.
 1. User initiates GitHub "pull request" to ease collaboration.

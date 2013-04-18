@@ -72,7 +72,7 @@ module GitProc
 
 
       def create_pull_request(lib, server_name, remote_name, repo_name, current_branch, base_branch, head_branch, title, description, logger, username, password)
-        logger.info { "Creating #@title" }
+        logger.info { "Creating #{@title}" }
 
         if base_branch == head_branch
           raise PullRequestError.new("Can not create a pull request where the base branch and head branch are the same: #{base_branch}")
@@ -85,7 +85,7 @@ module GitProc
 
 
       def checkout_pull_request(lib, pr_number, remote_name, repo_name, username, password, logger)
-        logger.info { "Getting #pr_number" }
+        logger.info { 'Getting #pr_number' }
 
         lib.fetch(remote_name)
 

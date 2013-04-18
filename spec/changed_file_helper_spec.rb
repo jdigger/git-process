@@ -8,12 +8,13 @@ describe ChangeFileHelper, :git_repo_helper do
   end
 
 
+  #noinspection RubyUnusedLocalVariable
   def create_process(dir, opts)
     nil
   end
 
 
-  describe "uncommitted changes" do
+  describe 'uncommitted changes' do
 
     it 'should fail when there are unmerged files' do
       change_file_and_commit('modified file.txt', 'start')

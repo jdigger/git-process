@@ -23,14 +23,14 @@ describe NewFeatureBranch do
   end
 
 
-  describe "#new_feature_branch" do
+  describe '#new_feature_branch' do
 
     def log_level
       Logger::ERROR
     end
 
 
-    it "should create the named branch against origin/master" do
+    it 'should create the named branch against origin/master' do
       clone_repo do |gl|
         gp = create_process(gl)
         new_branch = gp.runner
@@ -51,7 +51,7 @@ describe NewFeatureBranch do
       new_branch = gp.runner
 
       new_branch.name.should == 'test_branch'
-      Dir.chdir(gitlib.workdir) do |dir|
+      Dir.chdir(gitlib.workdir) do |_|
         File.exists?('a').should be_true
         File.exists?('b').should be_true
       end
@@ -79,7 +79,7 @@ describe NewFeatureBranch do
       new_branch = gitprocess.runner
 
       new_branch.name.should == 'test_branch'
-      Dir.chdir(gitlib.workdir) do |dir|
+      Dir.chdir(gitlib.workdir) do |_|
         File.exists?('a').should be_true
         File.exists?('b').should be_true
         File.exists?('c').should be_true

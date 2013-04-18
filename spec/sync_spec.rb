@@ -1,6 +1,5 @@
 require 'git-process/sync'
 require 'GitRepoHelper'
-include GitProc
 
 describe Sync do
   include GitRepoHelper
@@ -22,11 +21,11 @@ describe Sync do
 
 
   def create_process(base = gitlib, opts = {})
-    Sync.new(base, opts.merge({:rebase => false, :force => false}))
+    GitProc::Sync.new(base, opts.merge({:rebase => false, :force => false}))
   end
 
 
-  it "should work when pushing with fast-forward" do
+  it 'should work when pushing with fast-forward' do
     change_file_and_commit('a', '')
 
     gitlib.branch('fb', :base_branch => 'master')
@@ -34,7 +33,7 @@ describe Sync do
     clone_repo('fb') do |gl|
       change_file_and_commit('a', 'hello', gl)
       gl.branches.include?('origin/fb').should be_true
-      Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
+      GitProc::Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
       gl.branches.include?('origin/fb').should be_true
       gitlib.branches.include?('fb').should be_true
     end
@@ -49,17 +48,17 @@ describe Sync do
     clone_repo('fb', 'a_remote') do |gl|
       change_file_and_commit('a', 'hello', gl)
       gl.branches.include?('a_remote/fb').should be_true
-      Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
+      GitProc::Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
       gl.branches.include?('a_remote/fb').should be_true
       gitlib.branches.include?('fb').should be_true
     end
   end
 
 
-  describe "when forcing the push" do
+  describe 'when forcing the push' do
 
     def create_process(gitlib, opts)
-      Sync.new(gitlib, opts.merge({:rebase => false, :force => true}))
+      GitProc::Sync.new(gitlib, opts.merge({:rebase => false, :force => true}))
     end
 
 
@@ -74,7 +73,7 @@ describe Sync do
         end
 
         expect {
-          Sync.new(gl, :rebase => false, :force => true, :log_level => log_level).runner
+          GitProc::Sync.new(gl, :rebase => false, :force => true, :log_level => log_level).runner
         }.to_not raise_error GitExecuteError
       end
     end
@@ -85,7 +84,7 @@ describe Sync do
   describe "when changes are made upstream" do
 
     def create_process(base, opts = {})
-      Sync.new(base, opts.merge({:rebase => false, :force => false}))
+      GitProc::Sync.new(base, opts.merge({:rebase => false, :force => false}))
     end
 
 
@@ -111,7 +110,7 @@ describe Sync do
   describe "when rebasing" do
 
     def create_process(gitlib, opts = {})
-      Sync.new(gitlib, opts.merge({:rebase => true, :force => false}))
+      GitProc::Sync.new(gitlib, opts.merge({:rebase => true, :force => false}))
     end
 
 
@@ -154,7 +153,7 @@ describe Sync do
   describe "when forcing local-only" do
 
     def create_process(dir, opts)
-      Sync.new(dir, opts.merge({:rebase => true, :force => false, :local => true}))
+      GitProc::Sync.new(dir, opts.merge({:rebase => true, :force => false, :local => true}))
     end
 
 
@@ -167,7 +166,7 @@ describe Sync do
         gitlib.checkout('fb')
         change_file_and_commit('a', 'hello', gitlib)
 
-        sp = Sync.new(gl, :rebase => true, :force => false, :local => true, :log_level => log_level)
+        sp = GitProc::Sync.new(gl, :rebase => true, :force => false, :local => true, :log_level => log_level)
         gl.should_receive(:fetch) # want to get remote changes
         gl.should_not_receive(:push) # ...but not push any
 
@@ -181,7 +180,7 @@ describe Sync do
   describe "when there is no remote" do
 
     def create_process(base, opts)
-      Sync.new(base, opts.merge({:rebase => true, :force => false, :local => false}))
+      GitProc::Sync.new(base, opts.merge({:rebase => true, :force => false, :local => false}))
     end
 
 
@@ -190,7 +189,7 @@ describe Sync do
 
       gitlib.branch('fb', :base_branch => 'master')
 
-      sp = Sync.new(gitlib, :rebase => true, :force => false, :local => true, :log_level => log_level)
+      sp = GitProc::Sync.new(gitlib, :rebase => true, :force => false, :local => true, :log_level => log_level)
       gitlib.should_not_receive(:fetch)
       gitlib.should_not_receive(:push)
 
@@ -203,7 +202,7 @@ describe Sync do
   describe "when default rebase flag is used" do
 
     def create_process(base = gitlib, opts = {})
-      Sync.new(base, opts.merge({:rebase => false, :force => false, :local => false}))
+      GitProc::Sync.new(base, opts.merge({:rebase => false, :force => false, :local => false}))
     end
 
 
@@ -212,7 +211,7 @@ describe Sync do
 
       gitlib.branch('fb', :base_branch => 'master')
 
-      sp = Sync.new(gitlib, :rebase => true, :force => false, :local => true, :log_level => log_level)
+      sp = GitProc::Sync.new(gitlib, :rebase => true, :force => false, :local => true, :log_level => log_level)
       gitlib.should_receive(:rebase)
       gitlib.should_not_receive(:merge)
 
@@ -226,7 +225,7 @@ describe Sync do
       gitlib.branch('fb', :base_branch => 'master')
       gitlib.config['gitProcess.defaultRebaseSync'] = 'true'
 
-      sp = Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
+      sp = GitProc::Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
       gitlib.should_receive(:rebase)
       gitlib.should_not_receive(:merge)
 
@@ -240,7 +239,7 @@ describe Sync do
       gitlib.branch('fb', :base_branch => 'master')
       gitlib.config['gitProcess.defaultRebaseSync'] = 'false'
 
-      sp = Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
+      sp = GitProc::Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
       gitlib.should_not_receive(:rebase)
       gitlib.should_receive(:merge)
 
@@ -254,7 +253,7 @@ describe Sync do
       gitlib.branch('fb', :base_branch => 'master')
       gitlib.config['gitProcess.defaultRebaseSync'] = 'false'
 
-      sp = Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
+      sp = GitProc::Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
       gitlib.should_not_receive(:rebase)
       gitlib.should_receive(:merge)
 
@@ -268,7 +267,7 @@ describe Sync do
       gitlib.branch('fb', :base_branch => 'master')
       gitlib.config['gitProcess.defaultRebaseSync'] = 'true'
 
-      sp = Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
+      sp = GitProc::Sync.new(gitlib, :rebase => false, :force => false, :local => true, :log_level => log_level)
       gitlib.should_receive(:rebase)
       gitlib.should_not_receive(:merge)
 
@@ -287,7 +286,7 @@ describe Sync do
       change_file_and_commit('a', 'hello', gl)
       gl.branches.include?('a_remote/fb').should be_true
 
-      Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
+      GitProc::Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
 
       gl.branches.include?('a_remote/fb').should be_true
       gitlib.branches.include?('fb').should be_true

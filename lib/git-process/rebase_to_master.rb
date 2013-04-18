@@ -105,7 +105,7 @@ module GitProc
           logger.debug exp.to_s
         end
       else
-        logger.debug "There is no GitHub auth token defined, so not trying to close a pull request."
+        logger.debug 'There is no GitHub auth token defined, so not trying to close a pull request.'
       end
     end
 

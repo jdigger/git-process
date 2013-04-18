@@ -9,10 +9,10 @@ describe GitRemote do
   end
 
 
-  describe "#name" do
+  describe '#name' do
     include GitRepoHelper
 
-    it "should work with origin" do
+    it 'should work with origin' do
       change_file_and_commit('a', '')
 
       clone_repo('master', 'origin') do |gl|
@@ -22,7 +22,7 @@ describe GitRemote do
     end
 
 
-    it "should work with a different remote name" do
+    it 'should work with a different remote name' do
       change_file_and_commit('a', '')
 
       clone_repo('master', 'a_remote') do |gl|
@@ -32,7 +32,7 @@ describe GitRemote do
     end
 
 
-    it "should work with an overridden remote name" do
+    it 'should work with an overridden remote name' do
       change_file_and_commit('a', '')
 
       clone_repo('master', 'a_remote') do |gl|
@@ -55,7 +55,7 @@ describe GitRemote do
     end
 
 
-    it "should work for an http address" do
+    it 'should work for an http address' do
       remote.add('torigin', 'http://github.myco.com:8080/jdigger/git-process.git')
 
       remote.expanded_url('torigin').should == 'http://github.myco.com:8080/jdigger/git-process.git'

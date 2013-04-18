@@ -47,7 +47,7 @@ module GitHubService
     def remote_name
       unless @remote_name
         @remote_name = gitlib.remote.name
-        raise NoRemoteRepository.new("No remote repository is defined") unless @remote_name
+        raise NoRemoteRepository.new('No remote repository is defined') unless @remote_name
       end
       @remote_name
     end

@@ -32,7 +32,7 @@ module GitProc
         @logger = ::Logger.new(out)
       end
       @logger.level = log_level.nil? ? GitLogger::WARN : log_level
-      @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
+      @logger.datetime_format = '%Y-%m-%d %H:%M:%S'
       @logger.formatter = proc do |_, _, _, msg|
         "#{msg}\n"
       end

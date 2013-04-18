@@ -61,6 +61,7 @@ DESC
   end
 
 
+  #noinspection RubyUnusedLocalVariable
   def post_parse(opts, argv)
     opts[:force] = true if opts[:rebase]
     opts[:merge] = !opts[:rebase]

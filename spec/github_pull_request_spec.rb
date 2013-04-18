@@ -25,16 +25,16 @@ describe GitHub::PullRequest, :git_repo_helper do
   end
 
 
-  describe "#create" do
+  describe '#create' do
 
-    it "should return a pull request for a good request" do
-      stub_post("https://api.github.com/repos/test_repo/pulls", :body => {:number => 1, :state => 'open'})
+    it 'should return a pull request for a good request' do
+      stub_post('https://api.github.com/repos/test_repo/pulls', :body => {:number => 1, :state => 'open'})
 
       pull_request.create('test_base', 'test_head', 'test title', 'test body')[:state].should == 'open'
     end
 
 
-    it "should handle asking for a duplicate pull request" do
+    it 'should handle asking for a duplicate pull request' do
       # trying to create the request should return "HTTP 422: Unprocessable Entity" because it already exists
       stub_post("https://api.github.com/repos/test_repo/pulls", :status => 422)
 
@@ -51,7 +51,7 @@ describe GitHub::PullRequest, :git_repo_helper do
   describe "get" do
 
     it "should return a pull request for a good request" do
-      stub_get("https://api.github.com/repos/test_repo/pulls/1", :body => {:number => 1, :state => 'open'})
+      stub_get('https://api.github.com/repos/test_repo/pulls/1', :body => {:number => 1, :state => 'open'})
 
       pull_request.pull_request(1)[:state].should == 'open'
     end
@@ -59,7 +59,7 @@ describe GitHub::PullRequest, :git_repo_helper do
   end
 
 
-  describe "#close" do
+  describe '#close' do
 
     it "should close a good current pull request" do
       stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [{:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}])

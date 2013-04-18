@@ -88,7 +88,7 @@ module GitProc
       if remote.exists?
         gitlib.fetch(remote_name || remote.name)
       else
-        logger.debug "Can not fetch latest changes because there is no remote defined"
+        logger.debug 'Can not fetch latest changes because there is no remote defined'
       end
     end
 

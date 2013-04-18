@@ -26,7 +26,7 @@ module GitProc
         raise ArgumentError.new(":merge = #{opts[:merge]} and :rebase = #{opts[:rebase]}")
       end
 
-      raise ArgumentError.new(":rebase is not set") if opts[:rebase].nil?
+      raise ArgumentError.new(':rebase is not set') if opts[:rebase].nil?
 
       @do_rebase = opts[:rebase]
       @force = opts[:force]
@@ -106,11 +106,11 @@ module GitProc
 
     def push_to_server
       if @local
-        logger.debug("Not pushing to the server because the user selected local-only.")
+        logger.debug('Not pushing to the server because the user selected local-only.')
       elsif not gitlib.has_a_remote?
-        logger.debug("Not pushing to the server because there is no remote.")
+        logger.debug('Not pushing to the server because there is no remote.')
       elsif @current_branch == config.master_branch
-        logger.warn("Not pushing to the server because the current branch is the mainline branch.")
+        logger.warn('Not pushing to the server because the current branch is the mainline branch.')
       else
         handle_remote_changed
 
@@ -125,7 +125,7 @@ module GitProc
       new_sha = remote_branch_sha
 
       unless old_sha == new_sha
-        logger.warn("'#@current_branch' changed on '#{config.server_name}'"+
+        logger.warn("'#{@current_branch}' changed on '#{config.server_name}'"+
                         " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
         runner # try again
       end

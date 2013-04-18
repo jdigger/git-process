@@ -53,18 +53,18 @@ module GitProc
 
 
     def standard_opts(parser)
-      parser.opt :info, "Informational messages; show the major things this is doing", :default => true, :short => :none
-      parser.opt :quiet, "Quiet messages; only show errors", :short => :q
-      parser.opt :verbose, "Verbose messages; show lots of details on what this is doing", :short => :v
+      parser.opt :info, 'Informational messages; show the major things this is doing', :default => true, :short => :none
+      parser.opt :quiet, 'Quiet messages; only show errors', :short => :q
+      parser.opt :verbose, 'Verbose messages; show lots of details on what this is doing', :short => :v
       parser.opt :version, "Print version (#{GitProc::Version::STRING}) and exit", :short => :none
-      parser.opt :help, "Show this message", :short => :h
+      parser.opt :help, 'Show this message', :short => :h
 
       parser.conflicts :verbose, :info, :quiet
     end
 
 
     def summary
-      "Default summary"
+      'Default summary'
     end
 
 
@@ -74,7 +74,7 @@ module GitProc
 
 
     def description
-      "Default description"
+      'Default description'
     end
 
 

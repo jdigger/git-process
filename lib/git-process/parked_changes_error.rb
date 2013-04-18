@@ -28,7 +28,7 @@ module GitProc
 
 
     def human_message
-      "You made your changes on the the '_parking_' branch instead of a feature branch.\n"+"Please rename the branch to be a feature branch."
+      "You made your changes on the the '_parking_' branch instead of a feature branch.\n"+'Please rename the branch to be a feature branch.'
     end
 
 

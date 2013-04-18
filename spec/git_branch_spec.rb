@@ -21,15 +21,15 @@ describe GitProc::GitBranch do
   end
 
 
-  describe "contains_all_of" do
+  describe 'contains_all_of' do
 
-    it "should handle the trivial case" do
+    it 'should handle the trivial case' do
       current = gitlib.branches.current
       current.contains_all_of(current.name).should == true
     end
 
 
-    it "should handle new branch containing base branch that did not change" do
+    it 'should handle new branch containing base branch that did not change' do
       base_branch = gitlib.branches.current
 
       gitlib.checkout('fb', :new_branch => base_branch.name)
@@ -54,7 +54,7 @@ describe GitProc::GitBranch do
     end
 
 
-    it "should handle containing in both branches" do
+    it 'should handle containing in both branches' do
       base_branch = gitlib.branches.current
 
       gitlib.checkout('fb', :new_branch => base_branch.name)

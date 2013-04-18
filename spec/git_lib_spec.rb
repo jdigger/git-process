@@ -5,9 +5,9 @@ include GitProc
 
 describe GitLib, :git_repo_helper do
 
-  describe "workdir" do
+  describe 'workdir' do
 
-    it "should use the passed in directory when the top level is a git workdir" do
+    it 'should use the passed in directory when the top level is a git workdir' do
       dir = Dir.mktmpdir
       mkdir_p "#{dir}/.git"
       gitlib = GitLib.new(dir, :log_level => Logger::ERROR)
@@ -27,9 +27,9 @@ describe GitLib, :git_repo_helper do
   end
 
 
-  describe "branches" do
+  describe 'branches' do
 
-    it "list all the branches" do
+    it 'list all the branches' do
       gitlib.branch('ba', :base_branch => 'master')
       gitlib.branch('bb', :base_branch => 'master')
       gitlib.branch('origin/master', :base_branch => 'master')
@@ -54,13 +54,13 @@ describe GitLib, :git_repo_helper do
     end
 
 
-    it "should delete a branch without force" do
+    it 'should delete a branch without force' do
       gitlib.should_receive(:command).with(:branch, %w(-d test_branch))
       gitlib.branch('test_branch', :delete => true)
     end
 
 
-    it "should delete a branch with force" do
+    it 'should delete a branch with force' do
       gitlib.should_receive(:command).with(:branch, %w(-D test_branch))
       gitlib.branch('test_branch', :delete => true, :force => true)
     end

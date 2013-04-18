@@ -17,7 +17,7 @@ describe GitHubService::Configuration, :git_repo_helper do
   end
 
 
-  describe "create_authorization" do
+  describe 'create_authorization' do
 
     it "should return an auth_token for a good request" do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
@@ -28,7 +28,7 @@ describe GitHubService::Configuration, :git_repo_helper do
     end
 
 
-    it "should 401 for bad password" do
+    it 'should 401 for bad password' do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
       stub_post('https://tu:dfsdf@api.github.com/authorizations', :send => auth_json,
                 :status => 401)
@@ -51,14 +51,14 @@ describe GitHubService::Configuration, :git_repo_helper do
   end
 
 
-  describe "auth_token with password but no username" do
+  describe 'auth_token with password but no username' do
 
     def ghc
       @ghc ||= GitHubService::Configuration.new(gitlib.config, :user => nil, :password => 'dfsdf')
     end
 
 
-    it "should get the token from the server if it does not exist in config" do
+    it 'should get the token from the server if it does not exist in config' do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
       gitlib.config['github.user'] = 'test_user'
       gitlib.config['gitProcess.github.authToken'] = ''

@@ -22,9 +22,9 @@ describe GitProc::Process do
   end
 
 
-  describe "run lifecycle" do
+  describe 'run lifecycle' do
 
-    it "should call the standard hooks" do
+    it 'should call the standard hooks' do
       proc = GitProc::Process.new(gitlib)
       proc.should_receive(:verify_preconditions)
       proc.should_receive(:runner)

@@ -71,8 +71,8 @@ module GitProc
 
     def self.ask_how_to_handle_unknown_files(stat)
       show_changes(:unknown, stat)
-      resp = ask("Would you like to (a)dd them or (i)gnore them? ") do |q|
-        q.responses[:not_valid] = "Please respond with either (a)dd or (i)gnore. (Ctl-C to abort.) "
+      resp = ask('Would you like to (a)dd them or (i)gnore them? ') do |q|
+        q.responses[:not_valid] = 'Please respond with either (a)dd or (i)gnore. (Ctl-C to abort.) '
         q.case = :down
         q.validate = /a|i/i
       end
@@ -96,8 +96,8 @@ module GitProc
 
     def self.ask_how_to_handle_changed_files(stat)
       [:added, :modified, :deleted].each { |t| show_changes(t, stat) }
-      resp = ask("Would you like to (c)ommit them or (s)tash them? ") do |q|
-        q.responses[:not_valid] = "Please respond with either (c)ommit or (s)tash. (Ctl-C to abort.) "
+      resp = ask('Would you like to (c)ommit them or (s)tash them? ') do |q|
+        q.responses[:not_valid] = 'Please respond with either (c)ommit or (s)tash. (Ctl-C to abort.) '
         q.case = :down
         q.validate = /c|s/i
       end

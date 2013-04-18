@@ -15,6 +15,7 @@ require 'shellwords'
 
 module GitProc
 
+  #noinspection RubyTooManyInstanceVariablesInspection
   class AbstractMergeErrorBuilder
     include GitProc::AbstractErrorBuilder
 

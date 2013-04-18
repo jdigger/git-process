@@ -32,7 +32,7 @@ describe RebaseToMaster do
   end
 
 
-  describe "rebase to master" do
+  describe 'rebase to master' do
 
     it "should work easily for a simple rebase" do
       gitlib.checkout('fb', :new_branch => 'master')
@@ -51,7 +51,7 @@ describe RebaseToMaster do
     end
 
 
-    it "should work for a rebase after a rerere merge" do
+    it 'should work for a rebase after a rerere merge' do
       # Make sure rerere is enabled
       config.rerere_enabled(true, false)
       config.rerere_autoupdate(false, false)

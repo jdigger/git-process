@@ -15,21 +15,21 @@ include GitProc
 
 describe GitLogger do
 
-  it "should log info blocks" do
+  it 'should log info blocks' do
     val = false
     GitLogger.new(GitLogger::INFO, nil).info { val = true }
     val.should == true
   end
 
 
-  it "should not log info blocks by default" do
+  it 'should not log info blocks by default' do
     val = false
     GitLogger.new(nil, nil).info { val = true }
     val.should == false
   end
 
 
-  it "should log warn blocks" do
+  it 'should log warn blocks' do
     val = false
     GitLogger.new(GitLogger::WARN, nil).warn { val = true }
     val.should == true
@@ -57,7 +57,7 @@ describe GitLogger do
   end
 
 
-  it "should log debug blocks" do
+  it 'should log debug blocks' do
     val = false
     GitLogger.new(GitLogger::DEBUG, nil).debug { val = true }
     val.should == true

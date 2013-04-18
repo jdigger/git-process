@@ -28,7 +28,7 @@
 
 ### Since 1.0.3 ###
 
-* Gets rid of infinate loop in Highline library. (GH-72)
+* Gets rid of infinite loop in Highline library. (GH-72)
 
 ### Since 1.0.2 ###
 

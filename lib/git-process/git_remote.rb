@@ -41,7 +41,7 @@ module GitProc
   #
   class GitRemote
 
-    # @param [GitProc::GitConfig] lib
+    # @param [GitProc::GitConfig] gitconfig
     def initialize(gitconfig)
       @gitconfig = gitconfig
     end
@@ -71,7 +71,7 @@ module GitProc
       if @has_remote.nil?
         @has_remote = (config.gitlib.command(:remote) != '')
       end
-      logger.debug { "Does a remote exist? #@has_remote" }
+      logger.debug { "Does a remote exist? #{@has_remote}" }
       @has_remote
     end
 
@@ -95,10 +95,10 @@ module GitProc
             @remote_name = nil
           else
             @remote_name = remotes[0]
-            raise "!@remote_name.is_a? String" unless @remote_name.is_a? String
+            raise '!@remote_name.is_a? String' unless @remote_name.is_a? String
           end
         end
-        logger.debug { "Using remote name of '#@remote_name'" }
+        logger.debug { "Using remote name of '#{@remote_name}'" }
       end
       @remote_name
     end
@@ -136,7 +136,7 @@ module GitProc
     # @raise [::ArgumentError] if a server name is not provided
     def expanded_url(server_name = 'origin', raw_url = nil, opts = {})
       if raw_url.nil?
-        raise ArgumentError.new("Need server_name") unless server_name
+        raise ArgumentError.new('Need server_name') unless server_name
 
         conf_key = "remote.#{server_name}.url"
         url = config[conf_key]

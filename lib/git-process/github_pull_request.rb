@@ -103,7 +103,7 @@ module GitHub
                     elsif args.size == 1
                       args[0]
                     else
-                      raise ArgumentError.new("close(..) needs 1 or 2 arguments")
+                      raise ArgumentError.new('close(..) needs 1 or 2 arguments')
                     end
 
       logger.info { "Closing a pull request \##{pull_number} on #{repo}." }

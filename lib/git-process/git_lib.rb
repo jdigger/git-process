@@ -126,7 +126,7 @@ module GitProc
 
 
     def commit(msg = nil)
-      logger.info "Committing changes"
+      logger.info 'Committing changes'
       command(:commit, msg.nil? ? nil : ['-m', msg])
     end
 
@@ -151,7 +151,7 @@ module GitProc
 
 
     def fetch(name = remote.name)
-      logger.info "Fetching the latest changes from the server"
+      logger.info 'Fetching the latest changes from the server'
       command(:fetch, ['-p', name])
     end
 
@@ -221,7 +221,7 @@ module GitProc
         elsif !(opts[:delete].is_a? TrueClass)
           rb = opts[:delete]
         else
-          raise ArgumentError.new("Need a branch name to delete.")
+          raise ArgumentError.new('Need a branch name to delete.')
         end
 
         int_branch = config.master_branch
@@ -413,7 +413,7 @@ module GitProc
 
 
     def change_branch(branch_name, base_branch)
-      raise ArgumentError.new("Need :base_branch when using :force for a branch.") unless base_branch
+      raise ArgumentError.new('Need :base_branch when using :force for a branch.') unless base_branch
       logger.info { "Changing branch '#{branch_name}' to point to '#{base_branch}'." }
 
       command(:branch, ['-f', branch_name, base_branch])

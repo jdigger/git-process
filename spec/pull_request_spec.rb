@@ -25,13 +25,13 @@ describe GitProc::PullRequest do
   end
 
 
-  describe "with no parameters" do
+  describe 'with no parameters' do
     def create_process(dir, opts)
       GitProc::PullRequest.new(dir, opts)
     end
 
 
-    it "should push the branch and create a default pull request" do
+    it 'should push the branch and create a default pull request' do
       pr_client = double('pr_client')
 
       gitlib.config['gitProcess.integrationBranch'] = 'develop'
@@ -57,7 +57,7 @@ describe GitProc::PullRequest do
   end
 
 
-  describe "checkout pull request" do
+  describe 'checkout pull request' do
     include PullRequestHelper
 
     before(:each) do

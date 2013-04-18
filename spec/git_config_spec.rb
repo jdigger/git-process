@@ -27,7 +27,7 @@ describe GitConfig do
   end
 
 
-  it "should retrieve values by []" do
+  it 'should retrieve values by []' do
     lib = GitLib.new(tmpdir, :log_level => Logger::ERROR)
     lib.command(:config, %w(somevalue.subvalue here))
     config = GitConfig.new(lib)
