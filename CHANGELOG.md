@@ -1,4 +1,8 @@
-# CHANGELOG - 1.1.0 #
+# CHANGELOG - 1.1.1 #
+
+### Since 1.1.0 ###
+
+* Fixed scoping in "git-sync"
 
 ### Since 1.0.8 ###
 

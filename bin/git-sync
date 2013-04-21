@@ -10,7 +10,7 @@ require 'git-process/git_lib'
 
 
 class SyncOptions
-  include GitProcessOptions
+  include GitProc::GitProcessOptions
 
 
   def summary

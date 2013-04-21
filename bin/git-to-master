@@ -130,5 +130,4 @@ DESC
 end
 
 opts = ToMasterOptions.new.parse_cli(File.basename(__FILE__), ARGV)
-#GitProc::RebaseToMaster.new(GitLib.new('.', opts), opts).run
-puts opts.inspect
+GitProc::RebaseToMaster.new(GitLib.new('.', opts), opts).run
