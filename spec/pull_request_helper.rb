@@ -54,8 +54,9 @@ module PullRequestHelper
   end
 
 
-  def stub_get_pull_request(pr)
-    stub_get("#{api_url(pr[:head][:remote])}/repos/#{pr[:head][:repo][:name]}/pulls/#{pr[:number]}", :body => pr)
+  def stub_get_pull_request(pr, glib = gitlib)
+    api_url = api_url(pr[:head][:remote], glib)
+    stub_get("#{api_url}/repos/#{pr[:head][:repo][:name]}/pulls/#{pr[:number]}", :body => pr)
   end
 
 

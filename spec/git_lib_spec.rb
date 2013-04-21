@@ -7,7 +7,7 @@ describe GitLib, :git_repo_helper do
 
 
   def log_level
-    Logger::DEBUG
+    Logger::ERROR
   end
 
 

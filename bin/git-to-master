@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
-# require "rubygems"
-# require "bundler/setup"
-# $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
+require "rubygems"
+require "bundler/setup"
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
 
 require 'git-process/git_process_options'
 require 'git-process/rebase_to_master'
@@ -45,27 +45,52 @@ everything is done on a feature branch.  In addition to being a much \
 safer and more flexible way of working in general, it is also a \
 requirement to take advantage of Pull Request functionality.
 
-By default the first server name reported by 'git remote' is used as the server/remote name. \
-Since most projects only have a single remote (i.e., "origin") this works most of the time. \
-But if you have multiple remotes and want to explicitly set it, use the \
-'gitProcess.remoteName' configuration option.
+By default the first server name reported by 'git remote' is used as the \
+server/remote name. Since most projects only have a single remote (i.e., \
+"origin") this works most of the time. But if you have multiple remotes and \
+want to explicitly set it, use the 'gitProcess.remoteName' configuration option.
 
-EXAMPLE
+If a number is given, or a number with a server preceding it (e.g., \
+"origin/23"), then this assumes that the number refers to an existing pull \
+request identified by that number. In that case, the branch associated with \
+the HEAD of the pull request is checked out before doing the rest of the \
+"to-master".
 
-Assuming that the current branch is called "interesting_changes" and the integration \
-branch on the server is "master", typing "git to-master" will do roughly the following \
-for you:
+EXAMPLE WITHOUT PULL REQUEST
+
+Assuming that the current branch is called "interesting_changes" and the \
+integration branch on the server is "master", typing "git to-master" will do \
+roughly the following for you:
   $ git fetch -p
+  $ git rebase origin/master
+  $ git push origin interesting_changes:master
+  # close pull request if one exists
+  $ git checkout -b _parking_ origin/master
+  $ git branch -d interesting_changes
+  $ git push origin --delete interesting_changes
+
+If you use the --interactive option, then it does an interactive rebase before the first "push".
+
+If you use the --keep option, then the process stops after the first "push".
+
+
+EXAMPLE WITH PULL REQUEST
+
+Assuming that the pull request number is 493, its branch name is "interesting_changes" \
+and the integration branch on the server is "master", typing "git to-master 493" will \
+do roughly the following for you:
+  $ git fetch -p
+  # looks up the information for pull-request 493
+  $ git checkout -b interesting_changes origin/interesting_changes
   $ git rebase origin/master
   $ git push origin interesting_changes:master
   # close pull request
   $ git checkout -b _parking_ origin/master
   $ git branch -d interesting_changes
-  $ git push origin :interesting_changes
+  $ git push origin --delete interesting_changes
 
-If you use the --interactive option, then it does an interactive rebase before the first "push".
-
-If you use the --keep option, then the process stops after the first "push".
+If you would like the review the changes locally first, use "git pull-request 493"
+instead.
 
 NOTES
 
@@ -76,6 +101,10 @@ NOTES
 DESC
   end
 
+  def usage(filename)
+    "Usage: #{filename} [ options ] [server/pull_request_number | pull_request_number]"
+  end
+
 
   def extend_opts(parser)
     parser.opt :keep, "Don't do any \"cleanup.\" It keeps the current local "+
@@ -84,7 +113,22 @@ DESC
     parser.opt :interactive, "Do an interactive rebase before pushing to the server.", :short => :i, :default => false
   end
 
+
+  def post_parse(opts, argv)
+    arg = argv.shift
+    if /^\d+$/ =~ arg
+      opts[:prNumber] = arg
+    elsif /^(.*)\/(\d+)$/ =~ arg
+      m = /^(.*)\/(\d+)$/.match(arg)
+      opts[:server] = m[1]
+      opts[:prNumber] = m[2]
+    else
+      # "normal" to-master
+    end
+  end
+
 end
 
 opts = ToMasterOptions.new.parse_cli(File.basename(__FILE__), ARGV)
-GitProc::RebaseToMaster.new(GitLib.new('.', opts), opts).run
+#GitProc::RebaseToMaster.new(GitLib.new('.', opts), opts).run
+puts opts.inspect

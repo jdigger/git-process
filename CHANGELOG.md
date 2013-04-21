@@ -2,12 +2,19 @@
 
 ### Since 1.0.8 ###
 
-* Changed to use HTTPS instead of HTTP by default for GitHub API usage.
 * Adds `git pull-request {repoName}/{branchNumber}` ([GH-92](https://github.com/jdigger/git-process/issues/92))
+    * If a number is given to "git-pull-request", or a number with a server preceding it (e.g., "origin/23"), then
+      this assumes that the number refers to an existing pull request identified by that number. In that case, the
+      branch associated with the HEAD of the pull request is checked out.
+* Adds `git to-master {repoName}/{branchNumber}` ([GH-94](https://github.com/jdigger/git-process/issues/94))
+    * If a number is given to "git-to-master", or a number with a server preceding it (e.g., "origin/23"), then
+      this assumes that the number refers to an existing pull request identified by that number. In that case, the
+      branch associated with the HEAD of the pull request is checked out before doing the rest of the "to-master".
 * `git new-fb` changes to work better with integration branch ([GH-99](https://github.com/jdigger/git-process/issues/99),
   [GH-103](https://github.com/jdigger/git-process/issues/103) and [GH-105](https://github.com/jdigger/git-process/issues/105))
 * Added pull-request URL to `git pull-request` output ([GH-104](https://github.com/jdigger/git-process/issues/104))
 * Shows a cleaned up version of fetch's output. ([GH-85](https://github.com/jdigger/git-process/issues/85))
+* Changed to use HTTPS instead of HTTP by default for GitHub API usage.
 * Implementation details
     * GitProc::PullRequest has #checkout_pull_request to checkout the HEAD branch of a pull request at any "remote"
       that has been configured, setting the upstream to the pull request's BASE branch

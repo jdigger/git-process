@@ -122,7 +122,7 @@ module GitProc
         end
 
         if pair.nil?
-          raise GitHubService::NoRemoteRepository.new("Could not match pull request url (#{pr_url}) to any of the registered remote urls: #{server_urls.join(', ')}")
+          raise GitHubService::NoRemoteRepository.new("Could not match pull request url (#{pr_url}) to any of the registered remote urls: #{server_urls.map {|s| '{' + s[:server_name] + ': ' + s[:url] + '}'}.join(', ')}")
         end
 
         pair[:server_name]

@@ -176,6 +176,7 @@ module GitHubService
       else
         scheme = uri.scheme
         scheme = 'https' unless scheme.start_with?('http')
+        host = 'unknown-host' unless host
         "#{scheme}://#{host}"
       end
     end

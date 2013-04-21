@@ -35,7 +35,7 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
 * `git new-fb` - Create a new feature branch based on the integration branch.
 * `git sync` - Gets the latest changes that have happened on the integration branch, then pushes your changes to a "private" branch on the server.
 * `git pull-request` - Creates a Pull Request for the current branch.
-* `git to-master` - Rebase against the integration branch, then pushes to it.
+* `git to-master` - Rebase against the integration branch, then pushes to it. Knows how to deal "intelligently" with pull-requests.
 
 **All commands are well documented within themselves: Use the "-h" switch to see the full documentation.** (e.g., "`git sync -h`")
 
@@ -59,6 +59,9 @@ _The following assumes that the integration branch is "origin/master"._
    out the branch associated with the pull request in your repository.
 5. If you get the thumbs up from the code-review, use "`git to-master`".
     * This will merge and push your changes into "`origin/master`", closing the pull request.
+    * If reviewing the pull request via the web interface was sufficient, or there is otherwise not a reason
+      to explicitly checkout the branch first, you can use "`git to-master`" with the pull request number to
+      combine both of these steps.
 5. If you still need to make changes, do so and use "`git sync`" to keep your branch on the
    server for that feature updated with your work until all issues have been resolved.
 

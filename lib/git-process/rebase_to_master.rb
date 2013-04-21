@@ -16,6 +16,7 @@ require 'git-process/git_process_error'
 require 'git-process/parked_changes_error'
 require 'git-process/uncommitted_changes_error'
 require 'git-process/github_pull_request'
+require 'git-process/pull_request'
 
 
 module GitProc
@@ -25,6 +26,9 @@ module GitProc
     def initialize(dir, opts)
       @keep = opts[:keep]
       @interactive = opts[:interactive]
+      @pr_number = opts[:prNumber]
+      @user = opts[:user]
+      @password = opts[:password]
       super
     end
 
@@ -40,9 +44,15 @@ module GitProc
     def runner
       if remote.exists?
         gitlib.fetch(remote.name)
+
+        unless @pr_number.nil? or @pr_number.empty?
+          checkout_pull_request
+        end
+
         proc_rebase(config.integration_branch)
         proc_rebase(config.integration_branch, :interactive => true) if @interactive
-        gitlib.push(remote.name, gitlib.branches.current, config.master_branch)
+        current = gitlib.branches.current.name
+        gitlib.push(remote.name, current, config.master_branch)
 
         unless @keep
           close_pull_request
@@ -51,6 +61,11 @@ module GitProc
       else
         proc_rebase(config.integration_branch)
       end
+    end
+
+
+    def checkout_pull_request
+      PullRequest.checkout_pull_request(gitlib, @pr_number, remote.name, remote.repo_name, @user, @password, logger)
     end
 
 
@@ -94,12 +109,16 @@ module GitProc
       # (Or at least the user isn't using pull requests)
       if pr.configuration.get_config_auth_token
         begin
-          mybranches = gitlib.branches()
-          pull = pr.find_pull_request(config.master_branch, mybranches.current.name)
-          if pull
-            pr.close(pull[:number])
+          if @pr_number
+            pr.close(@pr_number)
           else
-            logger.debug { "There is no pull request for #{mybranches.current.name} against #{config.master_branch}" }
+            mybranches = gitlib.branches()
+            pull = pr.find_pull_request(config.master_branch, mybranches.current.name)
+            if pull
+              pr.close(pull[:number])
+            else
+              logger.debug { "There is no pull request for #{mybranches.current.name} against #{config.master_branch}" }
+            end
           end
         rescue GitHubService::NoRemoteRepository => exp
           logger.debug exp.to_s
@@ -115,12 +134,13 @@ module GitProc
 
     def bad_parking_branch_msg
       hl = HighLine.new
-      hl.color("\n***********************************************************************************************\n\n"+
-                   "There is an old '_parking_' branch with unacounted changes in it.\n"+
-                   "It has been renamed to '_parking_OLD_'.\n"+
-                   "Please rename the branch to what the changes are about (`git branch -m _parking_OLD_ my_fb_name`),\n"+
-                   " or remove it altogher (`git branch -D _parking_OLD_`).\n\n"+
-                   "***********************************************************************************************\n", :red, :bold)
+      hl.color(
+          "\n***********************************************************************************************\n\n"+
+              "There is an old '_parking_' branch with unacounted changes in it.\n"+
+              "It has been renamed to '_parking_OLD_'.\n"+
+              "Please rename the branch to what the changes are about (`git branch -m _parking_OLD_ my_fb_name`),\n"+
+              " or remove it altogher (`git branch -D _parking_OLD_`).\n\n"+
+              "***********************************************************************************************\n", :red, :bold)
     end
 
   end

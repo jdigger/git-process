@@ -287,7 +287,7 @@ describe RebaseToMaster do
       clone_repo('fb') do |gl|
         rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :keep => true)
         gl.should_receive(:fetch)
-        gl.should_receive(:push).with('origin', gl.branches.current, 'master')
+        gl.should_receive(:push).with('origin', gl.branches.current.name, 'master')
         gl.should_not_receive(:push).with('origin', nil, nil, :delete => 'fb')
         rtm.runner
       end
@@ -306,10 +306,122 @@ describe RebaseToMaster do
         gl.should_receive(:fetch)
         gl.should_receive(:rebase).with('origin/master', {})
         gl.should_receive(:rebase).with('origin/master', :interactive => true)
-        gl.should_receive(:push).with('origin', gl.branches.current, 'master')
+        gl.should_receive(:push).with('origin', gl.branches.current.name, 'master')
         gl.should_receive(:push).with('origin', nil, nil, :delete => 'fb')
         rtm.runner
       end
+    end
+
+  end
+
+
+  describe 'to-master pull request' do
+    include PullRequestHelper
+
+
+    def pull_request_number
+      pull_request[:number]
+    end
+
+
+    def head_repo_name
+      pull_request[:head][:repo][:name]
+    end
+
+
+    def base_repo_name
+      pull_request[:base][:repo][:name]
+    end
+
+
+    def base_branch_name
+      pull_request[:base][:ref]
+    end
+
+
+    def head_branch_name
+      pull_request[:head][:ref]
+    end
+
+
+    before(:each) do
+      gitlib.branch(head_branch_name, :base_branch => 'master')
+    end
+
+
+    def configure(gl)
+      gl.config['gitProcess.github.authToken'] = 'sdfsfsdf'
+      gl.config["remote.#{head_repo_name}.url"] = "git@github.com:#{head_repo_name}.git"
+      gl.config['github.user'] = 'jdigger'
+      gl.config['gitProcess.remoteName'] = head_repo_name
+
+      stub_fetch(:head, gl)
+      stub_fetch(:base, gl)
+
+      stub_get("https://api.github.com/repos/#{head_repo_name}/pulls/#{pull_request_number}", :body => pull_request)
+      stub_patch("https://api.github.com/repos/#{head_repo_name}/pulls/#{pull_request_number}")
+    end
+
+
+    describe "with PR #" do
+
+      def pull_request
+        @pr ||= create_pull_request({})
+      end
+
+
+      def create_process(dir, opts)
+        RebaseToMaster.new(dir, opts.merge({:prNumber => pull_request_number}))
+      end
+
+
+      it "should checkout the branch for the pull request" do
+        clone_repo('master', head_repo_name) do |gl|
+          gl.branch("#{base_repo_name}/#{base_branch_name}", :base_branch => "#{head_repo_name}/master")
+
+          configure(gl)
+
+          rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :prNumber => pull_request_number)
+
+          gl.should_receive(:push).with(head_repo_name, head_branch_name, 'master')
+          gl.should_receive(:push).with(head_repo_name, nil, nil, :delete => head_branch_name)
+
+          rtm.runner
+        end
+      end
+
+    end
+
+
+    describe "with repo name and PR #" do
+
+      def pull_request
+        @pr ||= create_pull_request(:base_remote => 'sourcerepo', :base_repo => 'source_repo')
+      end
+
+
+      def create_process(dir, opts = {})
+        RebaseToMaster.new(dir, opts.merge({:prNumber => var,
+                                            :server => pull_request[:head][:remote]}))
+      end
+
+
+      it "should checkout the branch for the pull request" do
+        clone_repo('master', head_repo_name) do |gl|
+          add_remote(:base, gl)
+          gl.branch("#{base_repo_name}/#{base_branch_name}", :base_branch => "#{head_repo_name}/master")
+
+          configure(gl)
+
+          rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :prNumber => pull_request_number)
+
+          gl.should_receive(:push).with(head_repo_name, head_branch_name, 'master')
+          gl.should_receive(:push).with(head_repo_name, nil, nil, :delete => head_branch_name)
+
+          rtm.runner
+        end
+      end
+
     end
 
   end
