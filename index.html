@@ -33,7 +33,7 @@
       <section id="main_content" class="inner">
         <h1>Purpose</h1>
 
-<p>This provides an easy way to work with a sane git workflow process that encourages using highly-focussed branches to encourage collaboration, enable fearless changes, and improve team communication.</p>
+<p>This provides an easy way to work with a sane git workflow process that encourages using highly-focused branches to encourage collaboration, enable fearless changes, and improve team communication.</p>
 
 <p>See the F.A.Q. for a much more complete explanation for the thoughts and assumptions that motivates this project.</p>
 
@@ -58,7 +58,7 @@
 <h2>Anticipated Use Cases</h2>
 
 <ol>
-<li>User creates new local branch for focussed work.</li>
+<li>User creates new local branch for focused work.</li>
 <li>User pushes local branch to remote (as feature branch) by merging/rebasing with the integration branch, then pushing to the branch to remote.</li>
 <li>User closes local branch by rebasing integration branch first, then pushing local to integration.</li>
 <li>User initiates GitHub "pull request" to ease collaboration.</li>
@@ -72,7 +72,7 @@
 <li>
 <code>git pull-request</code> - Creates a Pull Request for the current branch.</li>
 <li>
-<code>git to-master</code> - Rebase against the integration branch, then pushes to it.</li>
+<code>git to-master</code> - Rebase against the integration branch, then pushes to it. Knows how to deal "intelligently" with pull-requests.</li>
 </ul><p><strong>All commands are well documented within themselves: Use the "-h" switch to see the full documentation.</strong> (e.g., "<code>git sync -h</code>")</p>
 
 <h1>Workflow</h1>
@@ -96,12 +96,22 @@ as save your work on the server, do "<code>git sync</code>".
 result to the "<code>feature_branch</code>" branch to the server.</li>
 </ul>
 </li>
-<li>When you feel your work is ready for others to look at, do another "<code>git sync</code>" to post your
-changes to the server, and then "<code>git pull-request</code>" to ask someone to review your changes.</li>
+<li>When you feel your work is ready for others to look at, do "<code>git pull-request</code>" to ask someone to review your changes.
+
+<ul>
+<li>If no name or number is provided, it is assumed that you want to create a new pull request with the same name as the current branch.</li>
+<li>Any changes you make via "<code>git sync</code>" are automatically reflected in the pull request.</li>
+</ul>
+</li>
+<li>As a reviewer, to see a pull-request, do "<code>git pull-request ##</code>" (where "##" is the pull request number) to check
+out the branch associated with the pull request in your repository.</li>
 <li>If you get the thumbs up from the code-review, use "<code>git to-master</code>".
 
 <ul>
 <li>This will merge and push your changes into "<code>origin/master</code>", closing the pull request.</li>
+<li>If reviewing the pull request via the web interface was sufficient, or there is otherwise not a reason
+to explicitly checkout the branch first, you can use "<code>git to-master</code>" with the pull request number to
+combine both of these steps.</li>
 </ul>
 </li>
 <li>If you still need to make changes, do so and use "<code>git sync</code>" to keep your branch on the
@@ -186,6 +196,8 @@ $ git to-master              # 6
 <li>If you want to use a different integration branch other than "<code>master</code>", set the "<code>gitProcess.integrationBranch</code>" configuration value. (e.g., "<code>git config gitProcess.integrationBranch my-integ-branch</code>")</li>
 <li>This tries to respond "intelligently" to the use of 'rerere'.</li>
 <li>By default the first server name reported by <code>git remote</code> is used as the server/remote name. Since most projects only have a single remote (i.e., "origin") this works most of the time. But if you have multiple remotes and want to explicitly set it, use the <code>gitProcess.remoteName</code> configuration option.</li>
+<li>
+<code>git pull-request</code> shows the URL for the pull request after creating it on the server. Most terminal programs let you click on it to open it in your browser. (e.g., Cmd-Click on OSX.)</li>
 </ul><h1>F.A.Q.</h1>
 
 <h2>Q: How is this different from git-flow or GitHub flow?</h2>
