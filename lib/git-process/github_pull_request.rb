@@ -43,9 +43,13 @@ module GitHub
       logger.info { "Creating a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
       begin
         client.create_pull_request(repo, base, head, title, body)
-      rescue Octokit::UnprocessableEntity
+      rescue Octokit::UnprocessableEntity => exp
         pull = pull_requests.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
-        logger.warn { "Pull request already exists. See #{pull[:html_url]}" }
+        if pull
+          logger.warn { "Pull request already exists. See #{pull[:html_url]}" }
+        else
+          logger.warn { "UnprocessableEntity: #{exp}" }
+        end
         pull
       end
     end
