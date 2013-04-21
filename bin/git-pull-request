@@ -104,4 +104,4 @@ DESC
 end
 
 opts = PullRequestOptions.new.parse_cli(File.basename(__FILE__), ARGV)
-GitProc::PullRequest.new(GitLib.new('.', opts), opts).run
+GitProc::PullRequest.new(GitProc::GitLib.new('.', opts), opts).run

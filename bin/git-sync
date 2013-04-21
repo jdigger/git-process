@@ -70,4 +70,4 @@ DESC
 end
 
 opts = SyncOptions.new.parse_cli(File.basename(__FILE__), ARGV)
-GitProc::Sync.new(GitLib.new('.', opts), opts).run
+GitProc::Sync.new(GitProc::GitLib.new('.', opts), opts).run

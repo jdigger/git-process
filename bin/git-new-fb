@@ -55,4 +55,4 @@ DESC
 end
 
 opts = NewFeatureBranchOptions.new.parse_cli(File.basename(__FILE__), ARGV)
-NewFeatureBranch.new(GitLib.new('.', opts), opts).run
+GitProc::NewFeatureBranch.new(GitProc::GitLib.new('.', opts), opts).run
