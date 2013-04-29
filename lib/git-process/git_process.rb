@@ -65,6 +65,11 @@ module GitProc
     end
 
 
+    def master_branch
+      gitlib.config.master_branch
+    end
+
+
     def remote
       gitlib.remote
     end
@@ -129,7 +134,7 @@ module GitProc
 
 
     def ask_about_removing_master
-      resp = ask("You should remove your obsolete <%= color('local', [:bold]) %> branch, '#{master_branch}'. Should I remove it for you? (Yn) ") do |q|
+      resp = ask("You should remove your obsolete <%= color('local', [:bold]) %> branch, '#{config.master_branch}'. Should I remove it for you? (Yn) ") do |q|
         q.responses[:not_valid] = 'Please respond with either (y)es or (n)o. Defaults to (y)es.'
         q.case = :down
         q.default = 'Y'

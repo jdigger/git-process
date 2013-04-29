@@ -1,4 +1,8 @@
-# CHANGELOG - 1.1.1 #
+# CHANGELOG - 1.1.3 #
+
+### Since 1.1.2 ###
+
+* Fixed undefined local variable error when asking about removing local integration branch.
 
 ### Since 1.1.0 ###
 
