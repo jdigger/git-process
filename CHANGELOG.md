@@ -1,4 +1,8 @@
-# CHANGELOG - 1.1.3 #
+# CHANGELOG - 1.1.4 #
+
+### Since 1.1.3 ###
+
+* Improved URI handling of repo names. ([GH-108](https://github.com/jdigger/git-process/issues/108))
 
 ### Since 1.1.2 ###
 
