@@ -11,6 +11,7 @@
 # limitations under the License.
 
 require 'git-process/git_config'
+require 'addressable/uri'
 #require 'git-process/git_branches'
 #require 'git-process/git_status'
 #require 'git-process/git_process_error'
@@ -80,7 +81,8 @@ module GitProc
       unless @repo_name
         url = config["remote.#{name}.url"]
         raise GitProcessError.new("There is no #{name} url set up.") if url.nil? or url.empty?
-        @repo_name = url.sub(/^.*:(.*?)(.git)?$/, '\1')
+        uri = Addressable::URI.parse(url)
+        @repo_name = uri.path.sub(/\.git/, '').sub(/^\//, '')
       end
       @repo_name
     end

@@ -84,6 +84,45 @@ describe GitRemote do
   end
 
 
+  describe "#repo_name" do
+    include GitRepoHelper
+
+    it "should work for an ssh address" do
+      remote.add('torigin', 'tuser@github.myco.com:jdigger/git-process.git')
+
+      remote.repo_name.should == 'jdigger/git-process'
+    end
+
+
+    it 'should work for an http address' do
+      remote.add('torigin', 'http://github.myco.com:8080/jdigger/git-process.git')
+
+      remote.repo_name.should == 'jdigger/git-process'
+    end
+
+
+    it "should work for an https address" do
+      remote.add('torigin', 'https://github.myco.com/jdigger/git-process.git')
+
+      remote.repo_name.should == 'jdigger/git-process'
+    end
+
+
+    it "should work for an ssh-configured url address" do
+      remote.add('origin', 'mygithub:jdigger/git-process.git')
+
+      content = "\nHost mygithub\n"+
+          "  User tuser\n"+
+          "  HostName github.myco.com\n"
+
+      in_tempfile('ssh_config', content) do |file|
+        remote.repo_name.should == 'jdigger/git-process'
+      end
+    end
+
+  end
+
+
   describe "#hostname_and_user_from_ssh_config" do
     include GitRepoHelper
 

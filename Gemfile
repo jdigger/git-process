@@ -5,6 +5,7 @@ group :default do
   gem "json", "~> 1.7.3"
   gem "trollop", "~> 1.16.2" # CLI options parser
   gem "highline", "1.6.13" # user CLI interaction. There is a bug in 1.6.14
+  gem "addressable", "~> 2.3.4" # URI processing
 end
 
 group :development do

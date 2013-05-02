@@ -41,6 +41,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  addressable (~> 2.3.4)
   highline (= 1.6.13)
   json (~> 1.7.3)
   octokit (~> 1.24)
