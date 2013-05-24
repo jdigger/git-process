@@ -17,7 +17,9 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
 
 ## Windows Installation ##
 
-1. Install Ruby (if you have not sone so already) from http://rubyinstaller.org/
+1. Install Ruby (if you have not done so already) from http://rubyinstaller.org/
+   * If it complains about not being able to compile native code, install [DevKit](http://rubyinstaller.org/downloads).
+   * See [this StackOverflow](http://stackoverflow.com/questions/8100891/the-json-native-gem-requires-installed-build-tools/8463500#8463500) for help.
 2. Open a command prompt and type `gem install git-process`
 
 
