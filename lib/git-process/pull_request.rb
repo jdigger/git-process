@@ -90,11 +90,11 @@ module GitProc
 
         pr = create_pull_request_client(lib, remote_name, repo_name, username, password)
         json = pr.pull_request(pr_number)
-        head_branch_name = json.head.ref
-        base_branch_name = json.base.ref
+        head_branch_name = json[:head][:ref]
+        base_branch_name = json[:base][:ref]
 
-        remote_head_server_name = match_remote_to_pr_remote(lib, json.head.repo.ssh_url)
-        remote_base_server_name = match_remote_to_pr_remote(lib, json.base.repo.ssh_url)
+        remote_head_server_name = match_remote_to_pr_remote(lib, json[:head][:repo][:ssh_url])
+        remote_base_server_name = match_remote_to_pr_remote(lib, json[:base][:repo][:ssh_url])
         lib.checkout(head_branch_name, :new_branch => "#{remote_head_server_name}/#{head_branch_name}")
         lib.branch(head_branch_name, :upstream => "#{remote_base_server_name}/#{base_branch_name}")
         #logger.info(json.to_hash)

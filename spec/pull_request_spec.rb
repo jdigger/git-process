@@ -46,12 +46,70 @@ describe GitProc::PullRequest do
     end
 
 
-    it "should fail if the base and head branch are the same" do
+    it "should fail if the base and head branch are the same on the same server" do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
 
       expect {
         gitprocess.runner
       }.to raise_error GitProc::PullRequestError
+    end
+
+  end
+
+
+  describe 'with remote server' do
+    include PullRequestHelper
+
+    before(:each) do
+      gitlib.config['gitProcess.github.authToken'] = 'sdfsfsdf'
+      gitlib.config['github.user'] = 'jdigger'
+    end
+
+
+    def pull_request
+      @pr ||= create_pull_request({})
+    end
+
+
+    def create_process(dir, opts)
+      GitProc::PullRequest.new(dir, opts.merge({:prNumber => pull_request[:number],
+                                                :server => pull_request[:head][:remote]}))
+    end
+
+
+    it 'should push the branch and create a default pull request' do
+      pr_client = double('pr_client')
+
+      add_remote(:head)
+      stub_fetch(:head)
+
+      stub_get_pull_request(pull_request)
+
+      gitlib.config['gitProcess.integrationBranch'] = 'develop'
+      #gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
+
+      GitProc::PullRequest.stub(:create_pull_request_client).and_return(pr_client)
+      #GitProc::PullRequest.stub(:create_pull_request_client).with(anything, 'origin', 'jdigger/git-process').and_return(pr_client)
+      gitlib.should_receive(:push)
+      pr_client.should_receive(:pull_request).with(pull_request[:number]).and_return(pull_request)
+      pr_client.should_receive(:create).with('develop', 'master', 'master', '')
+
+      gitprocess.runner
+    end
+
+
+    it "should not fail if the base and head branch are the same on different servers" do
+      add_remote(:head)
+      stub_fetch(:head)
+
+      stub_get_pull_request(pull_request)
+
+      gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
+      gitlib.remote.add('other', 'git@other-github.com:test/git-process.git')
+
+      expect {
+        gitprocess.runner
+      }.to_not raise_error GitProc::PullRequestError
     end
 
   end
