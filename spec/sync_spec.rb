@@ -40,7 +40,7 @@ describe Sync do
   end
 
 
-  it "should work with a different remote server name" do
+  it 'should work with a different remote server name' do
     change_file_and_commit('a', '')
 
     gitlib.branch('fb', :base_branch => 'master')
@@ -62,7 +62,7 @@ describe Sync do
     end
 
 
-    it "should work when pushing with non-fast-forward" do
+    it 'should work when pushing with non-fast-forward' do
       change_file_and_commit('a', '')
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -81,14 +81,14 @@ describe Sync do
   end
 
 
-  describe "when changes are made upstream" do
+  describe 'when changes are made upstream' do
 
     def create_process(base, opts = {})
       GitProc::Sync.new(base, opts.merge({:rebase => false, :force => false}))
     end
 
 
-    it "should work when pushing with non-fast-forward by merging" do
+    it 'should work when pushing with non-fast-forward by merging' do
       change_file_and_commit('a', '')
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -107,14 +107,14 @@ describe Sync do
   end
 
 
-  describe "when rebasing" do
+  describe 'when rebasing' do
 
     def create_process(gitlib, opts = {})
       GitProc::Sync.new(gitlib, opts.merge({:rebase => true, :force => false}))
     end
 
 
-    it "should work when pushing (non-fast-forward)" do
+    it 'should work when pushing (non-fast-forward)' do
       change_file_and_commit('a', '')
 
       clone_repo do |gl|
@@ -129,7 +129,7 @@ describe Sync do
     end
 
 
-    it "should merge and then rebase if remote feature branch changed" do
+    it 'should merge and then rebase if remote feature branch changed' do
       change_file_and_commit('a', '')
 
       gitlib.checkout('fb', :new_branch => 'master')
@@ -150,14 +150,14 @@ describe Sync do
   end
 
 
-  describe "when forcing local-only" do
+  describe 'when forcing local-only' do
 
     def create_process(dir, opts)
       GitProc::Sync.new(dir, opts.merge({:rebase => true, :force => false, :local => true}))
     end
 
 
-    it "should not try to push" do
+    it 'should not try to push' do
       change_file_and_commit('a', '')
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -177,14 +177,14 @@ describe Sync do
   end
 
 
-  describe "when there is no remote" do
+  describe 'when there is no remote' do
 
     def create_process(base, opts)
       GitProc::Sync.new(base, opts.merge({:rebase => true, :force => false, :local => false}))
     end
 
 
-    it "should not try to fetch or push" do
+    it 'should not try to fetch or push' do
       change_file_and_commit('a', '')
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -199,14 +199,14 @@ describe Sync do
   end
 
 
-  describe "when default rebase flag is used" do
+  describe 'when default rebase flag is used' do
 
     def create_process(base = gitlib, opts = {})
       GitProc::Sync.new(base, opts.merge({:rebase => false, :force => false, :local => false}))
     end
 
 
-    it "should try to rebase by flag" do
+    it 'should try to rebase by flag' do
       change_file_and_commit('a', '', gitlib)
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -219,7 +219,7 @@ describe Sync do
     end
 
 
-    it "should try to rebase by config" do
+    it 'should try to rebase by config' do
       change_file_and_commit('a', '', gitlib)
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -233,7 +233,7 @@ describe Sync do
     end
 
 
-    it "should not try to rebase by false config" do
+    it 'should not try to rebase by false config' do
       change_file_and_commit('a', '', gitlib)
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -247,7 +247,7 @@ describe Sync do
     end
 
 
-    it "should not try to rebase by false config" do
+    it 'should not try to rebase by false config' do
       change_file_and_commit('a', '', gitlib)
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -261,7 +261,7 @@ describe Sync do
     end
 
 
-    it "should try to rebase by true config" do
+    it 'should try to rebase by true config' do
       change_file_and_commit('a', '', gitlib)
 
       gitlib.branch('fb', :base_branch => 'master')
