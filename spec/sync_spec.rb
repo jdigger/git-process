@@ -147,6 +147,30 @@ describe Sync do
       end
     end
 
+
+    def log_level
+      Logger::DEBUG
+    end
+
+
+    it 'should complain if remote feature branch conflicts' do
+      change_file_and_commit('a', '')
+
+      gitlib.checkout('fb', :new_branch => 'master')
+
+      clone_repo do |gl|
+        gl.checkout('fb', :new_branch => 'origin/master')
+
+        change_file_and_commit('b', 'hello', gl)
+        change_file_and_commit('a', 'hello!', gitlib)
+        change_file_and_commit('b', 'conflict!', gl)
+        change_file_and_commit('a', 'conflict!!', gl)
+        gitlib.checkout('master')
+
+        expect { create_process(gl).runner }.to raise_error MergeError
+      end
+    end
+
   end
 
 

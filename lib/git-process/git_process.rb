@@ -159,9 +159,9 @@ module GitProc
     end
 
 
-    def proc_merge(base)
+    def proc_merge(base, opts = {})
       begin
-        gitlib.merge(base)
+        gitlib.merge(base, opts)
       rescue GitExecuteError => merge_error
         raise MergeError.new(merge_error.message, gitlib)
       end

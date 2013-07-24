@@ -17,7 +17,7 @@ module GitProc
   class MergeError < GitProcessError
 
     def initialize(merge_error_message, gitlib)
-      @error_builder = GitProc::AbstractMergeErrorBuilder.new(gitlib, merge_error_message, 'git commit')
+      error_builder = GitProc::AbstractMergeErrorBuilder.new(gitlib, merge_error_message, 'git commit')
       msg = error_builder.build_message
 
       super(msg)

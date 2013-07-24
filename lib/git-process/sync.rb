@@ -73,7 +73,7 @@ module GitProc
       #   doing anything with the integration branch
       if remote_has_changed?
         logger.info('There have been changes on this remote branch, so will merge them in.')
-        proc_merge(@remote_branch)
+        proc_merge(@remote_branch, :merge_strategy => 'recursive')
       end
 
       if do_rebase?

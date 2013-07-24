@@ -144,9 +144,12 @@ module GitProc
     end
 
 
-    def merge(base)
+    def merge(base, opts= {})
       logger.info { "Merging #{branches.current.name} with #{base}" }
-      command(:merge, [base])
+      args = []
+      args << '-s' << opts[:merge_strategy] if opts[:merge_strategy]
+      args << base
+      command(:merge, args)
     end
 
 
@@ -321,6 +324,11 @@ module GitProc
     end
 
 
+    # @param [String] branch_name the name of the branch to checkout/create
+    # @option opts [Boolean] :no_track do not track the base branch
+    # @option opts [String] :new_branch the name of the base branch
+    #
+    # @return [void]
     def checkout(branch_name, opts = {})
       args = []
       args << '--no-track' if opts[:no_track]
