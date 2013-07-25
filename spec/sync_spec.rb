@@ -148,11 +148,6 @@ describe Sync do
     end
 
 
-    def log_level
-      Logger::DEBUG
-    end
-
-
     it 'should complain if remote feature branch conflicts' do
       change_file_and_commit('a', '')
 

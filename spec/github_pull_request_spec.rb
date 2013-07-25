@@ -36,7 +36,7 @@ describe GitHub::PullRequest, :git_repo_helper do
 
     it 'should handle asking for a duplicate pull request' do
       # trying to create the request should return "HTTP 422: Unprocessable Entity" because it already exists
-      stub_post("https://api.github.com/repos/test_repo/pulls", :status => 422)
+      stub_post('https://api.github.com/repos/test_repo/pulls', :status => 422)
 
       # listing all existing pull requests should contain the current branch
       stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :status => 200,
@@ -48,9 +48,9 @@ describe GitHub::PullRequest, :git_repo_helper do
   end
 
 
-  describe "get" do
+  describe 'get' do
 
-    it "should return a pull request for a good request" do
+    it 'should return a pull request for a good request' do
       stub_get('https://api.github.com/repos/test_repo/pulls/1', :body => {:number => 1, :state => 'open'})
 
       pull_request.pull_request(1)[:state].should == 'open'
@@ -61,16 +61,19 @@ describe GitHub::PullRequest, :git_repo_helper do
 
   describe '#close' do
 
-    it "should close a good current pull request" do
-      stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [{:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}])
+    it 'should close a good current pull request' do
+      stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [
+          {:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'},
+           :base => {:ref => 'test_base'}}])
       stub_patch('https://api.github.com/repos/test_repo/pulls/1', :send => JSON({:state => 'closed'}),
-                 :body => {:number => 1, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}})
+                 :body => {:number => 1, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'test_head'},
+                           :base => {:ref => 'test_base'}})
 
       pull_request.close('test_base', 'test_head')[:state].should == 'closed'
     end
 
 
-    it "should close a good current pull request using the pull request number" do
+    it 'should close a good current pull request using the pull request number' do
       stub_patch('https://api.github.com/repos/test_repo/pulls/1', :send => JSON({:state => 'closed'}),
                  :body => {:number => 1, :state => 'closed', :html_url => 'test_url',
                            :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}})
@@ -79,14 +82,32 @@ describe GitHub::PullRequest, :git_repo_helper do
     end
 
 
-    it "should complain about a missing pull request" do
-      stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [{:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}])
+    it 'should retry closing a good current pull request when getting a 422' do
+      stub = stub_request(:patch, 'https://api.github.com/repos/test_repo/pulls/1')
+
+      stub.with(:body => JSON({:state => 'closed'}))
+
+      stub.to_raise(Octokit::UnprocessableEntity).then.
+          to_raise(Octokit::UnprocessableEntity).then.
+          to_raise(Octokit::UnprocessableEntity).then.
+          to_raise(Octokit::UnprocessableEntity).then.
+          to_return(:status => 200, :body => {:number => 1, :state => 'closed', :html_url => 'test_url',
+                           :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}})
+
+      pull_request.close(1)[:state].should == 'closed'
+    end
+
+
+    it 'should complain about a missing pull request' do
+      stub_get('https://api.github.com/repos/test_repo/pulls?state=open', :body => [
+          {:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'},
+           :base => {:ref => 'test_base'}}])
 
       expect { pull_request.close('test_base', 'missing_head') }.to raise_error GitHub::PullRequest::NotFoundError
     end
 
 
-    it "should complain about wrong number of arguments" do
+    it 'should complain about wrong number of arguments' do
       expect { pull_request.close() }.to raise_error ::ArgumentError
       expect { pull_request.close('1', '2', '3') }.to raise_error ::ArgumentError
     end

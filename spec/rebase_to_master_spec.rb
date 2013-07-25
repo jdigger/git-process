@@ -34,7 +34,7 @@ describe RebaseToMaster do
 
   describe 'rebase to master' do
 
-    it "should work easily for a simple rebase" do
+    it 'should work easily for a simple rebase' do
       gitlib.checkout('fb', :new_branch => 'master')
       change_file_and_commit('a', '')
 
@@ -85,7 +85,7 @@ describe RebaseToMaster do
 
       begin
         gitprocess.runner
-        raise "Should have raised RebaseError"
+        raise 'Should have raised RebaseError'
       rescue RebaseError => exp
         error_builder = exp.error_builder
         error_builder.resolved_files.should == %w(a)
@@ -99,7 +99,7 @@ describe RebaseToMaster do
     end
 
 
-    describe "when used on _parking_" do
+    describe 'when used on _parking_' do
       it 'should fail #rebase_to_master' do
         gitlib.checkout('_parking_', :new_branch => 'master')
         change_file_and_commit('a', '')
@@ -109,7 +109,7 @@ describe RebaseToMaster do
     end
 
 
-    describe "closing the pull request" do
+    describe 'closing the pull request' do
       include PullRequestHelper
 
 
@@ -118,7 +118,7 @@ describe RebaseToMaster do
       end
 
 
-      it "should not try when there is no auth token" do
+      it 'should not try when there is no auth token' do
         gitlib.branch('fb', :base_branch => 'master')
         clone_repo('fb') do |gl|
           gl.config['gitProcess.github.authToken'] = ''
@@ -137,7 +137,7 @@ describe RebaseToMaster do
   end
 
 
-  describe "custom integration branch" do
+  describe 'custom integration branch' do
 
     it "should use the 'gitProcess.integrationBranch' configuration" do
       gitlib.checkout('int-br', :new_branch => 'master')
@@ -174,11 +174,11 @@ describe RebaseToMaster do
   end
 
 
-  describe "remove current feature branch" do
+  describe 'remove current feature branch' do
 
-    describe "when handling the parking branch" do
+    describe 'when handling the parking branch' do
 
-      it "should create it based on origin/master" do
+      it 'should create it based on origin/master' do
         gitlib.branch('fb', :base_branch => 'master')
         clone_repo('fb') do |gl|
           create_process(gl).remove_feature_branch
@@ -187,7 +187,7 @@ describe RebaseToMaster do
       end
 
 
-      it "should move it to the new origin/master if it already exists and is clean" do
+      it 'should move it to the new origin/master if it already exists and is clean' do
         clone_repo do |gl|
           gl.branch('_parking_', :base_branch => 'origin/master')
           change_file_and_commit('a', '', gl)
@@ -201,7 +201,7 @@ describe RebaseToMaster do
       end
 
 
-      it "should move it to the new origin/master if it already exists and changes are part of the current branch" do
+      it 'should move it to the new origin/master if it already exists and changes are part of the current branch' do
         gitlib.checkout('afb', :new_branch => 'master')
         clone_repo do |gl|
           gl.checkout('_parking_', :new_branch => 'origin/master') do
@@ -217,7 +217,7 @@ describe RebaseToMaster do
       end
 
 
-      it "should move it out of the way if it has unaccounted changes on it" do
+      it 'should move it out of the way if it has unaccounted changes on it' do
         clone_repo do |gl|
           gl.checkout('_parking_', :new_branch => 'origin/master')
           change_file_and_commit('a', '', gl)
@@ -235,7 +235,7 @@ describe RebaseToMaster do
     end
 
 
-    it "should delete the old local branch when it has been merged into origin/master" do
+    it 'should delete the old local branch when it has been merged into origin/master' do
       clone_repo do |gl|
         change_file_and_commit('a', '', gl)
 
@@ -250,7 +250,7 @@ describe RebaseToMaster do
     end
 
 
-    it "should raise an error when the local branch has not been merged into origin/master" do
+    it 'should raise an error when the local branch has not been merged into origin/master' do
       clone_repo do |gl|
         gl.checkout('fb', :new_branch => 'origin/master')
         change_file_and_commit('a', '', gl)
@@ -262,7 +262,7 @@ describe RebaseToMaster do
     end
 
 
-    it "should delete the old remote branch" do
+    it 'should delete the old remote branch' do
       change_file_and_commit('a', '')
 
       gitlib.branch('fb', :base_branch => 'master')
@@ -279,9 +279,9 @@ describe RebaseToMaster do
   end
 
 
-  describe ":keep option" do
+  describe ':keep option' do
 
-    it "should not try to close a pull request or remove remote branch" do
+    it 'should not try to close a pull request or remove remote branch' do
       gitlib.branch('fb', :base_branch => 'master')
 
       clone_repo('fb') do |gl|
@@ -296,9 +296,9 @@ describe RebaseToMaster do
   end
 
 
-  describe ":interactive option" do
+  describe ':interactive option' do
 
-    it "should try to do an interactive rebase" do
+    it 'should try to do an interactive rebase' do
       gitlib.branch('fb', :base_branch => 'master')
 
       clone_repo('fb') do |gl|
@@ -363,7 +363,7 @@ describe RebaseToMaster do
     end
 
 
-    describe "with PR #" do
+    describe 'with PR #' do
 
       def pull_request
         @pr ||= create_pull_request({})
@@ -375,7 +375,7 @@ describe RebaseToMaster do
       end
 
 
-      it "should checkout the branch for the pull request" do
+      it 'should checkout the branch for the pull request' do
         clone_repo('master', head_repo_name) do |gl|
           gl.branch("#{base_repo_name}/#{base_branch_name}", :base_branch => "#{head_repo_name}/master")
 
@@ -393,7 +393,7 @@ describe RebaseToMaster do
     end
 
 
-    describe "with repo name and PR #" do
+    describe 'with repo name and PR #' do
 
       def pull_request
         @pr ||= create_pull_request(:base_remote => 'sourcerepo', :base_repo => 'source_repo')
@@ -406,7 +406,7 @@ describe RebaseToMaster do
       end
 
 
-      it "should checkout the branch for the pull request" do
+      it 'should checkout the branch for the pull request' do
         clone_repo('master', head_repo_name) do |gl|
           add_remote(:base, gl)
           gl.branch("#{base_repo_name}/#{base_branch_name}", :base_branch => "#{head_repo_name}/master")

@@ -20,6 +20,7 @@ module GitHub
   class PullRequest
     attr_reader :gitlib, :repo, :remote_name, :client, :configuration
 
+    MAX_RESEND = 5
 
     def initialize(lib, remote_name, repo, opts = {})
       @gitlib = lib
@@ -112,7 +113,7 @@ module GitHub
 
       logger.info { "Closing a pull request \##{pull_number} on #{repo}." }
 
-      client.patch("repos/#{Octokit::Repository.new(repo)}/pulls/#{pull_number}", {:state => 'closed'})
+      send_close_req(pull_number, 1)
     end
 
 
@@ -143,8 +144,21 @@ module GitHub
 
     end
 
+
     private
 
+
+    def send_close_req(pull_number, count)
+      begin
+        client.patch("repos/#{Octokit::Repository.new(repo)}/pulls/#{pull_number}", {:state => 'closed'})
+      rescue Octokit::UnprocessableEntity => exp
+        if count > MAX_RESEND
+          raise exp
+        end
+        logger.warn { "Retrying closing a pull request \##{pull_number} on #{repo} - try \##{count + 1}" }
+        send_close_req(pull_number, count + 1)
+      end
+    end
 
   end
 
