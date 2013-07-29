@@ -87,10 +87,10 @@ describe GitHub::PullRequest, :git_repo_helper do
 
       stub.with(:body => JSON({:state => 'closed'}))
 
-      stub.to_raise(Octokit::UnprocessableEntity).then.
-          to_raise(Octokit::UnprocessableEntity).then.
-          to_raise(Octokit::UnprocessableEntity).then.
-          to_raise(Octokit::UnprocessableEntity).then.
+      stub.to_raise(Octokit::UnprocessableEntity.new).then.
+          to_raise(Octokit::UnprocessableEntity.new).then.
+          to_raise(Octokit::UnprocessableEntity.new).then.
+          to_raise(Octokit::UnprocessableEntity.new).then.
           to_return(:status => 200, :body => {:number => 1, :state => 'closed', :html_url => 'test_url',
                            :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}})
 
