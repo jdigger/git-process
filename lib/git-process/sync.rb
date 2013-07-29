@@ -26,8 +26,6 @@ module GitProc
         raise ArgumentError.new(":merge = #{opts[:merge]} and :rebase = #{opts[:rebase]}")
       end
 
-      raise ArgumentError.new(':rebase is not set') if opts[:rebase].nil?
-
       @do_rebase = opts[:rebase]
       @force = opts[:force]
       @local = opts[:local]
@@ -69,17 +67,29 @@ module GitProc
     def runner
       @remote_branch ||= "#{remote.name}/#{current_branch}"
 
-      # if the remote branch has changed, merge those changes in before
-      #   doing anything with the integration branch
-      if remote_has_changed?
-        logger.info('There have been changes on this remote branch, so will merge them in.')
-        proc_merge(@remote_branch, :merge_strategy => 'recursive')
-      end
-
       if do_rebase?
+        logger.info 'Doing rebase-based sync'
         @force = true
-        proc_rebase(config.integration_branch)
+
+        # if the remote branch has changed, bring in those changes in
+        if remote_has_changed?
+          logger.info('There have been changes on the remote branch, so will bring them in.')
+
+          cb = current_branch
+
+          logger.info { "Creating 'sync_temp' to rebase #{@remote_branch}'s changes on top of #{config.integration_branch}" }
+          gitlib.checkout('sync_tmp', :new_branch => @remote_branch)
+          proc_rebase(config.integration_branch)
+          gitlib.checkout(cb.name)
+
+          proc_rebase('sync_tmp', :old_base => config.integration_branch)
+
+          gitlib.branches['sync_tmp'].delete!(true)
+        else
+          proc_rebase(config.integration_branch)
+        end
       else
+        logger.info 'Doing merge-based sync'
         proc_merge(config.integration_branch)
       end
 
@@ -91,16 +101,29 @@ module GitProc
 
 
     def remote_has_changed?
+      return false unless (gitlib.has_a_remote? and gitlib.branches.include?(@remote_branch))
+
       old_sha = remote_branch_sha
       fetch_remote_changes
       new_sha = remote_branch_sha
 
-      old_sha != new_sha
+      if old_sha != new_sha
+        logger.info('The remote branch has changed since the last time')
+        true
+      elsif not current_branch.contains_all_of(@remote_branch)
+        logger.info('There are new commits on the remote branch')
+        true
+      else
+        false
+      end
     end
 
 
     def do_rebase?
-      @do_rebase ||= config['gitProcess.defaultRebaseSync'].to_boolean
+      if @do_rebase.nil?
+        @do_rebase = config.default_rebase_sync?
+      end
+      @do_rebase
     end
 
 
@@ -124,9 +147,8 @@ module GitProc
       fetch_remote_changes
       new_sha = remote_branch_sha
 
-      unless old_sha == new_sha
-        logger.warn("'#{@current_branch}' changed on '#{config.server_name}'"+
-                        " [#{old_sha[0..5]}->#{new_sha[0..5]}]; trying sync again.")
+      if old_sha != new_sha
+        logger.warn("'#{@current_branch}' changed on '#{remote.name}'; trying sync again.")
         runner # try again
       end
     end

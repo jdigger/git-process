@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
-# require "rubygems"
-# require "bundler/setup"
-# $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
+#require "rubygems"
+#require "bundler/setup"
+#$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
 
 require 'git-process/git_process_options'
 require 'git-process/sync'
@@ -35,7 +35,7 @@ Since most projects only have a single remote (i.e., "origin") this works most o
 But if you have multiple remotes and want to explicitly set it, use the \
 'gitProcess.remoteName' configuration option.
 
-Setting `gitProcess.defaultRebaseSync` to "true" causes this to default to using rebase instead of merge.
+Setting `gitProcess.defaultRebaseSync` to "false" causes this to default to using merge instead of rebase.
 
 EXAMPLE
 
@@ -43,7 +43,7 @@ Assuming that the current branch is called "interesting_changes" and the integra
 branch on the server is "master", typing "git sync" will do roughly the following \
 for you:
   $ git fetch -p
-  $ git merge origin/master
+  $ git rebase origin/master
   $ git push origin interesting_changes:interesting_changes
 
 DESC
@@ -51,8 +51,8 @@ DESC
 
 
   def extend_opts(parser)
-    parser.opt :rebase, "Rebase instead of merge against the integration branch"
-    parser.opt :merge, "Merge instead of rebase against the integration branch", :short => :none, :default => true
+    parser.opt :rebase, "Rebase instead of merge against the integration branch", :default => true
+    parser.opt :merge, "Merge instead of rebase against the integration branch", :short => :none, :default => false
     parser.opt :force, "Force the push; defaults to true if --rebase is used", :short => :f, :default => false
     parser.opt :local, "Do not do a push; gets remote changes, but does not update the server", :short => :l, :default => false
 

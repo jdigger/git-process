@@ -82,6 +82,28 @@ module GitProc
     end
 
 
+    #
+    # @return true if no value has been set; the value of the config otherwise
+    def default_rebase_sync?
+      val = self['gitProcess.defaultRebaseSync']
+      val.nil? or val.to_boolean
+    end
+
+
+    def default_rebase_sync(re, global = true)
+      if global
+        set_global('gitProcess.defaultRebaseSync', re)
+      else
+        self['gitProcess.defaultRebaseSync'] = re
+      end
+    end
+
+
+    def default_rebase_sync=(re)
+      default_rebase_sync(re, false)
+    end
+
+
     def master_branch
       @master_branch ||= self['gitProcess.integrationBranch'] || 'master'
     end

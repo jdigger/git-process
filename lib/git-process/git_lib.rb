@@ -131,15 +131,19 @@ module GitProc
     end
 
 
-    def rebase(base, opts = {})
+    def rebase(upstream, opts = {})
       args = []
       if opts[:interactive]
-        logger.info { "Interactively rebasing #{branches.current.name} against #{base}" }
+        logger.info { "Interactively rebasing #{branches.current.name} against #{upstream}" }
         args << '-i'
+        args << upstream
+      elsif opts[:oldbase]
+        logger.info { "Doing rebase from #{opts[:oldbase]} against #{upstream} on #{branches.current.name}" }
+        args << '--onto' << upstream << opts[:oldbase] << branches.current.name
       else
-        logger.info { "Rebasing #{branches.current.name} against #{base}" }
+        logger.info { "Rebasing #{branches.current.name} against #{upstream}" }
+        args << upstream
       end
-      args << base
       command('rebase', args)
     end
 
