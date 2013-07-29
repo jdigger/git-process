@@ -74,7 +74,7 @@ describe Sync do
 
         expect {
           GitProc::Sync.new(gl, :rebase => false, :force => true, :log_level => log_level).runner
-        }.to_not raise_error GitExecuteError
+        }.to_not raise_error
       end
     end
 
@@ -100,7 +100,7 @@ describe Sync do
 
         expect {
           create_process(gl).runner
-        }.to_not raise_error GitExecuteError
+        }.to_not raise_error
       end
     end
 
@@ -120,11 +120,11 @@ describe Sync do
       clone_repo do |gl|
         gl.checkout('fb', :new_branch => 'master')
 
-        expect { create_process(gl).runner }.to_not raise_error GitExecuteError
+        expect { create_process(gl).runner }.to_not raise_error
 
         change_file_and_commit('a', 'hello', gitlib)
 
-        expect { create_process(gl).runner }.to_not raise_error GitExecuteError
+        expect { create_process(gl).runner }.to_not raise_error
       end
     end
 
@@ -143,7 +143,7 @@ describe Sync do
         change_file_and_commit('a', 'goodbye', gitlib)
         gitlib.checkout('master')
 
-        expect { create_process(gl).runner }.to_not raise_error GitExecuteError
+        expect { create_process(gl).runner }.to_not raise_error
       end
     end
 

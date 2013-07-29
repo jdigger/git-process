@@ -9,12 +9,12 @@ group :default do
 end
 
 group :development do
-  gem "rake", "~> 0.9.2"
-  gem "yard", "~> 0.8.2.1" # documentation generator
-  gem "redcarpet", "~> 2.1.1"
+  gem "rake", "~> 0.9"
+  gem "yard", "~> 0.8" # documentation generator
+  gem "redcarpet", "~> 2"
 end
 
 group :test do
-  gem "rspec", "~> 2.12.0"
-  gem "webmock", "~> 1.8.7" # network mocking
+  gem "rspec", "~> 2"
+  gem "webmock", "~> 1" # network mocking
 end
