@@ -35,7 +35,7 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
 ## Command List ##
 
 * `git new-fb` - Create a new feature branch based on the integration branch.
-* `git sync` - Gets the latest changes that have happened on the integration branch, then pushes your changes to a "private" branch on the server.
+* `git sync` - Gets the latest changes that have happened on the integration branch and remote feature branch, then pushes your changes to a feature branch on the server.
 * `git pull-request` - Creates a Pull Request for the current branch.
 * `git to-master` - Rebase against the integration branch, then pushes to it. Knows how to deal "intelligently" with pull-requests.
 
@@ -84,10 +84,10 @@ $ git to-master              # 8
     * This creates a new branch called "`feature-name`" based on "`origin/master`".
 2. After making some changes, if you want to pick up any changes other people have made, as well
    as save your work on the server, do "`git sync`".
-    * That will merge in the changes that have occurred in "`origin/master`" and then push the
+    * That will rebase the changes that have occurred in "`origin/master`" and then push the
       result to the "`feature_branch`" branch to the server.
-3. When you are ready to merge your work into the mainline, "`git to-master`".
-    * This will merge and push your changes into "`origin/master`"
+3. When you are ready to move your work into the mainline, "`git to-master`".
+    * This will rebase and push your changes into "`origin/master`"
 
 ```
 $ git new-fb my-feature      # 1
@@ -106,7 +106,7 @@ $ git to-master              # 6
 * `gitProcess.integrationBranch` : The name of the integration branch. Defaults to `master`, but can be set to `develop` or other.
 * `gitProcess.keepLocalIntegrationBranch` : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).
 * `gitProcess.remoteName` : Explicitly sets the remote server name to use.
-* `gitProcess.defaultRebaseSync`: Should `git sync` default to using rebase instead of merge?
+* `gitProcess.defaultRebaseSync`: Should `git sync` default to using rebase instead of merge? Defaults to 'true' (i.e., Sync using rebase.)
 
 
 # Assumptions #
@@ -116,7 +116,7 @@ $ git to-master              # 6
   * "`git sync`" makes it extremely easy for you to get any changes that are made in "`master`" into your branch so you can react to it immediately.
   * "`git to-master`" then makes it easy to cleanly integrate the changes you have made. If you need to keep the current branch open, use the `--keep` option. Otherwise it closes the branch along with various other house-keeping duties.
 * The process that you use should be essentially the same, regardless of whether you are working alone, or on a large distributed team.
-  * The exception here is "`git pull-request`" since you do not use pull requests when working solo or when pair-programming.
+  * The exception here is "`git pull-request`" since you typically do not use pull requests when working solo or when pair-programming.
 
 
 # Notes #
@@ -144,14 +144,14 @@ $ git to-master              # 6
 Branches are extremely powerful tools that allow for clean organization/modularization of development.
 
 * Branches make it easy to sandbox changes while they are in a state of flux, while at the same time allowing you to be very fearless about making potentially breaking changes.
-    * For example, I commit "green to green": Doing [TDD](http://en.wikipedia.org/wiki/Test-driven_development), I commit every time I have a newly passing test case. So, assuming I'm in a regular development flow, I'm committing my changes every five minutes. Tiny commits, but lots of them. What that means is that if I make a "less than wise choice" at some point, it's trivial to rewind to before I'd made the mistake, potentially keep the throw-away code in another branch while I do my cleanup, and generally use the full power of a revision control system to make my life safer and easier. The branch(es) are pretty chaotic, but that's not a problem because before integrating with the mainline, I take a moment to cleanup: Squash related commits together, write clearer commit messages (since now I know what "the answer" is), and generally move from my drafts to a more finished result. (See below on objections related to "lying with rebase.") That may just be me, though, because I'm very paranoid when it comes to computers. I tend to automatically hit Cmd/Ctl-S every time I type a period when I'm writing, or when I close a block when I'm programming. I have a minimum of three copies/backups around the world of all my important documents. And I "`git sync`" frequently to make sure my machine isn't the only place where all my hard work is being stored. Have I mentioned I don't trust computers?
+    * For example, I commit "green to green": Doing [TDD](http://en.wikipedia.org/wiki/Test-driven_development), I commit every time I have a newly passing test case. So, assuming I'm in a regular development flow, I'm committing my changes every five minutes or so. Tiny commits, but lots of them. What that means is that if I make a "less than wise choice" at some point, it's trivial to rewind to before I'd made the mistake, potentially keep the throw-away code in another branch while I do my cleanup, and generally use the full power of a revision control system to make my life safer and easier. The branch(es) are pretty chaotic, but that's not a problem because before integrating with the mainline, I take a moment to cleanup: Squash related commits together, write clearer commit messages (since now I know what "the answer" is), and generally move from my drafts to a more finished result. (See below on objections related to "lying with rebase.") That may just be me, though, because I'm very paranoid when it comes to computers. I tend to automatically hit Cmd/Ctl-S every time I type a period when I'm writing, or when I close a block when I'm programming. I have a minimum of three copies/backups around the world of all my important documents. And I "`git sync`" frequently to make sure my machine isn't the only place where all my hard work is being stored. Have I mentioned I don't trust computers?
 
 * Branches allow for focused collaboration. Because a branch is about exactly one thing, it means that a team can collaborate around a feature/bug (especially when used in conjunction with a "pull request"), and keep such changes sandboxed until such time that they are ready to bring a larger audience into the mix.
-    * Branches encourage being less "shy" about your code. I have heard, on a number of occasions, developers say "I'm not ready to push this to the server yet because [it's still rough (and embarrassing)]/[it may break other people]/etc." All of those reasons for "hoarding" code are moot with branches.
+    * Branches encourage being less "shy" about your code. I have heard, on a number of occasions, developers say "I'm not ready to push this to the server yet because \[it's still rough (and embarrassing)]/\[it may break other people]/etc." All of those reasons for "hoarding" code are moot with branches.
 
 Jez Humble, a brilliant Principle at ThoughtWorks Studios, talks a lot about how "branches are evil." Unfortunately, people hear that, know how smart he is, and simply repeat it without really understanding what his objections are. Fortunately, he [posted clarification about what's really meant by that](http://continuousdelivery.com/2011/07/on-dvcs-continuous-integration-and-feature-branches/). He essentially says that the problem is that developers abuse branches by not merging with mainline (i.e., "master") on a regular basis. Not constantly getting changes *from* mainline makes life rough when it comes time to integrate. Not putting your changes *into* mainline means that your changes are not being validated (via [Continuous Integration](http://martinfowler.com/articles/continuousIntegration.html), or -- better -- with [Continuous Delivery](http://continuousdelivery.com/)). Both are, in fact, sins akin to not doing automated testing.
 
-Making it "easier to do things right than wrong" (i.e., using branches and keeping them synced with mainline) was the primary motivation for this project. This should be especially evident in the "`git sync`" and "`git to-master`" commands.
+Making it "easier to do things right than wrong" (i.e., using branches and keeping them synced with mainline) was the primary motivation for this project. Every command here is focussed on making it trivial to use branches that stay in sync with mainline and encourage collaboration.
 
 
 ## Q: Why so much emphasis on rebasing? Isn't rebasing a dangerous lie? ##
@@ -160,11 +160,13 @@ Like any powerful tool, "`git rebase`" is "dangerous" if used incorrectly, just 
 
 [A famous article](http://paul.stadig.name/2010/12/thou-shalt-not-lie-git-rebase-ammend.html) that people have been parroting in various forms for a while makes the case that rebasing (and its various forms, such as squashing, amending commits, etc.) is a "lie." As with so many things, context is everything.
 
-You almost certainly should *not* rebase things that you have "published." Generally this really means "Don't rebase the 'master' branch!" Fortunately, these scripts make it impossible to rebase the mainline by accident. By default "`git sync`" uses "merge" instead of "rebase" to encourage collaboration. (Though you can easily use "-r" if you know no one else is working on the branch.) When it's time to actually merge your work into the mainline (and thus no one is working against it except in the context of mainline), that's when it gets rebased in.
+You almost certainly should *not* rebase things that you have "published." Generally this really means "Don't rebase the 'master' branch!" Fortunately, these scripts make it impossible to rebase the mainline by accident.
 
 Rebasing "your" code is an extremely useful way of communicating clearly. In the "green to green" scenario above about branches, a lot of noise is generated. If someone wants to review my code, or cherry-pick in my changes, it's too much of a mess to effectively do so. Also, as part of the process of squashing, I have the opportunity to write clearer commit message based upon my newly enhanced understanding. The intermediate commits were my "drafts" and I'm now submitting my cleaned up copy.
 
-If you have ever seen an "active" project that uses a process like "git-flow" that encourages a lot of branching and merging, you've seen how hard it can be to follow a particular line of development. Branch lines are flying around everywhere, and half the commits are pretty much pure noise. (e.g., "Merge branch 'develop' of ... into develop".) It's also hard to follow the order in which commits actually impacted the mainline. In many ways, in practice merges turn into "a truth effectively being a lie (because it's buried in the noise)" versus rebases that are "a lie (changed from it's 'original' form) to tell an effective truth (clean and very clear about its impact)."
+If you have ever seen an "active" project that uses a process like "git-flow" that encourages a lot of branching and merging, you've seen how hard it can be to follow a particular line of development. Branch lines are flying around everywhere, and half the commits are pretty much pure noise. (e.g., "Merge branch 'master' of ... into master".) It's also hard to follow the order in which commits actually impacted the mainline. In many ways, in practice merges turn into "a truth effectively being a lie" (because it's buried in the noise) versus rebases that are "a lie (changed from it's 'original' form) to tell an effective truth" (clean and very clear about its impact).
+
+One significant advantage of using automation like this is that it lets you have the best of both worlds. For example, "`git sync`" uses "rebase" instead of "merge" in a way to is completely safe for collaboration on the same branch. As long as the other people are also using "`git sync`", it will make sure that changes are automatically incorporated with and brought in line. (See the extensive test suite in "`sync_spec.rb`" if you want to see how this works.)
 
 This project is trying to promote clear communication about reality as it applies to the code, over micro-management over no-longer-relevant history. Thus rational for the judicious use of rebase.
 

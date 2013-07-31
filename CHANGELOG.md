@@ -1,4 +1,11 @@
-# CHANGELOG - 1.1.4 #
+# CHANGELOG - 1.2.0 #
+
+### Since 1.1.4 ###
+
+* **Changed git-sync to default to rebasing.** ([GH-112](https://github.com/jdigger/git-process/issues/112))
+* Updated README and related files.
+* Retries closing a pull request if it gets a 422. ([GH-102](https://github.com/jdigger/git-process/issues/102))
+* Fixed typo in merge error. ([GH-114](https://github.com/jdigger/git-process/issues/114))
 
 ### Since 1.1.3 ###
 
