@@ -8,17 +8,13 @@ Gem::Specification.new do |gem|
   gem.homepage = "http://jdigger.github.com/git-process/"
   gem.license = 'ASL2'
 
-  gem.add_dependency "octokit", "~> 1.24" # GitHub API
-  gem.add_dependency "json", "~> 1.7.3"
-  gem.add_dependency "trollop", "~> 1.16.2" # CLI options parser
-  gem.add_dependency "highline", "1.6.13" # user CLI interaction. There is a bug in 1.6.14
-  gem.add_dependency "addressable", "~> 2.3.4" # URI processing
+  gem.add_dependency "git-sync", GitProc::Version::STRING
+  gem.add_dependency "git-new-fb", GitProc::Version::STRING
+  gem.add_dependency "git-to-master", GitProc::Version::STRING
+  gem.add_dependency "git-pull-request", GitProc::Version::STRING
 
-  gem.files = `git ls-files`.split($\).delete_if { |f| f =~ /^\./ }
-  gem.executables = gem.files.grep(%r{^bin/}).map { |f| File.basename(f) }
-  gem.test_files = gem.files.grep(%r{^(test|spec|features)/})
+  gem.files = %w(README.md LICENSE.txt CHANGELOG.md)
   gem.name = "git-process"
-  gem.require_paths = %w(lib)
   gem.version = GitProc::Version::STRING
   gem.platform = Gem::Platform::RUBY
   gem.required_ruby_version = '>= 1.8.7'

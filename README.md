@@ -11,9 +11,14 @@ See the F.A.Q. for a much more complete explanation for the thoughts and assumpt
 
 ## Unix-based OS (OSX, Linux, etc.) Installation ##
 
-    $ sudo gem install git-process
+If you are using a Ruby sandboxing system like [RVM](https://rvm.io/) or [rbenv](https://github.com/sstephenson/rbenv)
+(either or which I would recommend using) then simply do:
 
-Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "`sudo gem update --system`" to fix.
+    $ gem install git-process
+
+If you are not using RVM or rbenv, you will likely need to precede that with "`sudo`".
+
+Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "`gem update --system`" to fix.
 
 ## Windows Installation ##
 
@@ -21,6 +26,14 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
    * If it complains about not being able to compile native code, install [DevKit](http://rubyinstaller.org/downloads).
    * See [this StackOverflow](http://stackoverflow.com/questions/8100891/the-json-native-gem-requires-installed-build-tools/8463500#8463500) for help.
 2. Open a command prompt and type `gem install git-process`
+
+## All Operating Systems ##
+
+To get full `git help` and manpage support, do:
+
+    $ alias man="gem man -s"
+    $ git config --global man.gem-man.cmd "gem man -s"
+    $ git config --global man.viewer gem-man
 
 
 # Overview #
