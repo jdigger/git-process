@@ -74,20 +74,10 @@ module GitProc
         # if the remote branch has changed, bring in those changes in
         if remote_has_changed?
           logger.info('There have been changes on the remote branch, so will bring them in.')
-
-          cb = current_branch
-
-          logger.info { "Creating 'sync_temp' to rebase #{@remote_branch}'s changes on top of #{config.integration_branch}" }
-          gitlib.checkout('sync_tmp', :new_branch => @remote_branch)
-          proc_rebase(config.integration_branch)
-          gitlib.checkout(cb.name)
-
-          proc_rebase('sync_tmp', :old_base => config.integration_branch)
-
-          gitlib.branches['sync_tmp'].delete!(true)
-        else
-          proc_rebase(config.integration_branch)
+          proc_rebase(@remote_branch)
         end
+
+        proc_rebase(config.integration_branch)
       else
         logger.info 'Doing merge-based sync'
         proc_merge(config.integration_branch)
