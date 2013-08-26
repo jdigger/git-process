@@ -81,9 +81,7 @@ describe Sync do
           change_file_and_commit('a', 'hello', gitlib)
         end
 
-        expect {
-          GitProc::Sync.new(gl, :rebase => false, :force => true, :log_level => log_level).runner
-        }.to_not raise_error
+        GitProc::Sync.new(gl, :rebase => false, :force => true, :log_level => log_level).runner
       end
     end
 
@@ -210,7 +208,7 @@ describe Sync do
         #   B     l
         #   \
         #   r
-        it 'should do ???? if there is a conflict' do
+        it 'should raise an error if there is a conflict' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b, :file => 'a'
@@ -221,15 +219,7 @@ describe Sync do
             local 'fb', :new_branch => 'origin/fb'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              parent(l_sha).should == @c_sha
-              check_file_content :b
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -293,7 +283,7 @@ describe Sync do
         #   B - D   l
         #   \   \
         #   r   ??
-        it 'should do ??? if there is a conflict' do
+        it 'should raise an error if there is a conflict' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b, :file => 'a'
@@ -305,16 +295,7 @@ describe Sync do
             create_commit :c, :file => 'a'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~2").should == @c_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -449,7 +430,7 @@ describe Sync do
         #   B - D       l
         #       \
         #       ??
-        it 'should do ?? if there is a conflict' do
+        it 'should raise an error if there is a conflict' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b
@@ -465,16 +446,7 @@ describe Sync do
             @b1_sha = @origin.sha('HEAD')
           end
 
-          pending 'unknown' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              parent(l_sha).should == @b1_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -550,7 +522,7 @@ describe Sync do
         #   E
         #    \
         #    r
-        it 'should do ??? if conflict applying B' do
+        it 'should raise an error if conflict applying B' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b, :file => 'a'
@@ -567,16 +539,7 @@ describe Sync do
             create_commit :d
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~3").should == @c_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
 
@@ -590,7 +553,7 @@ describe Sync do
         #   E
         #    \
         #    r
-        it 'should do ??? if conflict applying remote' do
+        it 'should raise an error if there is a conflict applying remote' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b
@@ -607,16 +570,7 @@ describe Sync do
             create_commit :d
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~3").should == @c_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
 
@@ -630,7 +584,7 @@ describe Sync do
         #   E
         #    \
         #    r
-        it 'should do ??? if conflict applying local' do
+        it 'should raise an error if conflict applying local' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b
@@ -647,16 +601,7 @@ describe Sync do
             create_commit :d, :file => 'a'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~3").should == @c_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -722,7 +667,7 @@ describe Sync do
         #   B   XX  ??
         #   \    \
         #   r    l
-        it 'should do ??? if there is a conflict' do
+        it 'should raise an error if there is a conflict' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b, :file => 'a'
@@ -735,16 +680,7 @@ describe Sync do
             create_commit :d
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~2").should == @c_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -817,7 +753,7 @@ describe Sync do
         #   B     i    l
         #   \
         #   r
-        it 'should do ??? with conflict on remote content' do
+        it 'should raise an error with conflict on remote content' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b, :file => 'a'
@@ -833,16 +769,7 @@ describe Sync do
             create_commit :e, :file => 'a'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~2").should == @e_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
 
@@ -855,7 +782,7 @@ describe Sync do
         #   B     i         l
         #   \
         #   r
-        it 'should do ??? with conflict on local content' do
+        it 'should raise an error with conflict on local content' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b
@@ -871,16 +798,7 @@ describe Sync do
             create_commit :e, :file => 'a'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~2").should == @e_sha
-              check_file_content :b
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -953,7 +871,7 @@ describe Sync do
         #   B - D
         #       \
         #       ??
-        it 'should do ??? if there is a conflict' do
+        it 'should raise an error if there is a conflict' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b
@@ -972,16 +890,7 @@ describe Sync do
             create_commit :d, :file => 'a'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~2").should == @b1_sha
-              @local.sha("#{l_sha}~3").should == @c_sha
-              check_file_content :d
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
@@ -1060,7 +969,7 @@ describe Sync do
         #   B - D   i    l
         #       \
         #       ??
-        it 'should do ?? if conflict applying remote' do
+        it 'should raise an error if conflict applying remote' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b, :file => 'a'
@@ -1080,15 +989,7 @@ describe Sync do
             create_commit :f, :file => 'a'
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~3").should == @f_sha
-              check_file_content :b
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
 
@@ -1101,7 +1002,7 @@ describe Sync do
         #   B - D   i            l
         #       \
         #       ??
-        it 'should do ?? if conflict applying local' do
+        it 'should raise an error if conflict applying local' do
           Given do
             origin 'fb', :new_branch => 'master'
             create_commit :b
@@ -1121,15 +1022,7 @@ describe Sync do
             create_commit :f
           end
 
-          pending 'undefined' do
-            when_sync_is_run
-
-            Then do
-              local_and_remote_are_same
-              @local.sha("#{l_sha}~3").should == @f_sha
-              check_file_content :b
-            end
-          end
+          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
       end
