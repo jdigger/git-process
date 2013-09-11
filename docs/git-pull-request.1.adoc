@@ -1,0 +1,166 @@
+GIT-PULL-REQUEST(1)
+===================
+:doctype: manpage
+
+
+NAME
+----
+git-pull-request - Creates or gets a GitHub pull request.
+
+
+SYNOPSIS
+--------
+'git-pull-request' ['OPTIONS']
+
+'git-pull-request' ['OPTIONS'] 'pull_request_title'
+
+'git-pull-request' ['OPTIONS'] [ 'server/pull_request_number' | 'pull_request_number' ]
+
+
+DESCRIPTION
+-----------
+'git-pull-request(1)' creates or gets a pull request on the GitHub
+server associated with the current branch. For the reasons why pull
+requests are useful for the development process,
+see <https://help.github.com/articles/using-pull-requests>
+
+The 'git-pull-request(1)' command is a nice, simplified alternative to using the
+web interface that takes advantage of the conventions used in the rest of the
+'git-process(1)' suite.
+
+If no name or number is provided, it is assumed that you want to create a new
+pull request with the same name as the current branch. If a name is explicitly
+given, that is used instead.
+
+If a number is given, or a number with a server preceding it (e.g., "origin/23"),
+then this assumes that the number refers to an existing pull request identified
+by that number. In that case, the branch associated with the HEAD of the pull
+request is checked out.
+
+The URL for the newly created pull request is shown, making it trivial to make
+any changes you want to it, such as adding additional notes. (Most terminal
+programs allow you to "click through" a URL, though they all differ slightly
+in how. For example, iTerm2 on OS X does it with a Cmd-Click.)
+
+The counterpart to this command is 'git-to-master(1)'.
+
+It's assumed that you *never* do any work directly on the integration branch:
+everything is done on a feature branch.  In addition to being a much
+safer and more flexible way of working in general, it is also a
+requirement to take advantage of same-repo pull request functionality.
+
+
+OPTIONS
+-------
+
+The effective default is "*git pull-request -r -i -f*".
+
+*-b <branch>, --base-branch <branch>*::
+    The branch on the server that you want this "pulled" into. See the
+    'gitProcess.integrationBranch' configuration item. (*default: the integration branch*)
+
+*-e <branch>, --head-branch <branch>*::
+    The branch that you want reviewed before being "pulled" into the
+    base branch. (*default: the current branch*)
+
+*-r <repo>, --repo-name <repo>*::
+    The name of the repository to "pull" into. See the 'gitProcess.remoteName'
+    configuration item. (*default: the current repository)
+
+*-d <desc>, --description <desc>*::
+    The description of the Pull Request. Usually includes a nice description of what was
+    changed to make things easier for the reviewer.
+
+*-u <username>, --user <username>*::
+    Your GitHub username. Only needed the first time you connect, and you will be
+    prompted for it if needed. Used to generate the value for the 'gitProcess.github.authtoken'
+    configuration. See also the 'github.user' configuration item.
+
+*-p <password>, --password <password>*::
+    Your GitHub password. Only needed the first time you connect, and you will be
+    prompted for it if needed. Used to generate the value for the 'gitProcess.github.authtoken'
+    configuration.
+
+*--info*::
+    Informational messages; show the major things this is doing (*default: true*)
+
+*-q, --quiet*::
+    Quiet messages; only show errors
+
+*-v, --verbose*::
+    Verbose messages; show lots of details on what this is doing
+
+*--version*::
+    Print version and exit
+
+
+CONFIGURATION
+-------------
+
+Options for 'git-sync(1)' are set using 'git-config(1)'.
+
+*gitProcess.remoteName*::
+    Allows you to explicitly set the remote server name to use. Defaults
+    to the first server name reported by 'git-remote(1)'.
+
+*gitProcess.integrationBranch*::
+    Allows you to explicitly set the integration branch to use. Defaults
+    to "master".
+
+*gitProcess.github.authtoken*::
+    Not meant to be set manually, this is the OAuth token used to communicate
+    with the GitHub server. If it is not set, the user will be prompted for their credentials.
+
+*github.user*::
+    If OAuth needs to prompt for credentials, if this value is set then it is
+    used as the username. Otherwise it is unused.
+
+
+GITHUB SUPPORT
+--------------
+
+To know which GitHub URL to use, the value of 'gitProcess.remoteName' is resolved
+to the underlying server name/IP. (That includes
+"aliased" names in a 'ssh_config(5)' file.) If it's github.com, then the public
+GitHub.com API is used. Otherwise it's assumed that the server is GitHub Enterprise
+and that set of URLs is used.
+
+
+EXAMPLE
+-------
+
+You've been developing your killer new feature or bug fix, and you want
+someone else to look at it (to do code-review or otherwise provide input).
+'git-pull-request(1)' synchronizes the current branch with
+the server (effectively executing 'git-sync(1)') and creates the pull request
+against the integration branch.
+
+
+CONTROL FILES
+-------------
+
+*gitprocess-sync-\***--**::
+    To help make the process simpler and more reliable, 'git-pull-request(1)' will put a file in the "'.git'" directory
+    that contains the SHA-1 of the last successful sync to the server. 'git-to-master(1)' will remove the file
+    as part of its normal "housekeeping."
+
+
+SEE ALSO
+--------
+
+*git-process*(1), *git-to-master*(1), *git-new-fb*(1), *git-sync*(1)
+
+
+BUGS
+----
+Known bug list: <https://github.com/jdigger/git-process/issues?state=open>
+
+
+AUTHOR
+------
+git-sync has been written primarily by Jim Moore.
+
+
+RESOURCES
+---------
+Main web site: <https://github.com/jdigger/git-process>

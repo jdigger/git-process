@@ -1,0 +1,172 @@
+GIT-TO-MASTER(1)
+================
+:doctype: manpage
+
+
+NAME
+----
+git-to-master - Rebase against the integration branch, then pushes to it.
+
+
+SYNOPSIS
+--------
+'git-to-master' ['OPTIONS'] ['server/pull_request_number' | 'pull_request_number']
+
+
+DESCRIPTION
+-----------
+
+'git-to-master(1)' fetches the latest changes from the server, rebases against
+the integration branch, pushes to the integration branch, then does
+housecleaning.
+
+If there is a problem, such as a merge conflict, this tries to
+resolve it automatically. If it can not do so safely in an automated way,
+if tells you the steps involved for doing so manually.
+
+"Housecleaning" includes such things as closing any
+Pull Request that may exist for the branch, removing the (now obsolete)
+local and remote feature branches, and then "parking" on the
+special "'_parking_'" branch.
+
+Work is not expected to be done on the "'_parking_'" branch, but any that is
+done is brought over to a newly created feature branch when you do
+'git-new-fb(1)'.
+
+It's assumed that you *never* do any work directly on the integration branch:
+everything is done on a feature branch.  In addition to being a much
+safer and more flexible way of working in general, it is also a
+requirement to take advantage of pull request functionality. (See
+'git-pull-request(1)'.)
+
+If a number is given, or a number with a server preceding it (e.g.,
+"origin/23"), then this assumes that the number refers to an existing pull
+request identified by that number. In that case, the branch associated with
+the HEAD of the pull request is checked out before doing the rest of the
+"to-master".
+
+
+EXAMPLE WITHOUT PULL REQUEST
+----------------------------
+
+Assuming that the current branch is called "interesting_changes" and the
+integration branch on the server is "master", typing "*git to-master*" will do
+roughly the following for you:
+
+  $ git fetch -p
+  $ git rebase origin/master
+  $ git push origin interesting_changes:master
+  # close pull request if one exists
+  $ git checkout -b _parking_ origin/master
+  $ git branch -d interesting_changes
+  $ git push origin --delete interesting_changes
+
+If you use the --keep option, then the process stops after the first "push".
+
+
+EXAMPLE WITH PULL REQUEST
+-------------------------
+
+Assuming that the pull request number is 493, its branch name is "interesting_changes"
+and the integration branch on the server is "master", typing "*git to-master 493*" will
+do roughly the following for you:
+
+  $ git fetch -p
+  # looks up the information for pull-request 493
+  $ git checkout -b interesting_changes origin/interesting_changes
+  $ git rebase origin/master
+  $ git push origin interesting_changes:master
+  # close pull request
+  $ git checkout -b _parking_ origin/master
+  $ git branch -d interesting_changes
+  $ git push origin --delete interesting_changes
+
+If you would like the review the changes locally first, use 'git-pull-request(1)'
+instead.
+
+
+OPTIONS
+-------
+
+The effective default is "*git to-master --info*".
+
+*-k, --keep*::
+    Don't do any "cleanup." It keeps the current local and remote branches, and does
+    not close any outstanding pull requests.
+
+*--info*::
+    Informational messages; show the major things this is doing (*default: true*)
+
+*-q, --quiet*::
+    Quiet messages; only show errors
+
+*-v, --verbose*::
+    Verbose messages; show lots of details on what this is doing
+
+*--version*::
+    Print version and exit
+
+
+CONFIGURATION
+-------------
+
+Options for 'git-to-master(1)' are set using 'git-config(1)'.
+
+*gitProcess.remoteName*::
+    Allows you to explicitly set the remote server name to use. Defaults
+    to the first server name reported by 'git-remote(1)' (which is
+    typically "origin" since most projects have a single remote).
+
+*gitProcess.integrationBranch*::
+    Allows you to explicitly set the integration branch to use. Defaults
+    to "master".
+
+*gitProcess.github.authtoken*::
+    Not meant to be set manually, this is the OAuth token used to communicate
+    with the GitHub server. If it is not set, the user will be prompted for their credentials.
+
+*github.user*::
+    If OAuth needs to prompt for credentials, if this value is set then it is
+    used as the username. Otherwise it is unused.
+
+
+CONTROL FILES
+-------------
+
+*gitprocess-sync-\***--**::
+    To help make the process simpler and more reliable, 'git-to-master(1)' will
+    read a file in the "'.git'" directory that contains the SHA-1 of the last
+    successful sync to the server. (See 'git-sync(1)'.) As part of its normal
+    "housekeeping" 'git-to-master(1)' will remove the file if *--keep* is not
+    specified.
+
+
+GITHUB SUPPORT
+--------------
+
+To know which GitHub URL to use for pull-request support, the value of
+'gitProcess.remoteName' is resolved to the underlying server name/IP. (That includes
+"aliased" names in a 'ssh_config(5)' file.) If it's github.com, then the public
+GitHub.com API is used. Otherwise it's assumed that the server is GitHub Enterprise
+and that set of URLs is used.
+
+
+SEE ALSO
+--------
+
+*git-process*(1), *git-sync*(1), *git-new-fb*(1), *git-pull-request*(1)
+
+
+BUGS
+----
+Known bug list: <https://github.com/jdigger/git-process/issues?state=open>
+
+
+AUTHOR
+------
+git-to-master has been written primarily by Jim Moore.
+
+
+RESOURCES
+---------
+Main web site: <https://github.com/jdigger/git-process>

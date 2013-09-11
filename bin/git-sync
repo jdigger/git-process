@@ -5,49 +5,12 @@
 #$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '../lib')
 
 require 'git-process/git_process_options'
-require 'git-process/sync'
+require 'git-process/sync_process'
 require 'git-process/git_lib'
 
 
 class SyncOptions
   include GitProc::GitProcessOptions
-
-
-  def summary
-    "Gets the latest changes that have happened on the integration branch, then pushes your changes to a \"private\" branch on the server."
-  end
-
-
-  def description
-    <<DESC
-DESCRIPTION
-
-This fetches the latest repository from the server, rebases/merges the current branch \
-against the changes in the integration branch, then pushes the result up to a branch on \
-the server of the same name. (Unless told not to.)
-
-If there is a problem, such as a merge conflict, this tries to \
-resolve it automatically. If it can not do so in an automated way, \
-if tells you the steps involved for doing so manually.
-
-By default the first server name reported by 'git remote' is used as the server/remote name. \
-Since most projects only have a single remote (i.e., "origin") this works most of the time. \
-But if you have multiple remotes and want to explicitly set it, use the \
-'gitProcess.remoteName' configuration option.
-
-Setting `gitProcess.defaultRebaseSync` to "false" causes this to default to using merge instead of rebase.
-
-EXAMPLE
-
-Assuming that the current branch is called "interesting_changes" and the integration \
-branch on the server is "master", typing "git sync" will do roughly the following \
-for you:
-  $ git fetch -p
-  $ git rebase origin/master
-  $ git push origin interesting_changes:interesting_changes
-
-DESC
-  end
 
 
   def extend_opts(parser)
@@ -65,6 +28,8 @@ DESC
   def post_parse(opts, argv)
     opts[:force] = true if opts[:rebase]
     opts[:merge] = !opts[:rebase]
+
+    opts[:branch_name] = argv.shift
   end
 
 end

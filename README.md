@@ -11,9 +11,14 @@ See the F.A.Q. for a much more complete explanation for the thoughts and assumpt
 
 ## Unix-based OS (OSX, Linux, etc.) Installation ##
 
-    $ sudo gem install git-process
+If you are using a Ruby sandboxing system like [RVM](https://rvm.io/) or [rbenv](https://github.com/sstephenson/rbenv)
+(either or which I would recommend) then simply do:
 
-Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "`sudo gem update --system`" to fix.
+    $ gem install git-process
+
+If you are not using RVM or rbenv, you will likely need to precede that with "`sudo`".
+
+Some older operating systems (such as OSX 10.6) are using an old version of RubyGems, which can cause installation problems. Do "`gem update --system`" to fix.
 
 ## Windows Installation ##
 
@@ -21,6 +26,15 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
    * If it complains about not being able to compile native code, install [DevKit](http://rubyinstaller.org/downloads).
    * See [this StackOverflow](http://stackoverflow.com/questions/8100891/the-json-native-gem-requires-installed-build-tools/8463500#8463500) for help.
 2. Open a command prompt and type `gem install git-process`
+3. *THERE IS A KNOWN PROBLEM WITH [HELP ON WINDOWS](https://github.com/jdigger/git-process/issues/120).*
+
+## All Operating Systems ##
+
+To get full `git help` and manpage support, do:
+
+    $ git config --global man.gem-man.cmd "gem man -s"
+    $ git config --global man.viewer gem-man
+    $ alias man="gem man -s"
 
 
 # Overview #
@@ -36,67 +50,10 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
 
 * `git new-fb` - Create a new feature branch based on the integration branch.
 * `git sync` - Gets the latest changes that have happened on the integration branch and remote feature branch, then pushes your changes to a feature branch on the server.
-* `git pull-request` - Creates a Pull Request for the current branch.
+* `git pull-request` - Create or get a Pull Request for the current branch.
 * `git to-master` - Rebase against the integration branch, then pushes to it. Knows how to deal "intelligently" with pull-requests.
 
-**All commands are well documented within themselves: Use the "-h" switch to see the full documentation.** (e.g., "`git sync -h`")
-
-
-# Workflow #
-
-_The following assumes that the integration branch is "origin/master"._
-
-## Code Review Using Pull Requests ##
-
-1. When starting work on a new feature, use "`git new-fb feature-name`".
-    * This creates a new branch called "`feature-name`" based on "`origin/master`".
-2. After making some changes, if you want to pick up any changes other people have made, as well
-   as save your work on the server, do "`git sync`".
-    * That will merge in the changes that have occurred in "`origin/master`" and then push the
-      result to the "`feature_branch`" branch to the server.
-3. When you feel your work is ready for others to look at, do "`git pull-request`" to ask someone to review your changes.
-    * If no name or number is provided, it is assumed that you want to create a new pull request with the same name as the current branch.
-    * Any changes you make via "`git sync`" are automatically reflected in the pull request.
-4. As a reviewer, to see a pull-request, do "`git pull-request ##`" (where "##" is the pull request number) to check
-   out the branch associated with the pull request in your repository.
-5. If you get the thumbs up from the code-review, use "`git to-master`".
-    * This will merge and push your changes into "`origin/master`", closing the pull request.
-    * If reviewing the pull request via the web interface was sufficient, or there is otherwise not a reason
-      to explicitly checkout the branch first, you can use "`git to-master`" with the pull request number to
-      combine both of these steps.
-5. If you still need to make changes, do so and use "`git sync`" to keep your branch on the
-   server for that feature updated with your work until all issues have been resolved.
-
-```
-$ git new-fb my-feature      # 1
-# do work                    # 2
-$ git commit                 # 3
-$ git sync                   # 4
-# repeat #2-#4 as necessary  # 5
-$ git pull-request           # 6
-# repeat #2-#4 as necessary  # 7
-$ git to-master              # 8
-```
-
-## Working Alone or When Pairing ##
-
-1. When starting work on a new feature, use "`git new-fb feature-name`".
-    * This creates a new branch called "`feature-name`" based on "`origin/master`".
-2. After making some changes, if you want to pick up any changes other people have made, as well
-   as save your work on the server, do "`git sync`".
-    * That will rebase the changes that have occurred in "`origin/master`" and then push the
-      result to the "`feature_branch`" branch to the server.
-3. When you are ready to move your work into the mainline, "`git to-master`".
-    * This will rebase and push your changes into "`origin/master`"
-
-```
-$ git new-fb my-feature      # 1
-# do work                    # 2
-$ git commit                 # 3
-$ git sync                   # 4
-# repeat #2-#4 as necessary  # 5
-$ git to-master              # 6
-```
+**All commands are well documented within themselves: Use the "git help" to see the full documentation.** (e.g., "`git help sync`")
 
 
 ## Configurables ##
@@ -125,9 +82,189 @@ $ git to-master              # 6
 * If there is a problem (such as a merge conflict), this will try to resolve such errors for you as much as it can do safely. When it can't do so in an automated way, it will try to tell you the process for doing so manually.
 * The first time you use a GitHub feature (e.g., "`git pull-request`"), this will ask for your username and password. It does not store them, but instead uses them to get an OAuth2 token, which is stored in "`git config gitProcess.github.authToken`".
 * If you want to use a different integration branch other than "`master`", set the "`gitProcess.integrationBranch`" configuration value. (e.g., "`git config gitProcess.integrationBranch my-integ-branch`")
-* This tries to respond "intelligently" to the use of 'rerere'.
 * By default the first server name reported by `git remote` is used as the server/remote name. Since most projects only have a single remote (i.e., "origin") this works most of the time. But if you have multiple remotes and want to explicitly set it, use the `gitProcess.remoteName` configuration option.
 * `git pull-request` shows the URL for the pull request after creating it on the server. Most terminal programs let you click on it to open it in your browser. (e.g., Cmd-Click on OSX.)
+
+
+# Workflow Examples #
+
+## Working Alone On A Local-Only Project ##
+
+Jim is working on "my_project" and needs to start work on a new feature.
+
+```
+[a_branch]$ git new-fb save_the_planet
+  Creating save_tp off of master
+[save_the_planet]$
+```
+
+He does lots of work. Checkin, checkin, checkin.
+
+A sudden new brilliant idea happens.
+
+```
+[save_the_planet]$ git new-fb shave_the_bunnies
+  Creating shave_the_bunnies off of master
+[shave_the_bunnies]$
+```
+
+After creating a Sheering class and tests, he commits his changes.
+
+```
+[shave_the_bunnies]$ git commit
+[shave_the_bunnies]$ git to-master
+  Rebasing shave_the_bunnies against master
+  Removing branch 'shave_the_bunnies'
+[_parking_]$
+```
+
+Time to get back to work on "save_the_planet".
+
+```
+[_parking_]$ git checkout save_the_planet
+[save_the_planet]$ git sync
+  Rebasing save_the_planet against master
+[save_the_planet]$
+```
+
+Do more work. Commit. Commit. Commit.
+
+```
+[save_the_planet]$ git sync
+  Rebasing save_the_planet against master
+[save_the_planet]$
+```
+
+Liking to have a clean history, he squashes and edits the commits to hide
+the evidence of false starts and stupid ideas so that anyone who sees the
+code in the future will think he was simply a genius.
+
+```
+[save_the_planet]$ git rebase -i
+  Rebasing save_the_planet against master
+[save_the_planet]$ git to-master
+  Rebasing save_the_planet against master
+  Removing branch 'save_the_planet'
+[_parking_]$
+```
+
+Time to release to a grateful world.
+
+
+## Working With A Team ##
+
+John, Alice, Bill and Sally are working on "big_monies." Alice and John are pairing and
+need to start work on a new feature.
+
+```
+john-[a_branch]$ git new-fb steal_underpants
+  Fetching the latest changes from the server
+  Creating steal_underpants off of origin/master
+john-[steal_underpants]$
+```
+
+They do lots of work. Checkin, checkin, checkin. It has a lot of steps...
+
+Meanwhile Bill has been working on his great idea:
+
+```
+bill-[some_branch]$ git new-fb awesomo4000
+  Fetching the latest changes from the server
+  Creating awesomo4000 off of origin/master
+bill-[awesomo4000]$
+```
+
+He creates his "Laaaaame" class and checks it in, with a pull request asking Sally to do a code review.
+
+```
+bill-[awesomo4000]$ git commit
+bill-[awesomo4000]$ git pull-request "A.W.E.S.O.M-0 4000 prototype" \
+                    -d "@sally, can you make sure Butters won't recognize it?"
+  Pushing to 'awesomo4000' on 'origin'.
+  Creating a pull request asking for 'awesomo4000' to be merged into 'master' on big_monies.
+  Created pull request at https://github.com/big_monies/pull/3454
+bill-[awesomo4000]$
+```
+
+Sally sees the email. After looking at it in the web interface, she wants to test it.
+
+```
+sally-[other_branch]$ git pull-request 3454
+  Getting #pr_number
+  Fetching the latest changes from the server
+    new branch: awesomo4000
+  Setting upstream/tracking for branch 'awesomo4000' to 'origin/master'.
+sally-[awesomo4000]$ git sync
+  Fetching the latest changes from the server
+  Rebasing awesomo4000 against origin/master
+  Pushing to 'awesomo4000' on 'origin'.
+sally-[awesomo4000]$
+```
+
+After verifying that the tests still work and "it's all good" she promotes the code to integration.
+
+```
+sally-[awesomo4000]$ git to-master
+  Fetching the latest changes from the server
+  Rebasing awesomo4000 against origin/master
+  Pushing to 'awesomo4000' on 'origin'.
+  Removing branch remote 'awesomo4000'
+  Removing branch local 'awesomo4000'
+  Closing a pull request #3454 on origin.
+sally-[_parking_]$
+```
+
+Over lunch Alice gets a brainstorm ("a duck and rubber hose!") and rushes off to her computer:
+
+```
+alice-[lens_cap]$ git sync steal_underpants
+  Fetching the latest changes from the server
+  Creating steal_underpants off of origin/steal_underpants
+  Setting upstream/tracking for branch 'steal_underpants' to 'origin/master'.
+alice-[steal_underpants]$
+```
+
+She makes her changes, syncs back up with the server, and heads over to pair with John again.
+
+```
+alice-[steal_underpants]$ git commit
+alice-[steal_underpants]$ git sync
+  Fetching the latest changes from the server
+  Rebasing steal_underpants against origin/master
+  Pushing to 'steal_underpants' on 'origin'.
+alice-[steal_underpants]$
+```
+
+John, meanwhile, had made some changes of his own.
+
+```
+john-[steal_underpants]$ git commit
+john-[steal_underpants]$ git sync
+  Fetching the latest changes from the server
+  Remote branch has changed
+  Rebasing steal_underpants against origin/steal_underpants
+  Rebasing steal_underpants against origin/master
+  Pushing to 'steal_underpants' on 'origin'.
+john-[steal_underpants]$
+```
+
+At this point, his local branch has Alice's change as well as Bill and
+Sally's A.W.E.S.O.M-O 4000 enhancements.
+
+After confirming with Alice and Bill that everything looks good, he
+pushes his changes up for integration.
+
+```
+john-[steal_underpants]$ git to-master
+  Fetching the latest changes from the server
+  Rebasing steal_underpants against origin/master
+  Pushing to 'steal_underpants' on 'origin'.
+  Removing remote branch 'steal_underpants'
+  Removing local branch 'steal_underpants'
+[_parking_]$
+```
+
+Profit!!
 
 
 # F.A.Q. #

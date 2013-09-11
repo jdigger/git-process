@@ -3,6 +3,12 @@
 ### Since 1.1.4 ###
 
 * **Changed git-sync to default to rebasing.** ([GH-112](https://github.com/jdigger/git-process/issues/112))
+* git-sync now can take a branch name to check it out for work ([GH-117](https://github.com/jdigger/git-process/issues/117))
+* Change to use the "native" manpage-based help system for `git help`.
+  ([GH-113](https://github.com/jdigger/git-process/issues/113))
+* `git new-fb` now defaults to doing a `git fetch` before creating the feature branch if a remote is defined.
+  ([GH-118](https://github.com/jdigger/git-process/issues/118))
+* Removed **--interactive** option from git-to-master
 * Updated README and related files.
 * Retries closing a pull request if it gets a 422. ([GH-102](https://github.com/jdigger/git-process/issues/102))
 * Fixed typo in merge error. ([GH-114](https://github.com/jdigger/git-process/issues/114))

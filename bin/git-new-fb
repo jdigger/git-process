@@ -13,30 +13,6 @@ include GitProc
 class NewFeatureBranchOptions
   include GitProcessOptions
 
-  def summary
-    "Create a new feature branch based on the integration branch."
-  end
-
-
-  def description
-    <<DESC
-DESCRIPTION
-
-This creates the named branch based on the integration branch.
-
-EXAMPLE
-
-Assuming that the the integration branch on the server is "master", \
-typing "git new-fb my_feature" will do roughly the following \
-for you:
-  $ git checkout my_feature origin/master
-
-Also, if you are currently on the "_parking_" branch (see "git to-master"), \
-this will remove that branch.
-
-DESC
-  end
-
 
   def usage(filename)
     "#{filename} [options] branch_name"
@@ -45,6 +21,11 @@ DESC
 
   def empty_argv_ok?
     false
+  end
+
+
+  def extend_opts(parser)
+    parser.opt :local, "Do not do a fetch first if there is a remote defined", :short => :l, :default => false
   end
 
 

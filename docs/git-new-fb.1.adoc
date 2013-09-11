@@ -1,0 +1,83 @@
+GIT-NEW-FB(1)
+=============
+:doctype: manpage
+
+
+NAME
+----
+git-new-fb - Create a new feature branch based on the integration branch.
+
+
+SYNOPSIS
+--------
+'git-new-fb' ['OPTIONS'] [ 'branchname' ]
+
+
+OPTIONS
+-------
+
+The effective default is "*git new-fb -i* 'branch_name'".
+
+*-l, --local*::
+    Do not do a fetch first if there is a remote defined
+
+*--info*::
+    Informational messages; show the major things this is doing (*default: true*)
+
+*-q, --quiet*::
+    Quiet messages; only show errors
+
+*-v, --verbose*::
+    Verbose messages; show lots of details on what this is doing
+
+*--version*::
+    Print version and exit
+
+
+CONFIGURATION
+-------------
+
+Options for 'git-new-fb(1)' are set using 'git-config(1)'.
+
+*gitProcess.remoteName*::
+    Allows you to explicitly set the remote server name to use. Defaults
+    to the first server name reported by 'git-remote(1)'.
+
+*gitProcess.integrationBranch*::
+    Allows you to explicitly set the integration branch to use. Defaults
+    to "master".
+
+
+EXAMPLE
+-------
+
+Assuming that the the integration branch on the server is "master",
+running "git new-fb my_feature" will do roughly the following
+for you:
+
+  $ git fetch -p
+  $ git checkout my_feature origin/master
+
+Also, if you are currently on the "_parking_" branch (see 'git-to-master(1)'),
+this will remove that branch.
+
+
+SEE ALSO
+--------
+
+*git-process*(1), *git-to-master*(1), *git-sync*(1), *git-pull-request*(1)
+
+
+BUGS
+----
+Known bug list: <https://github.com/jdigger/git-process/issues?state=open>
+
+
+AUTHOR
+------
+git-new-fb has been written primarily by Jim Moore.
+
+
+RESOURCES
+---------
+Main web site: <https://github.com/jdigger/git-process>

@@ -1,0 +1,120 @@
+GIT-SYNC(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+git-sync - Syncs local changes with the server.
+
+
+SYNOPSIS
+--------
+'git-sync' ['OPTIONS'] [ 'branchname' ]
+
+
+DESCRIPTION
+-----------
+'git-sync(1)' fetches the latest repository from the server, rebases/merges
+the current branch against the changes in the integration branch, then pushes
+the result up to a branch on the server of the same name. (Unless told not to.)
+
+If a branch name is given, it is assumed that it is a remote branch that you want
+to start doing work on with full 'git-sync(1)' support. The branch will be fetched
+from the server, checked out, and a control file created.
+
+There is a lot of logic to make sure that rebasing/merging happens safely and
+with minimal conflicts regardless of things like squashes, multiple people working
+on the same feature branch, etc.
+
+
+OPTIONS
+-------
+
+The effective default is "*git sync -r -i -f*".
+
+*-r, --rebase*::
+    Rebase instead of merge against the integration branch (*default: true*)
+
+*--merge*::
+    Merge instead of rebase against the integration branch
+
+*-f, --force*::
+    Force the push; defaults to *true* if *--rebase* is used
+
+*-l, --local*::
+    Do not do a push; gets remote changes, but does not update the server
+
+*--info*::
+    Informational messages; show the major things this is doing (*default: true*)
+
+*-q, --quiet*::
+    Quiet messages; only show errors
+
+*-v, --verbose*::
+    Verbose messages; show lots of details on what this is doing
+
+*--version*::
+    Print version and exit
+
+
+CONFIGURATION
+-------------
+
+Options for 'git-sync(1)' are set using 'git-config(1)'.
+
+*gitProcess.remoteName*::
+    Allows you to explicitly set the remote server name to use. Defaults
+    to the first server name reported by 'git-remote(1)'.
+
+*gitProcess.integrationBranch*::
+    Allows you to explicitly set the integration branch to use. Defaults
+    to "master".
+
+*gitProcess.defaultRebaseSync*::
+    Should 'git-sync(1)' use *--rebase* by default instead of *--merge*? Defaults to *true*.
+
+
+EXAMPLE
+-------
+
+Assuming that the current branch is called "interesting_changes" and the integration
+branch on the server is "master", typing "git sync" will do roughly the following
+for you:
+
+  $ git fetch -p
+  # if there have been changes on the remote fb since the last sync
+  $ git rebase origin/interesting_changes
+  $ git rebase origin/master
+  # verify nothing has changed in the window of time since the last check
+  $ git push origin +interesting_changes:interesting_changes
+
+
+CONTROL FILES
+-------------
+
+*gitprocess-sync-\***--**::
+    To help make the process simpler and more reliable, 'git-sync(1)' will put a file in the "'.git'" directory
+    that contains the SHA-1 of the last successful sync to the server. 'git-to-master(1)' will remove the file
+    as part of its normal "housekeeping."
+
+
+SEE ALSO
+--------
+
+*git-process*(1), *git-to-master*(1), *git-new-fb*(1), *git-pull-request*(1)
+
+
+BUGS
+----
+Known bug list: <https://github.com/jdigger/git-process/issues?state=open>
+
+
+AUTHOR
+------
+git-sync has been written primarily by Jim Moore.
+
+
+RESOURCES
+---------
+Main web site: <https://github.com/jdigger/git-process>
