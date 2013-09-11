@@ -19,9 +19,17 @@ module GitProc
     include Enumerable
 
 
-    def initialize(lib)
+    def initialize(lib, opt = {})
       @lib = lib
-      branch_lines = lib.branch(nil, :all => true, :no_color => true).split("\n")
+      branch_opts = {:no_color => true}
+      if opt[:remote]
+        branch_opts[:remote] = true
+      elsif opt[:local]
+        branch_opts[:local] = true
+      else
+        branch_opts[:all] = true
+      end
+      branch_lines = lib.branch(nil, branch_opts).split("\n")
       @items = SortedSet.new
       branch_lines.each do |bl|
         @items << GitBranch.new(bl[2..-1], bl[0..0] == '*', lib)

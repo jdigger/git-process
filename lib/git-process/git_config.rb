@@ -119,46 +119,6 @@ module GitProc
     end
 
 
-    def rerere_enabled?
-      re = self['rerere.enabled']
-      re && re.to_boolean
-    end
-
-
-    def rerere_enabled(re, global = true)
-      if global
-        set_global('rerere.enabled', re)
-      else
-        self['rerere.enabled'] = re
-      end
-    end
-
-
-    def rerere_enabled=(re)
-      rerere_enabled(re, false)
-    end
-
-
-    def rerere_autoupdate?
-      re = self['rerere.autoupdate']
-      re && re.to_boolean
-    end
-
-
-    def rerere_autoupdate(re, global = true)
-      if global
-        set_global('rerere.autoupdate', re)
-      else
-        self['rerere.autoupdate'] = re
-      end
-    end
-
-
-    def rerere_autoupdate=(re)
-      rerere_autoupdate(re, false)
-    end
-
-
     private
 
     def remote

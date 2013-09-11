@@ -18,6 +18,7 @@ module GitProc
 
     def initialize(dir, opts)
       @branch_name = opts[:branch_name]
+      @local_only = opts[:local]
       super
     end
 
@@ -26,23 +27,21 @@ module GitProc
       mybranches = gitlib.branches()
       on_parking = (mybranches.parking == mybranches.current)
 
-      if on_parking
-        base_branch = if mybranches[config.integration_branch].contains_all_of(mybranches.parking.name)
-          config.integration_branch
-        else
-          '_parking_'
-        end
+      base_branch = if on_parking and not mybranches[config.integration_branch].contains_all_of(mybranches.parking.name)
+                      '_parking_'
+                    else
+                      config.integration_branch
+                    end
 
-        logger.info { "Creating #{@branch_name} off of #{base_branch}" }
-        new_branch = gitlib.checkout(@branch_name, :new_branch => base_branch)
+      gitlib.fetch if gitlib.has_a_remote? and not @local_only
 
-        branches = gitlib.branches()
-        branches[@branch_name].upstream(config.integration_branch)
-        branches.parking.delete!
-        new_branch
-      else
-        gitlib.checkout(@branch_name, :new_branch => config.integration_branch)
-      end
+      logger.info { "Creating #{@branch_name} off of #{base_branch}" }
+      new_branch = gitlib.checkout(@branch_name, :new_branch => base_branch)
+
+      branches = gitlib.branches()
+      branches[@branch_name].upstream(config.integration_branch)
+      branches.parking.delete! if on_parking
+      new_branch
     end
 
   end

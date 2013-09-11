@@ -3,6 +3,7 @@ require 'git-process/pull_request'
 require 'github_test_helper'
 require 'pull_request_helper'
 require 'GitRepoHelper'
+require 'hashie'
 
 
 describe GitProc::PullRequest do
@@ -40,7 +41,7 @@ describe GitProc::PullRequest do
       GitProc::PullRequest.stub(:create_pull_request_client).and_return(pr_client)
       #PullRequest.stub(:create_pull_request_client).with(anything, 'origin', 'jdigger/git-process').and_return(pr_client)
       gitlib.should_receive(:push)
-      pr_client.should_receive(:create).with('develop', 'master', 'master', '')
+      pr_client.should_receive(:create).with('develop', 'master', 'master', '').and_return(Hashie::Mash.new({:html_url => 'http://test'}))
 
       gitprocess.runner
     end
@@ -87,6 +88,10 @@ describe GitProc::PullRequest do
         expect_checkout_pr_head()
         expect_upstream_set()
 
+        gitlib.stub(:branch).with(nil, :no_color => true, :all => true).and_return("")
+        gitlib.stub(:branch).with(nil, :no_color => true, :remote => true).and_return("")
+        gitlib.should_receive(:rebase).with('test_repo/master', {})
+
         gitprocess.runner
       end
 
@@ -117,6 +122,10 @@ describe GitProc::PullRequest do
 
         expect_checkout_pr_head()
         expect_upstream_set()
+
+        gitlib.stub(:branch).with(nil, :no_color => true, :all => true).and_return('')
+        gitlib.stub(:branch).with(nil, :no_color => true, :remote => true).and_return('')
+        gitlib.should_receive(:rebase).with('test_repo/master', {})
 
         gitprocess.runner
       end

@@ -17,6 +17,7 @@ require 'git-process/parked_changes_error'
 require 'git-process/uncommitted_changes_error'
 require 'git-process/github_pull_request'
 require 'git-process/pull_request'
+require 'git-process/syncer'
 
 
 module GitProc
@@ -25,7 +26,6 @@ module GitProc
 
     def initialize(dir, opts)
       @keep = opts[:keep]
-      @interactive = opts[:interactive]
       @pr_number = opts[:prNumber]
       @user = opts[:user]
       @password = opts[:password]
@@ -49,17 +49,17 @@ module GitProc
           checkout_pull_request
         end
 
-        proc_rebase(config.integration_branch)
-        proc_rebase(config.integration_branch, :interactive => true) if @interactive
+        Syncer.rebase_sync(gitlib, true)
         current = gitlib.branches.current.name
         gitlib.push(remote.name, current, config.master_branch)
 
         unless @keep
           close_pull_request
           remove_feature_branch
+          gitlib.delete_sync_control_file!(current) if gitlib.sync_control_file_exists?(current)
         end
       else
-        proc_rebase(config.integration_branch)
+        Syncer.rebase_sync(gitlib, true)
       end
     end
 

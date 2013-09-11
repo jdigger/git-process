@@ -17,4 +17,5 @@ end
 group :test do
   gem "rspec", "~> 2"
   gem "webmock", "~> 1" # network mocking
+  gem "rugged", "~> 0.18.0.gh.de28323"
 end

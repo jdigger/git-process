@@ -97,6 +97,82 @@ module GitProc
     end
 
 
+    def fetch_remote_changes(remote_name = nil)
+      if remote.exists?
+        fetch(remote_name || remote.name)
+      else
+        logger.debug 'Can not fetch latest changes because there is no remote defined'
+      end
+    end
+
+
+    def proc_rebase(base, opts = {})
+      begin
+        rebase(base, opts)
+      rescue GitExecuteError => rebase_error
+        raise RebaseError.new(rebase_error.message, self)
+      end
+    end
+
+
+    def proc_merge(base, opts = {})
+      begin
+        merge(base, opts)
+      rescue GitExecuteError => merge_error
+        raise MergeError.new(merge_error.message, self)
+      end
+    end
+
+
+    # @return [String] the previous remote sha ONLY IF it is not the same as the new remote sha; otherwise nil
+    def previous_remote_sha(current_branch, remote_branch)
+      return nil unless has_a_remote?
+      return nil unless remote_branches.include?(remote_branch)
+
+      control_file_sha = read_sync_control_file(current_branch)
+      old_sha = control_file_sha || remote_branch_sha(remote_branch)
+      fetch_remote_changes
+      new_sha = remote_branch_sha(remote_branch)
+
+      if old_sha != new_sha
+        logger.info('The remote branch has changed since the last time')
+        old_sha
+      else
+        logger.debug 'The remote branch has not changed since the last time'
+        nil
+      end
+    end
+
+
+    def remote_branch_sha(remote_branch)
+      logger.debug {"getting sha for remotes/#{remote_branch}"}
+      rev_parse("remotes/#{remote_branch}") rescue ''
+    end
+
+
+    def is_parked?
+      mybranches = self.branches()
+      mybranches.parking == mybranches.current
+    end
+
+
+    def push_to_server(local_branch, remote_branch, opts = {})
+      if opts[:local]
+        logger.debug('Not pushing to the server because the user selected local-only.')
+      elsif not has_a_remote?
+        logger.debug('Not pushing to the server because there is no remote.')
+      elsif local_branch == config.master_branch
+        logger.warn('Not pushing to the server because the current branch is the mainline branch.')
+      else
+        opts[:prepush].call if opts[:prepush]
+
+        push(remote.name, local_branch, remote_branch, :force => opts[:force])
+
+        opts[:postpush].call if opts[:postpush]
+      end
+    end
+
+
     def config
       if @config.nil?
         @config = GitConfig.new(self)
@@ -219,6 +295,11 @@ module GitProc
     end
 
 
+    def remote_branches
+      GitProc::GitBranches.new(self, :remote => true)
+    end
+
+
     #
     # Does branch manipulation.
     #
@@ -248,7 +329,8 @@ module GitProc
           create_branch(branch_name, opts[:base_branch])
         end
       else
-        list_branches(opts[:all], opts[:no_color])
+        #list_branches(opts)
+        list_branches(opts[:all], opts[:remote], opts[:no_color])
       end
     end
 
@@ -430,6 +512,40 @@ module GitProc
     end
 
 
+    def write_sync_control_file(branch_name)
+      latest_sha = rev_parse(branch_name)
+      filename = sync_control_filename(branch_name)
+      logger.debug { "Writing sync control file, #{filename}, with #{latest_sha}" }
+      File.open(filename, 'w') { |f| f.puts latest_sha }
+    end
+
+
+    def read_sync_control_file(branch_name)
+      filename = sync_control_filename(branch_name)
+      if File.exists?(filename)
+        sha = File.new(filename).readline.chop
+        logger.debug "Read sync control file, #{filename}: #{sha}"
+        sha
+      else
+        logger.debug "Sync control file, #{filename}, was not found"
+        nil
+      end
+    end
+
+
+    def delete_sync_control_file!(branch_name)
+      filename = sync_control_filename(branch_name)
+      logger.debug { "Deleting sync control file, #{filename}" }
+      File.delete(filename)
+    end
+
+
+    def sync_control_file_exists?(branch_name)
+      filename = sync_control_filename(branch_name)
+      File.exist?(filename)
+    end
+
+
     private
 
 
@@ -491,9 +607,10 @@ module GitProc
     end
 
 
-    def list_branches(all_branches, no_color)
+    def list_branches(all_branches, remote_branches, no_color)
       args = []
       args << '-a' if all_branches
+      args << '-r' if remote_branches
       args << '--no-color' if no_color
       command(:branch, args)
     end
@@ -517,6 +634,11 @@ module GitProc
       logger.info { "Setting upstream/tracking for branch '#{branch_name}' to '#{upstream}'." }
 
       command(:branch, ['--set-upstream-to', upstream, branch_name])
+    end
+
+
+    def sync_control_filename(branch_name)
+      File.join(File.join(workdir, '.git'), "gitprocess-sync-#{remote.name}--#{branch_name}")
     end
 
   end

@@ -13,6 +13,7 @@
 require 'git-process/git_process'
 require 'git-process/github_pull_request'
 require 'git-process/pull_request_error'
+require 'git-process/syncer'
 require 'highline/import'
 
 
@@ -100,6 +101,7 @@ module GitProc
         #logger.info(json.to_hash)
 
         lib.fetch(remote_base_server_name) if remote_head_server_name != remote_base_server_name
+        Syncer.rebase_sync(lib, true)
       end
 
 

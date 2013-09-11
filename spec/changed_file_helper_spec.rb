@@ -1,4 +1,4 @@
-require 'git-process/sync'
+require 'git-process/sync_process'
 include GitProc
 
 describe ChangeFileHelper, :git_repo_helper do

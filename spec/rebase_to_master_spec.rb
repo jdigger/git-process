@@ -51,54 +51,6 @@ describe RebaseToMaster do
     end
 
 
-    it 'should work for a rebase after a rerere merge' do
-      # Make sure rerere is enabled
-      config.rerere_enabled(true, false)
-      config.rerere_autoupdate(false, false)
-
-      # Create the file to conflict on
-      change_file_and_commit('a', '')
-
-      # In the new branch, give it a new value
-      gitlib.checkout('fb', :new_branch => 'master') do
-        change_file_and_commit('a', 'hello')
-      end
-
-      # Change the value as well in the original branch
-      gitlib.checkout('master') do
-        change_file_and_commit('a', 'goodbye')
-      end
-
-      # Merge in the new branch; don't error-out because will auto-fix.
-      gitlib.checkout('fb') do
-        gitlib.merge('master') rescue
-            change_file_and_commit('a', 'merged')
-      end
-
-      # Make another change on master
-      gitlib.checkout('master') do
-        change_file_and_commit('b', '')
-      end
-
-      # Go back to the branch and try to rebase
-      gitlib.checkout('fb')
-
-      begin
-        gitprocess.runner
-        raise 'Should have raised RebaseError'
-      rescue RebaseError => exp
-        error_builder = exp.error_builder
-        error_builder.resolved_files.should == %w(a)
-        error_builder.unresolved_files.should == []
-
-        error_builder.commands.length.should == 3
-        error_builder.commands[0].should match /^# Verify/
-        error_builder.commands[1].should == 'git add a'
-        error_builder.commands[2].should == 'git rebase --continue'
-      end
-    end
-
-
     describe 'when used on _parking_' do
       it 'should fail #rebase_to_master' do
         gitlib.checkout('_parking_', :new_branch => 'master')
@@ -286,28 +238,9 @@ describe RebaseToMaster do
 
       clone_repo('fb') do |gl|
         rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :keep => true)
-        gl.should_receive(:fetch)
+        gl.should_receive(:fetch).at_least(1)
         gl.should_receive(:push).with('origin', gl.branches.current.name, 'master')
         gl.should_not_receive(:push).with('origin', nil, nil, :delete => 'fb')
-        rtm.runner
-      end
-    end
-
-  end
-
-
-  describe ':interactive option' do
-
-    it 'should try to do an interactive rebase' do
-      gitlib.branch('fb', :base_branch => 'master')
-
-      clone_repo('fb') do |gl|
-        rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :interactive => true)
-        gl.should_receive(:fetch)
-        gl.should_receive(:rebase).with('origin/master', {})
-        gl.should_receive(:rebase).with('origin/master', :interactive => true)
-        gl.should_receive(:push).with('origin', gl.branches.current.name, 'master')
-        gl.should_receive(:push).with('origin', nil, nil, :delete => 'fb')
         rtm.runner
       end
     end

@@ -90,17 +90,12 @@ module GitProc
 
 
     def fetch_remote_changes(remote_name = nil)
-      if remote.exists?
-        gitlib.fetch(remote_name || remote.name)
-      else
-        logger.debug 'Can not fetch latest changes because there is no remote defined'
-      end
+      gitlib.fetch_remote_changes(remote_name)
     end
 
 
     def is_parked?
-      mybranches = gitlib.branches
-      mybranches.parking == mybranches.current
+      gitlib.is_parked?
     end
 
 
@@ -151,20 +146,12 @@ module GitProc
 
 
     def proc_rebase(base, opts = {})
-      begin
-        gitlib.rebase(base, opts)
-      rescue GitExecuteError => rebase_error
-        raise RebaseError.new(rebase_error.message, gitlib)
-      end
+      gitlib.proc_rebase(base, opts)
     end
 
 
     def proc_merge(base, opts = {})
-      begin
-        gitlib.merge(base, opts)
-      rescue GitExecuteError => merge_error
-        raise MergeError.new(merge_error.message, gitlib)
-      end
+      gitlib.proc_merge(base, opts)
     end
 
   end

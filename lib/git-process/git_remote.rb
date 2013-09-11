@@ -176,40 +176,6 @@ module GitProc
     end
 
 
-    # @return [boolean]
-    def rerere_enabled?
-      re = config['rerere.enabled']
-      !re.nil? && re.to_boolean
-    end
-
-
-    # @return [void]
-    def rerere_enabled(re, global = true)
-      if global
-        config.set_global('rerere.enabled', re)
-      else
-        config['rerere.enabled'] = re
-      end
-    end
-
-
-    # @return [boolean]
-    def rerere_autoupdate?
-      re = config['rerere.autoupdate']
-      !re.nil? && re.to_boolean
-    end
-
-
-    # @return [void]
-    def rerere_autoupdate(re, global = true)
-      if global
-        config.set_global('rerere.autoupdate', re)
-      else
-        config['rerere.autoupdate'] = re
-      end
-    end
-
-
     # @return [void]
     def add_remote(remote_name, url)
       config.gitlib.command(:remote, ['add', remote_name, url])

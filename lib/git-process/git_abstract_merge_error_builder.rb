@@ -54,16 +54,6 @@ module GitProc
     def human_message
       msg = 'There was a problem merging.'
 
-      resolved_files.each do |file|
-        if modified.include? file
-          msg << "\n'#{file}' was modified in both branches, and 'rerere' automatically resolved it."
-        end
-      end
-
-      unless config.rerere_enabled?
-        msg << "\n\nConsider turning on 'rerere'.\nSee http://git-scm.com/2010/03/08/rerere.html for more information."
-      end
-
       unresolved_files.each do |file|
         if modified.include? file
           msg << "\n'#{file}' was modified in both branches."
@@ -77,13 +67,7 @@ module GitProc
     def build_commands
       commands = []
 
-      commands << 'git config --global rerere.enabled true' unless config.rerere_enabled?
-
-      resolved_files.each do |file|
-        commands << "# Verify that 'rerere' did the right thing for '#{file}'."
-      end
-
-      unless resolved_files.empty? or config.rerere_autoupdate?
+      unless resolved_files.empty?
         escaped_files = shell_escaped_files(resolved_files)
         commands << "git add #{escaped_files}"
       end

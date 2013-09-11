@@ -25,13 +25,15 @@ module GitProc
       parser = Trollop::Parser.new
       parser.version "#{filename} #{GitProc::Version::STRING}"
 
-      parser.banner "#{summary}\n\n"
-      parser.banner "\nUsage:\n    #{usage(filename)}\n\nWhere [options] are:"
+      #parser.banner "#{summary}\n\n"
+      command_name = filename.sub(/git-/, '')
+      parser.banner "For full documentation, see 'git help #{command_name}'"
+      parser.banner ""
 
       extend_opts(parser)
       standard_opts(parser)
 
-      parser.banner "\n#{description}"
+      #parser.banner "\n#{description}"
 
       opts = Trollop::with_standard_exception_handling parser do
         raise Trollop::HelpNeeded if ARGV.empty? and !empty_argv_ok?

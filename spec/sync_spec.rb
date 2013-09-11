@@ -1,5 +1,7 @@
-require 'git-process/sync'
+require 'git-process/sync_process'
 require 'GitRepoHelper'
+require 'rugged'
+
 
 describe Sync do
   include GitRepoHelper
@@ -64,7 +66,7 @@ describe Sync do
   end
 
 
-  describe 'when forcing the push' do
+  describe 'when forcing the push with a merge' do
 
     def create_process(gitlib, opts)
       GitProc::Sync.new(gitlib, opts.merge({:rebase => false, :force => true}))
@@ -109,23 +111,6 @@ describe Sync do
     end
 
 
-    it 'should complain if remote feature branch conflicts' do
-      change_file_and_commit('a', '')
-
-      gitlib.checkout('fb', :new_branch => 'master')
-
-      clone_repo do |gl|
-        gl.checkout('fb', :new_branch => 'origin/master')
-
-        change_file_and_commit('a', 'hello!', gitlib)
-        change_file_and_commit('a', 'conflict!!', gl)
-        gitlib.checkout('master')
-
-        expect { create_process(gl).runner }.to raise_error RebaseError
-      end
-    end
-
-
     context 'piece by piece' do
 
       #
@@ -139,8 +124,7 @@ describe Sync do
         @origin = gitlib
         @origin.config['receive.denyCurrentBranch'] = 'ignore'
 
-        change_file_and_commit('a', 'A')
-        @a_sha = @origin.sha('HEAD')
+        @a_sha = rcreate_commit :origin, 'HEAD', :a
 
         @local = clone_repo('master', 'origin')
       end
@@ -170,8 +154,8 @@ describe Sync do
           l_sha.should == @b_sha
           r_sha.should == @b_sha
           i_sha.should == @c_sha
-          parent(@c_sha).should == @a_sha
-          parent(@b_sha).should == @a_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
         end
 
 
@@ -182,13 +166,11 @@ describe Sync do
         #         l,r
         it 'should work if no conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :origin, 'master', :c
           end
 
           when_sync_is_run
@@ -210,13 +192,11 @@ describe Sync do
         #   r
         it 'should raise an error if there is a conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b, :file => 'a'
-
-            origin 'master'
-            create_commit :c, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b, :file => 'a'
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :origin, 'master', :c, :file => 'a'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -242,9 +222,9 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @b_sha
           i_sha.should == @c_sha
-          parent(@c_sha).should == @a_sha
-          parent(@b_sha).should == @a_sha
-          parent(@d_sha).should == @b_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @b_sha
         end
 
 
@@ -255,14 +235,12 @@ describe Sync do
         #              l,r
         it 'should work if no conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d
-
-            origin 'master'
-            create_commit :c
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'master', :c
           end
 
           when_sync_is_run
@@ -285,14 +263,12 @@ describe Sync do
         #   r   ??
         it 'should raise an error if there is a conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d
-
-            origin 'master'
-            create_commit :c, :file => 'a'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b, :file => 'a'
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'master', :c, :file => 'a'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -320,45 +296,32 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @b_sha
           i_sha.should == @c_sha
-          parent(@c_sha).should == @a_sha
-          parent(@b_sha).should == @a_sha
-          parent(@b1_sha).should == @c_sha
-          parent(@d_sha).should == @b1_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@b1_sha}~1").should == @c_sha
+          treeish(local_repo, "#{@d_sha}~2").should == @c_sha
         end
 
 
-        #     i
-        #    /
-        # - A - C - B2 - D1
+        #         i
+        #        /
+        # - A - C - B1 - D
         #               /
         #             l,r
-        #
-        # 'B2' would have the same content, but different SHA from 'B1' because it comes
-        # from 'B' on the remote. When 'B1' is then applied it's a no-op, but 'D' becomes 'D1'
-        # because it is based on 'B2' instead of 'B1'.
         it 'should work' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            @local.rebase('origin/master', :oldbase => @a_sha)
-            @b1_sha = @local.sha('HEAD')
-
-            create_commit :d
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            rcreate_commit_on_new_branch :local, 'fb', 'origin/master', :b1, :file => 'b'
+            rcreate_commit :local, 'fb', :d
           end
 
           when_sync_is_run
 
           Then do
             local_and_remote_are_same
-            @local.sha("#{l_sha}~2").should == @c_sha
-            check_file_content :b
-            check_file_content :d
+            treeish(local_repo, "#{l_sha}~2").should == @c_sha
           end
         end
 
@@ -384,10 +347,10 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @b1_sha
           i_sha.should == @c_sha
-          parent(@c_sha).should == @a_sha
-          parent(@b_sha).should == @a_sha
-          parent(@b1_sha).should == @c_sha
-          parent(@d_sha).should == @b_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b1_sha}~1").should == @c_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @b_sha
         end
 
 
@@ -398,27 +361,20 @@ describe Sync do
         #             l,r
         it 'should work' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
+            rcreate_commit_on_new_branch :local, 'fb', 'origin/master', :b
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'master', :c
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b1, :file => 'b'
           end
 
           when_sync_is_run
 
           Then do
             local_and_remote_are_same
-            parent(l_sha).should == @b1_sha
-            check_file_content :b
-            check_file_content :d
+            l_sha.should_not == @d_sha
+            treeish(local_repo, "#{l_sha}~1").should == @b1_sha
+            treeish(local_repo, "#{l_sha}~2").should == @c_sha
           end
         end
 
@@ -432,21 +388,90 @@ describe Sync do
         #       ??
         it 'should raise an error if there is a conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d, :file => 'a'
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
+            rcreate_commit_on_new_branch :local, 'fb', 'origin/master', :b
+            rcreate_commit :local, 'fb', :d, :file => 'a'
+            rcreate_commit :origin, 'master', :c, :file => 'a'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b1, :file => 'b'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
+        end
+
+      end
+
+
+      #         i      r
+      #        /       \
+      # - A - C - B1 - D
+      #   \
+      #   B
+      #   \
+      #   l
+      #
+      # Steps to get to this state:
+      #   1. Changes have been applied to the integration branch
+      #   2. The remote feature branch is rebased with integration, but with new work
+      #   2. Work has not happened locally on the feature branch
+      #
+      describe 'if remote is ahead of local' do
+
+        def verify_start_state
+          l_sha.should == @b_sha
+          r_sha.should == @d_sha
+          i_sha.should == @c_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b1_sha}~1").should == @c_sha
+          treeish(origin_repo, "#{@d_sha}~1").should == @b1_sha
+        end
+
+
+        #     i
+        #    /
+        # - A - C - B1 - D
+        #               /
+        #             l,r
+        it 'should work' do
+          Given do
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :origin, 'master', :c
+            rcreate_commit :origin, 'fb', :b1, :file => 'b', :parents => [@c_sha]
+            rcreate_commit :origin, 'fb', :d
+          end
+
+          when_sync_is_run
+
+          Then do
+            local_and_remote_are_same
+            l_sha.should == @d_sha
+          end
+        end
+
+
+        #     i
+        #    /
+        # - A - C - B1 - D
+        #               /
+        #             l,r
+        it 'should work without a control file' do
+          Given do
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            rcreate_commit :origin, 'master', :c
+            rcreate_commit :origin, 'fb', :b1, :file => 'b', :parents => [@c_sha]
+            rcreate_commit :origin, 'fb', :d
+          end
+
+          when_sync_is_run
+
+          Then do
+            local_and_remote_are_same
+            l_sha.should == @d_sha
+          end
         end
 
       end
@@ -474,10 +499,10 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @e_sha
           i_sha.should == @c_sha
-          parent(@b_sha).should == @a_sha
-          parent(@c_sha).should == @a_sha
-          parent(@d_sha).should == @b_sha
-          parent(@e_sha).should == @b_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @b_sha
+          treeish(origin_repo, "#{@e_sha}~1").should == @b_sha
         end
 
 
@@ -486,26 +511,20 @@ describe Sync do
         # - A - C - B1 - E1 - D1
         it 'should work if no conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            origin 'fb'
-            create_commit :e
-
-            local 'fb'
-            create_commit :d
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'master', :c
+            rcreate_commit :origin, 'fb', :e
           end
 
           when_sync_is_run
 
           Then do
             local_and_remote_are_same
-            @local.sha("#{l_sha}~3").should == @c_sha
+            treeish(origin_repo, "#{l_sha}~3").should == @c_sha
             check_file_content :b
             check_file_content :d
           end
@@ -524,19 +543,13 @@ describe Sync do
         #    r
         it 'should raise an error if conflict applying B' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b, :file => 'a'
-
-            origin 'master'
-            create_commit :c, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            origin 'fb'
-            create_commit :e
-
-            local 'fb'
-            create_commit :d
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b, :file => 'a'
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'master', :c, :file => 'a'
+            rcreate_commit :origin, 'fb', :e
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -555,19 +568,13 @@ describe Sync do
         #    r
         it 'should raise an error if there is a conflict applying remote' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            origin 'fb'
-            create_commit :e, :file => 'a'
-
-            local 'fb'
-            create_commit :d
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'master', :c, :file => 'a'
+            rcreate_commit :origin, 'fb', :e, :file => 'a'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -586,19 +593,13 @@ describe Sync do
         #    r
         it 'should raise an error if conflict applying local' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            origin 'fb'
-            create_commit :e
-
-            local 'fb'
-            create_commit :d, :file => 'a'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d, :file => 'a'
+            rcreate_commit :origin, 'master', :c, :file => 'a'
+            rcreate_commit :origin, 'fb', :e
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -617,7 +618,8 @@ describe Sync do
       #
       # Steps to get to this state:
       #   1. Changes have been applied to the integration branch
-      #   2. Work has happened locally on the feature branch, but it is no longer a "simple" addition to the remote
+      #   2. Nothing has changed on the remote since the last sync
+      #   3. Work has happened locally on the feature branch, and it is no longer a "simple" addition to the remote
       #
       describe 'if local is based on integration but not a "simple" version of remote' do
 
@@ -625,62 +627,33 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @b_sha
           i_sha.should == @c_sha
-          parent(@b_sha).should == @a_sha
-          parent(@c_sha).should == @a_sha
-          parent(@d_sha).should == @c_sha
-        end
-
-
-        #         i
-        #        /
-        # - A - C - B1 - D1
-        #               /
-        #             l,r
-        it 'should work if no conflict' do
-          Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            @local.reset('origin/master', :hard => true)
-            create_commit :d
-          end
-
-          when_sync_is_run
-
-          Then do
-            local_and_remote_are_same
-            @local.sha("#{l_sha}~2").should == @c_sha
-            check_file_content :b
-            check_file_content :d
-          end
+          treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @c_sha
         end
 
 
         #         i
         #        /
         # - A - C - D
-        #   \   \   \
-        #   B   XX  ??
-        #   \    \
-        #   r    l
-        it 'should raise an error if there is a conflict' do
+        #          /
+        #         l,r
+        it 'should override remote branch' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b, :file => 'a'
-
-            origin 'master'
-            create_commit :c, :file => 'a'
-
-            local 'fb', :new_branch => 'origin/fb'
-            @local.reset('origin/master', :hard => true)
-            create_commit :d
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d, :parents => [@c_sha]
           end
 
-          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
+          when_sync_is_run
+
+          Then do
+            local_and_remote_are_same
+            l_sha.should == @d_sha
+          end
         end
 
       end
@@ -698,6 +671,7 @@ describe Sync do
       #
       # Steps to get to this state:
       #   1. Changes have been applied to the integration branch
+      #   2. Nothing has changed on the remote since the last sync
       #   2. Work has happened locally based on a newer version of integration, and it is no longer
       #      a "simple" addition to the remote
       #
@@ -707,39 +681,32 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @b_sha
           i_sha.should == @e_sha
-          parent(@b_sha).should == @a_sha
-          parent(@c_sha).should == @a_sha
-          parent(@d_sha).should == @c_sha
-          parent(@e_sha).should == @c_sha
+          treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @c_sha
+          treeish(origin_repo, "#{@e_sha}~1").should == @c_sha
         end
 
 
-        # - A - C - E - B1 - D1
-        #          /         /
-        #         i        l,r
-        it 'should work if no conflict' do
+        # - A - C - E - D1
+        #          /    /
+        #         i   l,r
+        it 'should override remote branch' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            @local.reset('origin/master', :hard => true)
-            create_commit :d
-
-            origin 'master'
-            create_commit :e
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d, :parents => [@c_sha]
+            rcreate_commit :origin, 'master', :e
           end
 
           when_sync_is_run
 
           Then do
             local_and_remote_are_same
-            @local.sha("#{l_sha}~2").should == @e_sha
-            check_file_content :b
-            check_file_content :d
+            treeish(origin_repo, "#{l_sha}~1").should == @e_sha
           end
         end
 
@@ -753,49 +720,15 @@ describe Sync do
         #   B     i    l
         #   \
         #   r
-        it 'should raise an error with conflict on remote content' do
-          Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b, :file => 'a'
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            @local.reset('origin/master', :hard => true)
-            create_commit :d
-
-            origin 'master'
-            create_commit :e, :file => 'a'
-          end
-
-          expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
-        end
-
-
-        #           ??
-        #          /
-        #         D
-        #        /
-        # - A - C - E - B1 - XX
-        #   \      /         /
-        #   B     i         l
-        #   \
-        #   r
         it 'should raise an error with conflict on local content' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            @local.reset('origin/master', :hard => true)
-            create_commit :d, :file => 'a'
-
-            origin 'master'
-            create_commit :e, :file => 'a'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d, :parents => [@c_sha], :file => 'a'
+            rcreate_commit :origin, 'master', :e, :file => 'a'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -823,43 +756,34 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @e_sha
           i_sha.should == @c_sha
-          parent(@b_sha).should == @a_sha
-          parent(@b1_sha).should == @c_sha
-          parent(@c_sha).should == @a_sha
-          parent(@d_sha).should == @b_sha
-          parent(@e_sha).should == @b1_sha
+          treeish(local_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b1_sha}~1").should == @c_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @b_sha
+          treeish(origin_repo, "#{@e_sha}~1").should == @b1_sha
         end
 
 
-        # - A - C - B1 - E1 - D1
-        #      /              /
-        #     i             l,r
+        # - A - C - B1 - E - D1
+        #      /             /
+        #     i            l,r
         it 'should work if no conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
-            create_commit :e
-
-            local 'fb'
-            create_commit :d
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'fb', :b1, :parents => [@c_sha], :file => 'b'
+            rcreate_commit :origin, 'fb', :e
           end
 
           when_sync_is_run
 
           Then do
             local_and_remote_are_same
-            @local.sha("#{l_sha}~2").should == @b1_sha
-            @local.sha("#{l_sha}~3").should == @c_sha
-            check_file_content :d
+            treeish(origin_repo, "#{l_sha}~1").should == @e_sha
           end
         end
 
@@ -873,21 +797,14 @@ describe Sync do
         #       ??
         it 'should raise an error if there is a conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
-            create_commit :e, :file => 'a'
-
-            local 'fb'
-            create_commit :d, :file => 'a'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d, :file => 'a'
+            rcreate_commit :origin, 'fb', :b1, :parents => [@c_sha], :file => 'b'
+            rcreate_commit :origin, 'fb', :e, :file => 'a'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -918,12 +835,12 @@ describe Sync do
           l_sha.should == @d_sha
           r_sha.should == @e_sha
           i_sha.should == @f_sha
-          parent(@b_sha).should == @a_sha
-          parent(@b1_sha).should == @c_sha
-          parent(@c_sha).should == @a_sha
-          parent(@d_sha).should == @b_sha
-          parent(@e_sha).should == @b1_sha
-          parent(@f_sha).should == @c_sha
+          treeish(local_repo, "#{@b_sha}~1").should == @a_sha
+          treeish(origin_repo, "#{@b1_sha}~1").should == @c_sha
+          treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+          treeish(local_repo, "#{@d_sha}~1").should == @b_sha
+          treeish(origin_repo, "#{@e_sha}~1").should == @b1_sha
+          treeish(origin_repo, "#{@f_sha}~1").should == @c_sha
         end
 
 
@@ -932,30 +849,22 @@ describe Sync do
         #         i             l,r
         it 'should work if no conflict' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
-            create_commit :e
-
-            origin 'master'
-            create_commit :f
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'fb', :b1, :parents => [@c_sha], :file => 'b'
+            rcreate_commit :origin, 'fb', :e
+            rcreate_commit :origin, 'master', :f
           end
 
           when_sync_is_run
 
           Then do
             local_and_remote_are_same
-            @local.sha("#{l_sha}~3").should == @f_sha
-            check_file_content :b
+            treeish(local_repo, "#{l_sha}~3").should == @f_sha
           end
         end
 
@@ -971,22 +880,15 @@ describe Sync do
         #       ??
         it 'should raise an error if conflict applying remote' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b, :file => 'a'
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
-            create_commit :e
-
-            origin 'master'
-            create_commit :f, :file => 'a'
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d
+            rcreate_commit :origin, 'fb', :b1, :parents => [@c_sha], :file => 'a'
+            rcreate_commit :origin, 'fb', :e
+            rcreate_commit :origin, 'master', :f, :file => 'a'
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
@@ -1004,25 +906,214 @@ describe Sync do
         #       ??
         it 'should raise an error if conflict applying local' do
           Given do
-            origin 'fb', :new_branch => 'master'
-            create_commit :b
-
-            origin 'master'
-            create_commit :c
-
-            local 'fb', :new_branch => 'origin/fb'
-            create_commit :d, :file => 'a'
-
-            origin 'fb'
-            @origin.rebase('master', :oldbase => @a_sha)
-            @b1_sha = @origin.sha('HEAD')
-            create_commit :e, :file => 'a'
-
-            origin 'master'
-            create_commit :f
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rcreate_commit :origin, 'master', :c
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.write_sync_control_file('fb')
+            rcreate_commit :local, 'fb', :d, :file => 'a'
+            rcreate_commit :origin, 'fb', :b1, :parents => [@c_sha], :file => 'b'
+            rcreate_commit :origin, 'fb', :e, :file => 'a'
+            rcreate_commit :origin, 'master', :f
           end
 
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
+        end
+
+      end
+
+
+      describe 'with branch name' do
+
+        def create_process(gitlib, opts = {})
+          GitProc::Sync.new(gitlib, opts.merge({:branch_name => 'fb', :rebase => true, :force => false}))
+        end
+
+
+        #         i
+        #        /
+        # - A - C
+        #   \
+        #   B
+        #   \
+        #   r
+        #
+        # Steps to get to this state:
+        #   1. There is a remote feature branch ("fb")
+        #   2. The local repo does not have a feature branch by the same name
+        #   3. The integration branch has moved on since the remote branch was last synced
+        describe 'no local branch by the same name' do
+
+          def verify_start_state
+            Rugged::Branch.lookup(local_repo, 'fb').should be_nil
+            r_sha.should == @b_sha
+            i_sha.should == @c_sha
+            treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+            treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          end
+
+
+          #         i  l,r
+          #        /   /
+          # - A - C - B1
+          #
+          it 'creates a local branch and rebases with integration' do
+            Given do
+              rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+              rfetch local_repo, 'origin'
+              rcreate_commit_on_new_branch :local, 'random', 'master', :z, :parents => []
+              rcreate_commit :origin, 'master', :c
+            end
+
+            when_sync_is_run(false)
+
+            Then do
+              local_and_remote_are_same
+              @local.config['branch.fb.remote'].should == 'origin'
+              @local.config['branch.fb.merge'].should == 'refs/heads/master'
+              parent(l_sha).should == @c_sha
+            end
+          end
+
+        end
+
+
+        #         i
+        #        /
+        # - A - C
+        #   \
+        #   B - l
+        #   \
+        #   D - r
+        #
+        # Steps to get to this state:
+        #   1. There is a remote feature branch ("fb")
+        #   2. The local repo has a feature branch by the same name that is fully within the remote's history
+        #   3. The integration branch has moved on since the feature branches were last synced
+        describe 'has local branch by same name subsumed by remote' do
+
+          def verify_start_state
+            Rugged::Branch.lookup(local_repo, 'fb').should_not be_nil
+            l_sha.should == @b_sha
+            r_sha.should == @d_sha
+            i_sha.should == @c_sha
+            treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+            treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+            treeish(origin_repo, "#{@d_sha}~1").should == @b_sha
+          end
+
+
+          #         i  l,r
+          #        /   /
+          # - A - C - B1
+          #
+          it 'change to the remote and rebases with integration if it is subsumed by the remote' do
+            Given do
+              rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+              rfetch local_repo, 'origin'
+              local_repo.create_branch('fb', 'origin/fb')
+              rcreate_commit :origin, 'fb', :d
+              rcreate_commit :origin, 'master', :c
+            end
+
+            when_sync_is_run(false)
+
+            Then do
+              local_and_remote_are_same
+              @local.config['branch.fb.remote'].should == 'origin'
+              @local.config['branch.fb.merge'].should == 'refs/heads/master'
+              parent(l_sha).should == @c_sha
+            end
+          end
+
+        end
+
+
+        #         i
+        #        /
+        # - A - C
+        #   \
+        #   B
+        #   \
+        #   r
+        #
+        # Steps to get to this state:
+        #   1. There is a remote feature branch ("fb")
+        #   2. The local repo has a feature branch by the same name not fully in the remote's history
+        #   3. The integration branch has moved on since the remote branch was last synced
+        describe 'has local branch by same name not subsumed by remote' do
+
+          def verify_start_state
+            Rugged::Branch.lookup(local_repo, 'fb').should_not be_nil
+            r_sha.should == @b_sha
+            i_sha.should == @c_sha
+            treeish(origin_repo, "#{@c_sha}~1").should == @a_sha
+            treeish(origin_repo, "#{@b_sha}~1").should == @a_sha
+          end
+
+
+          #         i  l,r
+          #        /   /
+          # - A - C - B1
+          #
+          it 'should fail if it is not subsumed by the remote' do
+            Given do
+              rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+              rcreate_commit_on_new_branch :local, 'fb', 'master', :z, :parents => []
+              rcreate_commit :origin, 'master', :c
+            end
+
+            expect { when_sync_is_run(false) }.to raise_error(GitProcessError, /is not fully subsumed by origin\/fb/)
+          end
+
+        end
+
+
+        describe 'unknown branch name' do
+
+          def create_process(gitlib, opts = {})
+            GitProc::Sync.new(gitlib, opts.merge({:branch_name => 'unknown', :rebase => true, :force => false}))
+          end
+
+
+          def verify_start_state
+            Rugged::Branch.lookup(origin_repo, 'fb').should_not be_nil
+            Rugged::Branch.lookup(local_repo, 'unknown').should be_nil
+            Rugged::Branch.lookup(origin_repo, 'unknown').should be_nil
+          end
+
+
+          it 'should fail if it is not subsumed by the remote' do
+            Given do
+              rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            end
+
+            expect { when_sync_is_run(false) }.to raise_error(GitProcessError, /There is not a remote branch for 'unknown'/)
+          end
+
+        end
+
+
+        describe 'no remote' do
+
+          def create_process(gitlib, opts = {})
+            GitProc::Sync.new(gitlib, opts.merge({:branch_name => 'no_remote', :rebase => true, :force => false}))
+          end
+
+
+          def verify_start_state
+            Rugged::Branch.lookup(local_repo, 'no_remote').should be_nil
+          end
+
+
+          it 'should fail if it is not subsumed by the remote' do
+            Given do
+              @local.command(:remote, ['remove', 'origin'])
+            end
+
+            expect { when_sync_is_run(false) }.to raise_error(GitProcessError, /Specifying 'no_remote' does not make sense without a remote/)
+          end
+
         end
 
       end
@@ -1047,7 +1138,7 @@ describe Sync do
           change_file_and_commit('a', 'hello', gitlib)
 
           sp = GitProc::Sync.new(gl, :rebase => true, :force => false, :local => true, :log_level => log_level)
-          gl.should_receive(:fetch) # want to get remote changes
+          gl.should_receive(:fetch).at_least(1) # want to get remote changes
           gl.should_not_receive(:push) # ...but not push any
 
           sp.runner
@@ -1201,7 +1292,8 @@ describe Sync do
   end
 
 
-  def when_sync_is_run
+  def when_sync_is_run(do_checkout = true)
+    @local.checkout('fb') if do_checkout
     create_process(@local).runner
   end
 
@@ -1269,23 +1361,114 @@ describe Sync do
   end
 
 
+  def local_repo
+    @local_repo ||= Rugged::Repository.new(@local.workdir)
+  end
+
+
+  def origin_repo
+    @origin_repo ||= Rugged::Repository.new(@origin.workdir)
+  end
+
+
   def l_sha
-    @local.sha('fb')
+    branch_tip(local_repo, 'fb')
   end
 
 
   def i_sha
-    @origin.sha('master')
+    branch_tip(origin_repo, 'master')
   end
 
 
   def r_sha
-    @origin.sha('fb')
+    branch_tip(origin_repo, 'fb')
   end
 
 
   def local_and_remote_are_same
     l_sha.should == r_sha
+  end
+
+
+  def branch_tip(repo, branch_name)
+    Rugged::Branch.lookup(repo, branch_name).tip.oid
+  end
+
+
+  def rchange_file_and_commit(repo_name, branch, filename, contents, opts = {})
+    repo = self.method("#{repo_name.to_s}_repo").call
+
+    content_oid = repo.write(contents, :blob)
+    logger.debug { "\nwrote content '#{contents}' to #{content_oid}" }
+
+    if branch.nil?
+      tree = Rugged::Tree::Builder.new
+      tree.insert(:name => filename, :oid => content_oid, :filemode => 0100644)
+      tree_oid = tree.write(repo)
+      parents = opts[:parents] || []
+      branch_name = 'HEAD'
+    else
+      tree = Rugged::Tree::Builder.new(branch.tip.tree)
+      tree.insert(:name => filename, :oid => content_oid, :filemode => 0100644)
+      tree_oid = tree.write(repo)
+      parents = opts[:parents] || [branch.tip.oid]
+      branch_name = branch.canonical_name
+    end
+
+    tree = repo.lookup(tree_oid)
+    logger.debug "tree:"
+    tree.each { |entry| logger.debug "  #{entry.inspect}" }
+
+    person = {:name => 'test user', :email => 'test.user@test.com', :time => Time.now, :time_offset => 3600}
+    oid = Rugged::Commit.create(repo,
+                                :message => "#{filename} - #{contents}",
+                                :committer => person,
+                                :author => person,
+                                :parents => parents,
+                                :update_ref => branch_name,
+                                :tree => tree_oid)
+
+    new_branch = Rugged::Branch.lookup(repo, branch.nil? ? 'HEAD' : branch.name)
+    new_tip = new_branch.nil? ? 'BUG' : new_branch.tip.oid
+    logger.debug { "wrote commit #{oid} on #{repo_name} - #{branch_name} with #{parents} as the parent, making new branch tip #{new_tip}" }
+    oid
+  end
+
+
+  def rcreate_commit(repo_name, branch_name, commit_name, opts={})
+    repo = self.method("#{repo_name.to_s}_repo").call
+    branch = Rugged::Branch.lookup(repo, branch_name)
+    _create_commit(repo_name, branch, commit_name, opts)
+  end
+
+
+  def _create_commit(repo_name, branch, commit_name, opts)
+    filename = opts[:file] || commit_name.to_s
+    oid = rchange_file_and_commit(repo_name, branch, filename, "#{commit_name} contents\n", opts)
+    instance_variable_set("@#{commit_name}_sha", oid)
+    oid
+  end
+
+
+  def rcreate_commit_on_new_branch(repo_name, branch_name, base_branch_name, commit_name, opts={})
+    repo = self.method("#{repo_name.to_s}_repo").call
+    branch = repo.create_branch(branch_name, base_branch_name)
+    _create_commit(repo_name, branch, commit_name, opts)
+  end
+
+
+  def rfetch(repo, remote_name)
+    remote = Rugged::Remote.lookup(repo, remote_name)
+    remote.connect(:fetch) do |r|
+      r.download()
+      r.update_tips!
+    end
+  end
+
+
+  def treeish(repo, treeish)
+    Rugged::Object.rev_parse(repo, treeish).oid
   end
 
 end
