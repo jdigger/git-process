@@ -11,7 +11,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "git-sync", GitProc::Version::STRING
   gem.add_dependency "git-new-fb", GitProc::Version::STRING
   gem.add_dependency "git-to-master", GitProc::Version::STRING
-  gem.add_dependency "git-pull-request", GitProc::Version::STRING
+  gem.add_dependency "git-pull-req", GitProc::Version::STRING
 
   gem.files = %w(README.md LICENSE CHANGELOG.md)
   gem.files << 'man/git-process.1'

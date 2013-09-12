@@ -65,7 +65,7 @@ this will remove that branch.
 SEE ALSO
 --------
 
-*git-process*(1), *git-to-master*(1), *git-sync*(1), *git-pull-request*(1)
+*git-process*(1), *git-to-master*(1), *git-sync*(1), *git-pull-req*(1)
 
 
 BUGS

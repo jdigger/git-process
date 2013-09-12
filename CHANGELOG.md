@@ -1,5 +1,9 @@
 # CHANGELOG - 1.2.0 #
 
+### Since 2.0.1 ###
+
+Changed git-pull-request to git-pull-req
+
 ### Since 1.1.4 ###
 
 * **Changed git-sync to default to rebasing.** ([GH-112](https://github.com/jdigger/git-process/issues/112))

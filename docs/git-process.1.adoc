@@ -126,7 +126,7 @@ Meanwhile Bill has been working on his great idea:
 He creates his "Laaaaame" class and checks it in, with a pull request asking Sally to do a code review.
 
   bill-[awesomo4000]$ git commit
-  bill-[awesomo4000]$ git pull-request "A.W.E.S.O.M-0 4000 prototype" \
+  bill-[awesomo4000]$ git pull-req "A.W.E.S.O.M-0 4000 prototype" \
                       -d "@sally, can you make sure Butters won't recognize it?"
     Pushing to 'awesomo4000' on 'origin'.
     Creating a pull request asking for 'awesomo4000' to be merged into 'master' on big_monies.
@@ -135,7 +135,7 @@ He creates his "Laaaaame" class and checks it in, with a pull request asking Sal
 
 Sally sees the email. After looking at it in the web interface, she wants to test it.
 
-  sally-[other_branch]$ git pull-request 3454
+  sally-[other_branch]$ git pull-req 3454
     Getting #pr_number
     Fetching the latest changes from the server
       new branch: awesomo4000
@@ -212,7 +212,7 @@ Profit!!
 
 == SEE ALSO ==
 
-*git-sync*(1), *git-to-master*(1), *git-new-fb*(1), *git-pull-request*(1)
+*git-sync*(1), *git-to-master*(1), *git-new-fb*(1), *git-pull-req*(1)
 
 
 == BUGS ==

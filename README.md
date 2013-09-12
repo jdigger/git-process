@@ -50,7 +50,7 @@ To get full `git help` and manpage support, do:
 
 * `git new-fb` - Create a new feature branch based on the integration branch.
 * `git sync` - Gets the latest changes that have happened on the integration branch and remote feature branch, then pushes your changes to a feature branch on the server.
-* `git pull-request` - Create or get a Pull Request for the current branch.
+* `git pull-req` - Create or get a Pull Request for the current branch.
 * `git to-master` - Rebase against the integration branch, then pushes to it. Knows how to deal "intelligently" with pull-requests.
 
 **All commands are well documented within themselves: Use the "git help" to see the full documentation.** (e.g., "`git help sync`")
@@ -73,17 +73,17 @@ To get full `git help` and manpage support, do:
   * "`git sync`" makes it extremely easy for you to get any changes that are made in "`master`" into your branch so you can react to it immediately.
   * "`git to-master`" then makes it easy to cleanly integrate the changes you have made. If you need to keep the current branch open, use the `--keep` option. Otherwise it closes the branch along with various other house-keeping duties.
 * The process that you use should be essentially the same, regardless of whether you are working alone, or on a large distributed team.
-  * The exception here is "`git pull-request`" since you typically do not use pull requests when working solo or when pair-programming.
+  * The exception here is "`git pull-req`" since you typically do not use pull requests when working solo or when pair-programming.
 
 
 # Notes #
 
 * After publishing changes to the main integration branch (i.e., "`git to-master`") the old feature branch is removed as part of cleanup. Git is then "parked" on a "`_parking_`" branch until a new feature branch is created. Work is not expected to be done on this branch, but any that is done is brought over to a newly created feature branch (i.e., "`git new-fb`").
 * If there is a problem (such as a merge conflict), this will try to resolve such errors for you as much as it can do safely. When it can't do so in an automated way, it will try to tell you the process for doing so manually.
-* The first time you use a GitHub feature (e.g., "`git pull-request`"), this will ask for your username and password. It does not store them, but instead uses them to get an OAuth2 token, which is stored in "`git config gitProcess.github.authToken`".
+* The first time you use a GitHub feature (e.g., "`git pull-req`"), this will ask for your username and password. It does not store them, but instead uses them to get an OAuth2 token, which is stored in "`git config gitProcess.github.authToken`".
 * If you want to use a different integration branch other than "`master`", set the "`gitProcess.integrationBranch`" configuration value. (e.g., "`git config gitProcess.integrationBranch my-integ-branch`")
 * By default the first server name reported by `git remote` is used as the server/remote name. Since most projects only have a single remote (i.e., "origin") this works most of the time. But if you have multiple remotes and want to explicitly set it, use the `gitProcess.remoteName` configuration option.
-* `git pull-request` shows the URL for the pull request after creating it on the server. Most terminal programs let you click on it to open it in your browser. (e.g., Cmd-Click on OSX.)
+* `git pull-req` shows the URL for the pull request after creating it on the server. Most terminal programs let you click on it to open it in your browser. (e.g., Cmd-Click on OSX.)
 
 
 # Workflow Examples #
@@ -178,7 +178,7 @@ He creates his "Laaaaame" class and checks it in, with a pull request asking Sal
 
 ```
 bill-[awesomo4000]$ git commit
-bill-[awesomo4000]$ git pull-request "A.W.E.S.O.M-0 4000 prototype" \
+bill-[awesomo4000]$ git pull-req "A.W.E.S.O.M-0 4000 prototype" \
                     -d "@sally, can you make sure Butters won't recognize it?"
   Pushing to 'awesomo4000' on 'origin'.
   Creating a pull request asking for 'awesomo4000' to be merged into 'master' on big_monies.
@@ -189,7 +189,7 @@ bill-[awesomo4000]$
 Sally sees the email. After looking at it in the web interface, she wants to test it.
 
 ```
-sally-[other_branch]$ git pull-request 3454
+sally-[other_branch]$ git pull-req 3454
   Getting #pr_number
   Fetching the latest changes from the server
     new branch: awesomo4000
@@ -306,25 +306,6 @@ If you have ever seen an "active" project that uses a process like "git-flow" th
 One significant advantage of using automation like this is that it lets you have the best of both worlds. For example, "`git sync`" uses "rebase" instead of "merge" in a way to is completely safe for collaboration on the same branch. As long as the other people are also using "`git sync`", it will make sure that changes are automatically incorporated with and brought in line. (See the extensive test suite in "`sync_spec.rb`" if you want to see how this works.)
 
 This project is trying to promote clear communication about reality as it applies to the code, over micro-management over no-longer-relevant history. Thus rational for the judicious use of rebase.
-
-
-# Contributing #
-
-## Coding Setup ##
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature origin/master`)
-3. Commit your changes (`git commit`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
-
-or, if using these scripts:
-
-1. Fork it
-2. `git new-fb my-new-feature
-3. `git commit`
-4. `git sync`
-5. `git pull-request`
 
 
 ## License ##

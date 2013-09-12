@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require File.expand_path('../lib/git-process/version', __FILE__)
 
-gems = %w(git-process-lib git-sync git-to-master git-new-fb git-pull-request git-process)
+gems = %w(git-process-lib git-sync git-to-master git-new-fb git-pull-req git-process)
 
 %x[rake manpage 2>&1]
 
@@ -19,3 +19,6 @@ end
 
 puts %x(gem install ./git-process-#{GitProc::Version::STRING}.gem -l -u)
 SystemExit.new($?) if $?.exitstatus
+
+#puts %x(gem push ./git-process-#{GitProc::Version::STRING}.gem)
+#SystemExit.new($?) if $?.exitstatus

@@ -1,30 +1,29 @@
-GIT-PULL-REQUEST(1)
-===================
+= GIT-PULL-REQ(1) =
 :doctype: manpage
 
 
 NAME
 ----
-git-pull-request - Creates or gets a GitHub pull request.
+git-pull-req - Creates or gets a GitHub pull request.
 
 
 SYNOPSIS
 --------
-'git-pull-request' ['OPTIONS']
+'git-pull-req' ['OPTIONS']
 
-'git-pull-request' ['OPTIONS'] 'pull_request_title'
+'git-pull-req' ['OPTIONS'] 'pull_request_title'
 
-'git-pull-request' ['OPTIONS'] [ 'server/pull_request_number' | 'pull_request_number' ]
+'git-pull-req' ['OPTIONS'] [ 'server/pull_request_number' | 'pull_request_number' ]
 
 
 DESCRIPTION
 -----------
-'git-pull-request(1)' creates or gets a pull request on the GitHub
+'git-pull-req(1)' creates or gets a pull request on the GitHub
 server associated with the current branch. For the reasons why pull
 requests are useful for the development process,
 see <https://help.github.com/articles/using-pull-requests>
 
-The 'git-pull-request(1)' command is a nice, simplified alternative to using the
+The 'git-pull-req(1)' command is a nice, simplified alternative to using the
 web interface that takes advantage of the conventions used in the rest of the
 'git-process(1)' suite.
 
@@ -53,7 +52,7 @@ requirement to take advantage of same-repo pull request functionality.
 OPTIONS
 -------
 
-The effective default is "*git pull-request -r -i -f*".
+The effective default is "*git pull-req -r -i -f*".
 
 *-b <branch>, --base-branch <branch>*::
     The branch on the server that you want this "pulled" into. See the
@@ -131,7 +130,7 @@ EXAMPLE
 
 You've been developing your killer new feature or bug fix, and you want
 someone else to look at it (to do code-review or otherwise provide input).
-'git-pull-request(1)' synchronizes the current branch with
+'git-pull-req(1)' synchronizes the current branch with
 the server (effectively executing 'git-sync(1)') and creates the pull request
 against the integration branch.
 
@@ -140,7 +139,7 @@ CONTROL FILES
 -------------
 
 *gitprocess-sync-\***--**::
-    To help make the process simpler and more reliable, 'git-pull-request(1)' will put a file in the "'.git'" directory
+    To help make the process simpler and more reliable, 'git-pull-req(1)' will put a file in the "'.git'" directory
     that contains the SHA-1 of the last successful sync to the server. 'git-to-master(1)' will remove the file
     as part of its normal "housekeeping."
 

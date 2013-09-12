@@ -10,10 +10,10 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency "git-process-lib", GitProc::Version::STRING
 
-  gem.files = %w(README.md LICENSE CHANGELOG.md bin/git-pull-request)
-  gem.files << 'man/git-pull-request.1'
-  gem.executables = ['git-pull-request']
-  gem.name = "git-pull-request"
+  gem.files = %w(README.md LICENSE CHANGELOG.md bin/git-pull-req)
+  gem.files << 'man/git-pull-req.1'
+  gem.executables = ['git-pull-req']
+  gem.name = "git-pull-req"
   gem.version = GitProc::Version::STRING
   gem.platform = Gem::Platform::RUBY
   gem.required_ruby_version = '>= 1.8.7'
