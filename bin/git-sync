@@ -14,10 +14,10 @@ class SyncOptions
 
 
   def extend_opts(parser)
-    parser.opt :rebase, "Rebase instead of merge against the integration branch", :default => true
-    parser.opt :merge, "Merge instead of rebase against the integration branch", :short => :none, :default => false
+    parser.opt :rebase, "Rebase instead of merge against the integration branch (default: on)", :short => :r
+    parser.opt :merge, "Merge instead of rebase against the integration branch", :short => :m
     parser.opt :force, "Force the push; defaults to true if --rebase is used", :short => :f, :default => false
-    parser.opt :local, "Do not do a push; gets remote changes, but does not update the server", :short => :l, :default => false
+    parser.opt :local, "Do not do a push; gets remote changes, but does not update the server", :short => :l
 
     parser.conflicts :rebase, :merge
     parser.conflicts :local, :force
@@ -26,8 +26,8 @@ class SyncOptions
 
   #noinspection RubyUnusedLocalVariable
   def post_parse(opts, argv)
+    opts[:rebase] = true unless opts[:merge]
     opts[:force] = true if opts[:rebase]
-    opts[:merge] = !opts[:rebase]
 
     opts[:branch_name] = argv.shift
   end
