@@ -1,8 +1,14 @@
-# CHANGELOG - 1.2.0 #
+# CHANGELOG - 2.0.2 #
 
 ### Since 2.0.1 ###
 
-Changed git-pull-request to git-pull-req
+* Added "extra safe" code for deleting on Windows ([GH-121](https://github.com/jdigger/git-process/issues/121))
+* Unknown variable for handling uncommited changes for sync ([GH-123](https://github.com/jdigger/git-process/issues/123))
+* git-sync -r now keeps rebase on instead of acting as a switch ([GH-122](https://github.com/jdigger/git-process/issues/122))
+
+### Since 2.0.0 ###
+
+* Changed git-pull-request to git-pull-req
 
 ### Since 1.1.4 ###
 
