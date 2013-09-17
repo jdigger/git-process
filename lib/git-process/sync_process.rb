@@ -34,7 +34,7 @@ module GitProc
       super
 
       if not gitlib.status.clean?
-        change_file_helper.offer_to_help_uncommitted_changes
+        GitProc::ChangeFileHelper.new(gitlib).offer_to_help_uncommitted_changes
       end
 
       raise ParkedChangesError.new(self) if gitlib.is_parked?

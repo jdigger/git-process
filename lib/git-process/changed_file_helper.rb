@@ -22,6 +22,8 @@ module GitProc
   #noinspection RubyControlFlowConversionInspection,RubyClassMethodNamingConvention,RubyInstanceMethodNamingConvention
   class ChangeFileHelper
 
+    attr_reader :gitlib
+
     # @param [GitLib] gitlib
     def initialize(gitlib)
       @gitlib = gitlib
@@ -103,11 +105,6 @@ module GitProc
       end
 
       resp == 'c' ? :commit : :stash
-    end
-
-
-    def gitlib
-      @gitlib
     end
 
   end
