@@ -523,7 +523,9 @@ module GitProc
     def read_sync_control_file(branch_name)
       filename = sync_control_filename(branch_name)
       if File.exists?(filename)
-        sha = File.new(filename).readline.chop
+        sha = File.open(filename) do |file|
+          file.readline.chop
+        end
         logger.debug "Read sync control file, #{filename}: #{sha}"
         sha
       else
@@ -536,7 +538,17 @@ module GitProc
     def delete_sync_control_file!(branch_name)
       filename = sync_control_filename(branch_name)
       logger.debug { "Deleting sync control file, #{filename}" }
-      File.delete(filename)
+
+      counter = 10
+      while counter > 0
+        begin
+          File.delete(filename)
+          counter = 0
+        rescue
+          counter = counter - 1
+          sleep(0.25)
+        end
+      end
     end
 
 
