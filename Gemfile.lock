@@ -44,9 +44,10 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  addressable (~> 2.3.4)
+  addressable (~> 2.3)
   highline (= 1.6.13)
   json (~> 1.7.3)
+  multipart-post (~> 1.2.0)
   octokit (~> 1.24)
   rake (~> 0.9)
   redcarpet (~> 2)
