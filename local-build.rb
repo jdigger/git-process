@@ -15,10 +15,10 @@ for gem in gems
 
   %x[gem build #{gem}.gemspec]
   SystemExit.new($?) if $?.exitstatus
+
+  puts %x(gem install ./#{gem}-#{GitProc::Version::STRING}.gem -l -u)
+  SystemExit.new($?) if $?.exitstatus
+
+  # puts %x(gem push ./#{gem}-#{GitProc::Version::STRING}.gem)
+  # SystemExit.new($?) if $?.exitstatus
 end
-
-puts %x(gem install ./git-process-#{GitProc::Version::STRING}.gem -l -u)
-SystemExit.new($?) if $?.exitstatus
-
-#puts %x(gem push ./git-process-#{GitProc::Version::STRING}.gem)
-#SystemExit.new($?) if $?.exitstatus

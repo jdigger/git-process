@@ -1,4 +1,8 @@
-# CHANGELOG - 2.0.3 #
+# CHANGELOG - 2.0.4 #
+
+### Since 2.0.3 ###
+
+* Fixed incompatibility with git 1.7 ([GH-128](https://github.com/jdigger/git-process/issues/128))
 
 ### Since 2.0.2 ###
 

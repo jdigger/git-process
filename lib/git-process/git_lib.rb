@@ -558,6 +558,29 @@ module GitProc
     end
 
 
+    def set_upstream_branch(branch_name, upstream)
+      logger.info { "Setting upstream/tracking for branch '#{branch_name}' to '#{upstream}'." }
+
+      if has_a_remote?
+        parts = upstream.split(/\//)
+        if parts.length() > 1
+          potential_remote = parts.shift
+          if remote.remote_names.include?(potential_remote)
+            config["branch.#{branch_name}.remote"] = potential_remote
+            config["branch.#{branch_name}.merge"] = "refs/heads/#{parts.join('/')}"
+          end
+        else
+          config["branch.#{branch_name}.merge"] = "refs/heads/#{upstream}"
+        end
+      else
+        config["branch.#{branch_name}.merge"] = "refs/heads/#{upstream}"
+      end
+
+      # The preferred way assuming using git 1.8 cli
+      #command(:branch, ['--set-upstream-to', upstream, branch_name])
+    end
+
+
     private
 
 
@@ -639,13 +662,6 @@ module GitProc
       logger.info { "Renaming branch '#{branch_name}' to '#{new_name}'." }
 
       command(:branch, ['-m', branch_name, new_name])
-    end
-
-
-    def set_upstream_branch(branch_name, upstream)
-      logger.info { "Setting upstream/tracking for branch '#{branch_name}' to '#{upstream}'." }
-
-      command(:branch, ['--set-upstream-to', upstream, branch_name])
     end
 
 

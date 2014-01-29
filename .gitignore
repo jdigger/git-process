@@ -19,3 +19,4 @@ tmp
 *.iws
 .rakeTasks
 man/
+.idea/

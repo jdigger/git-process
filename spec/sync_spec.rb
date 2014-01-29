@@ -1108,7 +1108,7 @@ describe Sync do
 
           it 'should fail if it is not subsumed by the remote' do
             Given do
-              @local.command(:remote, ['remove', 'origin'])
+              @local.command(:remote, ['rm', 'origin'])
             end
 
             expect { when_sync_is_run(false) }.to raise_error(GitProcessError, /Specifying 'no_remote' does not make sense without a remote/)

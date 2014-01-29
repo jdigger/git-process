@@ -46,6 +46,43 @@ describe GitLib, :git_repo_helper do
   end
 
 
+  describe 'set_upstream_branch' do
+    include GitRepoHelper
+
+    it 'updates for remote branch' do
+        gitlib.branch('ba/bb', :base_branch => 'master')
+        clone_repo do |gl|
+           gl.checkout('new_branch', :new_branch => 'origin/master')
+           gl.set_upstream_branch('new_branch', 'origin/ba/bb')
+
+           gl.config['branch.new_branch.remote'].should == 'origin'
+           gl.config['branch.new_branch.merge'].should == 'refs/heads/ba/bb'
+        end
+    end
+
+
+    it 'updates for local branch' do
+      gitlib.branch('ba', :base_branch => 'master')
+      gitlib.checkout('new_branch', :new_branch => 'master')
+      gitlib.set_upstream_branch('new_branch', 'ba')
+
+      gitlib.config['branch.new_branch.remote'].should == nil
+      gitlib.config['branch.new_branch.merge'].should == 'refs/heads/ba'
+    end
+
+
+    it 'updates for local branch that looks remote' do
+      gitlib.branch('other/ba', :base_branch => 'master')
+      gitlib.checkout('new_branch', :new_branch => 'master')
+      gitlib.set_upstream_branch('new_branch', 'other/ba')
+
+      gitlib.config['branch.new_branch.remote'].should == nil
+      gitlib.config['branch.new_branch.merge'].should == 'refs/heads/other/ba'
+    end
+
+  end
+
+
   describe 'fetch' do
 
     it 'parse the list of changes' do
