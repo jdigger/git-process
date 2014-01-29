@@ -1,4 +1,8 @@
-# CHANGELOG - 2.0.2 #
+# CHANGELOG - 2.0.3 #
+
+### Since 2.0.2 ###
+
+* Locked down dependencies due to a change in the "faraday" packages.
 
 ### Since 2.0.1 ###
 
