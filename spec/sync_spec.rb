@@ -65,6 +65,23 @@ describe Sync do
     end
   end
 
+  it 'should work when the branch name contins a slash' do
+    Given do
+      origin 'user/fb', :new_branch => 'master'
+      create_commit :b
+      local 'user/fb', :new_branch => 'origin/user/fb'
+      create_commit :c
+    end
+
+    @local.checkout('user/fb')
+    create_process(@local).runner
+
+    Then do
+      branch_tip(local_repo, 'user/fb').should == branch_tip(origin_repo, 'user/fb')
+      branch_tip(local_repo, 'user/fb').should == @local.sha('origin/user/fb')
+    end
+  end
+
 
   describe 'when forcing the push with a merge' do
 

@@ -666,7 +666,9 @@ module GitProc
 
 
     def sync_control_filename(branch_name)
-      File.join(File.join(workdir, '.git'), "gitprocess-sync-#{remote.name}--#{branch_name}")
+      normalized_branch_name = branch_name.to_s.gsub(/[\/]/, "-")
+      
+      File.join(File.join(workdir, '.git'), "gitprocess-sync-#{remote.name}--#{normalized_branch_name}")
     end
 
   end
