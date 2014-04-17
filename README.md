@@ -62,6 +62,7 @@ To get full `git help` and manpage support, do:
 
 * `gitProcess.integrationBranch` : The name of the integration branch. Defaults to `master`, but can be set to `develop` or other.
 * `gitProcess.keepLocalIntegrationBranch` : Controls asking about removing the local integration branch. Defaults to 'false' (i.e., do not assume the branch should be there).
+* `gitProcess.squashCommits` : Controls asking about squashing commits when pushing to master.  Defaults to 'false' (i.e., do not prompt user to squash commits).
 * `gitProcess.remoteName` : Explicitly sets the remote server name to use.
 * `gitProcess.defaultRebaseSync`: Should `git sync` default to using rebase instead of merge? Defaults to 'true' (i.e., Sync using rebase.)
 
