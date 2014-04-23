@@ -39,10 +39,13 @@ module GitProc
       raise UncommittedChangesError.new unless gitlib.status.clean?
       raise ParkedChangesError.new(gitlib) if is_parked?
     end
-		
-    def should_squash_commits
-        if ask_about_squashing_commits
-          gitlib.proc_rebase(gitlib.config.integration_branch, :interactive => 'origin/master')
+	
+	
+    def should_squash_commits		
+        if commits_since_master > 1
+            if ask_about_squashing_commits
+              gitlib.proc_rebase(gitlib.config.integration_branch, :interactive => 'origin/master')
+            end
         end
     end
 

@@ -480,6 +480,9 @@ module GitProc
       args << "-#{opts[:num_revs]}" if opts[:num_revs]
       args << '--oneline' if opts[:oneline]
       args << "#{start_revision}..#{end_revision}"
+      if opts[:count]
+        args << '--count'
+      end
       command('rev-list', args)
     end
 

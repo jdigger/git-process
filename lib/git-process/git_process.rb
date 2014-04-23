@@ -97,6 +97,11 @@ module GitProc
     def is_parked?
       gitlib.is_parked?
     end
+	
+	
+    def commits_since_master
+	  Integer(gitlib.rev_list('origin/master','HEAD', :count => []))
+    end
 
 
     private
