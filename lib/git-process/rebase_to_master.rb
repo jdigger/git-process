@@ -42,11 +42,11 @@ module GitProc
 	
 	
     def should_squash_commits		
-        if commits_since_master > 1
-            if ask_about_squashing_commits
-              gitlib.proc_rebase(gitlib.config.integration_branch, :interactive => 'origin/master')
-            end
+      if commits_since_master > 1
+        if ask_about_squashing_commits
+          gitlib.proc_rebase(gitlib.config.integration_branch, :interactive => 'origin/master')
         end
+      end
     end
 
     def runner
