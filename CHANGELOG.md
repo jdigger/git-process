@@ -1,4 +1,9 @@
-# CHANGELOG - 2.0.4 #
+# CHANGELOG - 2.0.5 #
+
+### Since 2.0.4 ###
+
+* Updated to replace '/' with '-' when generating the sync control filename. ([GH-130](https://github.com/jdigger/git-process/issues/130))
+* Deprecated support for Ruby 1.8. (Should continue to work, but now that OS X has moved to Ruby 2.0 there's no longer much reason to support such an old version and it was making tests break.)
 
 ### Since 2.0.3 ###
 
