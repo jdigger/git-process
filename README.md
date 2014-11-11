@@ -43,8 +43,8 @@ To get full `git help` and manpage support, do:
 
 1. User creates new local branch for focused work.
 1. User pushes local branch to remote (as feature branch) by merging/rebasing with the integration branch, then pushing to the branch to remote.
-1. User closes local branch by rebasing integration branch first, then pushing local to integration.
 1. User initiates GitHub "pull request" to ease collaboration.
+1. User closes local branch by rebasing integration branch first, then pushing local to integration.
 
 ## Command List ##
 
