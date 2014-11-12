@@ -100,7 +100,7 @@ module GitProc
 	
 	
     def commits_since_master
-      Integer(gitlib.rev_list('origin/master','HEAD', :count => []))
+      Integer(gitlib.rev_list('origin/master','HEAD', :count => true))
     end
 
 
