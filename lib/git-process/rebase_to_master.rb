@@ -39,7 +39,15 @@ module GitProc
       raise UncommittedChangesError.new unless gitlib.status.clean?
       raise ParkedChangesError.new(gitlib) if is_parked?
     end
-
+	
+	
+    def should_squash_commits		
+      if commits_since_master > 1
+        if ask_about_squashing_commits
+          gitlib.proc_rebase(gitlib.config.integration_branch, :interactive => 'origin/master')
+        end
+      end
+    end
 
     def runner
       if remote.exists?
@@ -48,7 +56,9 @@ module GitProc
         unless @pr_number.nil? or @pr_number.empty?
           checkout_pull_request
         end
-
+		
+        should_squash_commits if squash_commits_config_value.to_boolean
+		
         Syncer.rebase_sync(gitlib, true)
         current = gitlib.branches.current.name
         gitlib.push(remote.name, current, config.master_branch)
@@ -128,6 +138,26 @@ module GitProc
       end
     end
 
+    #noinspection RubyInstanceMethodNamingConvention
+    def squash_commits_config_value
+      gitlib.config['gitProcess.squashCommits']
+    end
+	
+    def ask_about_squashing_commits
+      resp = ask("You should squash your commits before pushing to master.  Do you need to do this? (Yn) ") do |q|
+        q.responses[:not_valid] = 'Please respond with either (y)es or (n)o. Defaults to (y)es.'
+        q.case = :down
+        q.default = 'Y'
+        q.validate = /y|n/i
+      end
+
+      if resp == 'n'
+        say("(You can turn off this message using \"git config gitProcess.squashCommits false\").")
+        false
+      else
+        true
+      end
+    end
 
     private
 

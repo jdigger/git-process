@@ -51,6 +51,33 @@ describe RebaseToMaster do
     end
 
 
+    it 'should prompt for squash when > 1 commit' do
+      gitlib.branch('fb', :base_branch => 'master')
+      change_file_and_commit('a', '')
+      clone_repo('fb') do |gl|
+        rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :keep => false)
+        rtm.config['gitProcess.squashCommits'] = 'true'
+        rtm.stub(:commits_since_master).and_return(2)
+        rtm.should_receive(:ask_about_squashing_commits)
+        commit_count.should == 2
+        rtm.should_squash_commits
+      end
+    end
+
+    
+    it 'should not prompt for squash when < 2 commits' do
+      gitlib.branch('fb', :base_branch => 'master')
+      clone_repo('fb') do |gl|
+        rtm = GitProc::RebaseToMaster.new(gl, :log_level => log_level, :keep => false)
+        rtm.config['gitProcess.squashCommits'] = 'true'
+        rtm.stub(:commits_since_master).and_return(1)
+        rtm.should_not_receive(:ask_about_squashing_commits)
+        commit_count.should == 1
+        rtm.should_squash_commits
+      end
+    end
+    
+
     describe 'when used on _parking_' do
       it 'should fail #rebase_to_master' do
         gitlib.checkout('_parking_', :new_branch => 'master')
