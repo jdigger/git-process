@@ -26,7 +26,12 @@ Some older operating systems (such as OSX 10.6) are using an old version of Ruby
    * If it complains about not being able to compile native code, install [DevKit](http://rubyinstaller.org/downloads).
    * See [this StackOverflow](http://stackoverflow.com/questions/8100891/the-json-native-gem-requires-installed-build-tools/8463500#8463500) for help.
 2. Open a command prompt and type `gem install git-process`
-3. *THERE IS A KNOWN PROBLEM WITH [HELP ON WINDOWS](https://github.com/jdigger/git-process/issues/120).*
+3. *THERE IS A KNOWN PROBLEM WITH [HELP ON WINDOWS](../../issues/140)* [(GH-120)](../../issues/140).
+
+
+## Ruby Compatibility
+
+Currently tested and maintained primarily against Ruby 1.9.3. [(GH-140)](../../issues/140)
 
 ## All Operating Systems ##
 
