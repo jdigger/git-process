@@ -1,5 +1,6 @@
-require 'git-process/git_process'
+require File.dirname(__FILE__) + '/../lib/git-process/git_process'
 require 'GitRepoHelper'
+require 'climate_control'
 require 'fileutils'
 
 describe GitProc::Process do
@@ -19,6 +20,13 @@ describe GitProc::Process do
 
   after(:each) do
     rm_rf(gitlib.workdir)
+  end
+
+  around do |example|
+    # make sure there aren't side-effects testing from the testing user's .gitconfig
+    ClimateControl.modify HOME: '/path_that_does_not_exist' do
+      example.run
+    end
   end
 
 
