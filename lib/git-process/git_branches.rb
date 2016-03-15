@@ -63,7 +63,7 @@ module GitProc
 
 
     def include?(branch_name)
-      @items.find { |b| b.name == branch_name } != nil
+      @items.any? { |b| b.name == branch_name }
     end
 
 
