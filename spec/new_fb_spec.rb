@@ -1,4 +1,4 @@
-require 'git-process/new_fb'
+require File.dirname(__FILE__) + '/../lib/git-process/new_fb'
 require 'GitRepoHelper'
 include GitProc
 
@@ -42,7 +42,7 @@ describe NewFeatureBranch do
   end
 
 
-  it "should bring committed changes on _parking_ over to the new branch" do
+  it 'should bring committed changes on _parking_ over to the new branch' do
     clone_repo do |gl|
       gl.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '', gl)
@@ -53,12 +53,12 @@ describe NewFeatureBranch do
 
       new_branch.name.should == 'test_branch'
       Dir.chdir(gl.workdir) do |_|
-        File.exists?('a').should be_true
-        File.exists?('b').should be_true
+        File.exists?('a').should be true
+        File.exists?('b').should be true
       end
 
-      gl.config["branch.test_branch.remote"].should == 'origin'
-      gl.config["branch.test_branch.merge"].should == 'refs/heads/master'
+      gl.config['branch.test_branch.remote'].should == 'origin'
+      gl.config['branch.test_branch.merge'].should == 'refs/heads/master'
 
       gl.fetch
       gl.branches.parking.should be_nil
@@ -68,7 +68,7 @@ describe NewFeatureBranch do
   end
 
 
-  it "should move new branch over to the integration branch" do
+  it 'should move new branch over to the integration branch' do
     clone_repo do |gl|
       gl.checkout('_parking_', :new_branch => 'master')
       change_file_and_commit('a', '', gitlib)
@@ -80,8 +80,8 @@ describe NewFeatureBranch do
 
       new_branch.name.should == 'test_branch'
       Dir.chdir(gitlib.workdir) do |_|
-        File.exists?('a').should be_true
-        File.exists?('b').should be_true
+        File.exists?('a').should be true
+        File.exists?('b').should be true
       end
 
       gl.config["branch.test_branch.remote"].should == 'origin'
@@ -95,7 +95,7 @@ describe NewFeatureBranch do
   end
 
 
-  it "should use 'integration_branch' instead of 'remote_master_branch'" do
+  it 'should use "integration_branch" instead of "remote_master_branch"' do
     change_file_and_commit('a', '')
 
     new_branch = gitprocess.runner
@@ -104,7 +104,7 @@ describe NewFeatureBranch do
   end
 
 
-  it "should bring new/uncommitted changes on _parking_ over to the new branch" do
+  it 'should bring new/uncommitted changes on _parking_ over to the new branch' do
     gitlib.branch('origin/master', :base_branch => 'master')
     gitlib.checkout('_parking_', :new_branch => 'master')
     change_file_and_commit('a', '')
@@ -115,9 +115,9 @@ describe NewFeatureBranch do
 
     new_branch.name.should == 'test_branch'
     Dir.chdir(gitlib.workdir) do |_|
-      File.exists?('a').should be_true
-      File.exists?('b').should be_true
-      File.exists?('c').should be_true
+      File.exists?('a').should be true
+      File.exists?('b').should be true
+      File.exists?('c').should be true
     end
 
     gitlib.branches.parking.should be_nil

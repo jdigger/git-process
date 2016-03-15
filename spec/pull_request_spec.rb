@@ -47,7 +47,7 @@ describe GitProc::PullRequest do
     end
 
 
-    it "should fail if the base and head branch are the same" do
+    it 'should fail if the base and head branch are the same' do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
 
       expect {
@@ -79,7 +79,7 @@ describe GitProc::PullRequest do
       end
 
 
-      it "should checkout the branch for the pull request" do
+      it 'should checkout the branch for the pull request' do
         add_remote(:head)
         stub_fetch(:head)
 
@@ -88,9 +88,9 @@ describe GitProc::PullRequest do
         expect_checkout_pr_head()
         expect_upstream_set()
 
-        gitlib.stub(:branch).with(nil, :no_color => true, :all => true).and_return("")
-        gitlib.stub(:branch).with(nil, :no_color => true, :remote => true).and_return("")
         gitlib.should_receive(:rebase).with('test_repo/master', {})
+        gitlib.stub(:branch).with(nil, :no_color => true, :all => true).and_return('')
+        gitlib.stub(:branch).with(nil, :no_color => true, :remote => true).and_return('')
 
         gitprocess.runner
       end
@@ -98,7 +98,7 @@ describe GitProc::PullRequest do
     end
 
 
-    describe "with repo name and PR #" do
+    describe 'with repo name and PR #' do
 
       def pull_request
         @pr ||= create_pull_request(:base_remote => 'sourcerepo', :base_repo => 'source_repo')
@@ -111,7 +111,7 @@ describe GitProc::PullRequest do
       end
 
 
-      it "should checkout the branch for the pull request" do
+      it 'should checkout the branch for the pull request' do
         add_remote(:head)
         add_remote(:base)
         stub_fetch(:head)

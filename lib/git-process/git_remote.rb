@@ -12,9 +12,6 @@
 
 require 'git-process/git_config'
 require 'addressable/uri'
-#require 'git-process/git_branches'
-#require 'git-process/git_status'
-#require 'git-process/git_process_error'
 
 
 class String
@@ -61,7 +58,7 @@ module GitProc
 
 
     # @deprecated
-    # TODO: Remove
+    # @todo Remove
     def server_name
       @server_name ||= self.remote_name
     end
@@ -77,6 +74,13 @@ module GitProc
     end
 
 
+    #
+    # The name of the repository
+    #
+    # @example
+    #   repo_name #=> "jdigger/git-process"
+    #
+    # @return [String] the name of the repository
     def repo_name
       unless @repo_name
         url = config["remote.#{name}.url"]
@@ -88,7 +92,14 @@ module GitProc
     end
 
 
-    def name
+    #
+    # Returns the "remote name" to use. By convention the most common name is "origin".
+    #
+    # If the Git configuration "gitProcess.remoteName" is set, that will always be used. Otherwise this
+    # simple returns the first name it finds in the list of remotes.
+    #
+    # @return [String, nil] the remote name, or nil if there are none defined
+    def remote_name
       unless @remote_name
         @remote_name = config['gitProcess.remoteName']
         if @remote_name.nil? or @remote_name.empty?
@@ -97,7 +108,7 @@ module GitProc
             @remote_name = nil
           else
             @remote_name = remotes[0]
-            raise '!@remote_name.is_a? String' unless @remote_name.is_a? String
+            raise "remote name is not a String: #{@remote_name.inspect}" unless @remote_name.is_a? String
           end
         end
         logger.debug { "Using remote name of '#{@remote_name}'" }
@@ -106,9 +117,23 @@ module GitProc
     end
 
 
+    alias :name :remote_name
+
+
+    #
+    # Takes {#remote_name} and combines it with {GitConfig#master_branch}.
+    #
+    # @example
+    #   master_branch_name #=> origin/master
+    #
+    # @return [String] the complete remote name of the integration branch
+    #
     def master_branch_name
       "#{self.name}/#{config.master_branch}"
     end
+
+
+    alias :remote_integration_branch_name :master_branch_name
 
 
     def remote_names
@@ -136,6 +161,8 @@ module GitProc
     # @raise [URI::InvalidURIError] the retrieved URL does not have a schema
     # @raise [GitHubService::NoRemoteRepository] if could not figure out a host for the retrieved URL
     # @raise [::ArgumentError] if a server name is not provided
+    #
+    # @todo use the netrc gem
     def expanded_url(server_name = 'origin', raw_url = nil, opts = {})
       if raw_url.nil?
         raise ArgumentError.new('Need server_name') unless server_name
@@ -185,6 +212,7 @@ module GitProc
     alias :add :add_remote
 
 
+    # @todo use the netrc gem
     #noinspection RubyClassMethodNamingConvention
     def self.hostname_and_user_from_ssh_config(host_alias, config_file)
       if File.exists?(config_file)

@@ -17,7 +17,7 @@ describe GitRemote do
 
       clone_repo('master', 'origin') do |gl|
         gl.remote.name.should == 'origin'
-        gl.branches.include?('origin/master').should be_true
+        gl.branches.include?('origin/master').should be true
       end
     end
 
@@ -27,7 +27,7 @@ describe GitRemote do
 
       clone_repo('master', 'a_remote') do |gl|
         gl.remote.name.should == 'a_remote'
-        gl.branches.include?('a_remote/master').should be_true
+        gl.branches.include?('a_remote/master').should be true
       end
     end
 

@@ -106,7 +106,7 @@ describe RebaseToMaster do
         gl.checkout('ab', :new_branch => 'origin/int-br')
 
         my_branches = gl.branches
-        my_branches.include?('origin/master').should be_false
+        my_branches.include?('origin/master').should be false
         my_branches['ab'].sha.should == my_branches['origin/int-br'].sha
 
         gl.stub(:repo_name).and_return('test_repo')
@@ -175,11 +175,11 @@ describe RebaseToMaster do
           change_file_and_commit('a', '', gl)
           gl.checkout('fb', :new_branch => 'origin/master')
 
-          gl.branches.include?('_parking_OLD_').should be_false
+          gl.branches.include?('_parking_OLD_').should be false
 
           create_process(gl).remove_feature_branch
 
-          gl.branches.include?('_parking_OLD_').should be_true
+          gl.branches.include?('_parking_OLD_').should be true
           gl.branches.current.name.should == '_parking_'
         end
       end
@@ -192,11 +192,11 @@ describe RebaseToMaster do
         change_file_and_commit('a', '', gl)
 
         gl.checkout('fb', :new_branch => 'origin/master')
-        gl.branches.include?('fb').should be_true
+        gl.branches.include?('fb').should be true
 
         create_process(gl).remove_feature_branch
 
-        gl.branches.include?('fb').should be_false
+        gl.branches.include?('fb').should be false
         gl.branches.current.name.should == '_parking_'
       end
     end
@@ -207,7 +207,7 @@ describe RebaseToMaster do
         gl.checkout('fb', :new_branch => 'origin/master')
         change_file_and_commit('a', '', gl)
 
-        gl.branches.include?('fb').should be_true
+        gl.branches.include?('fb').should be true
 
         expect { create_process(gl).remove_feature_branch }.to raise_error GitProcessError
       end
@@ -220,10 +220,10 @@ describe RebaseToMaster do
       gitlib.branch('fb', :base_branch => 'master')
 
       clone_repo('fb') do |gl|
-        gl.branches.include?('origin/fb').should be_true
+        gl.branches.include?('origin/fb').should be true
         create_process(gl).remove_feature_branch
-        gl.branches.include?('origin/fb').should be_false
-        gitlib.branches.include?('fb').should be_false
+        gl.branches.include?('origin/fb').should be false
+        gitlib.branches.include?('fb').should be false
         gl.branches.current.name.should == '_parking_'
       end
     end

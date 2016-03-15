@@ -65,7 +65,7 @@ describe Sync do
     end
   end
 
-  it 'should work when the branch name contins a slash' do
+  it 'should work when the branch name contains a slash' do
     Given do
       origin 'user/fb', :new_branch => 'master'
       create_commit :b
@@ -1273,12 +1273,12 @@ describe Sync do
 
     clone_repo('fb', 'a_remote') do |gl|
       change_file_and_commit('a', 'hello', gl)
-      gl.branches.include?('a_remote/fb').should be_true
+      gl.branches.include?('a_remote/fb').should be true
 
       GitProc::Sync.new(gl, :rebase => false, :force => false, :log_level => log_level).runner
 
-      gl.branches.include?('a_remote/fb').should be_true
-      gitlib.branches.include?('fb').should be_true
+      gl.branches.include?('a_remote/fb').should be true
+      gitlib.branches.include?('fb').should be true
     end
   end
 

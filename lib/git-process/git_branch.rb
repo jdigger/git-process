@@ -12,12 +12,23 @@
 
 module GitProc
 
+  #
+  # A Git Branch
+  #
+  # @attr_reader [String] name the name of the branch
+  #
   class GitBranch
     include Comparable
 
     attr_reader :name
 
 
+    # @param [String] name the name of the branch; if it starts with "remotes/" that part is stripped
+    #                       and {#remote?} will return {true}
+    # @param [Boolean] current is this the current branch?
+    # @param [GitLib] lib the {GitLib} to use for operations
+    #
+    # @todo instead of passing in _current_, detect it dynamically (e.g., look at HEAD)
     def initialize(name, current, lib)
       if /^remotes\// =~ name
         @name = name[8..-1]
@@ -31,47 +42,67 @@ module GitProc
     end
 
 
+    # @return [Boolean] is this the current branch?
     def current?
       @current
     end
 
 
+    # @return [Boolean] does this represent a remote branch?
     def remote?
       @remote
     end
 
 
+    # @return [Boolean] does this represent a local branch?
     def local?
       !@remote
     end
 
 
+    # @return [String] the name of the branch
     def to_s
       name
     end
 
 
+    # @return [GitLogger] the logger to use
     def logger
       @lib.logger
     end
 
 
+    # @return [String] the SHA-1 of the tip of this branch
     def sha
-      @sha ||= @lib.sha(name)
+      @lib.sha(name)
     end
 
 
+    #
+    # Implements {Comparable} based on the branch name
+    #
+    # @param [String, #name] other the item to compare to this; if a {String} then it is compared to _self.name_,
+    #                              otherwise the names are compared
+    # @return [int, nil] -1, 0, 1 or nil per {Object#<=>}
     def <=>(other)
       self.name <=> other.name
     end
 
 
+    # @param [String] base_branch_name the branch to compare to
+    # @return [Boolean] does this branch contain every commit in _base_branch_name_ as well as at least one more?
     def is_ahead_of(base_branch_name)
       contains_all_of(base_branch_name) and
           (@lib.rev_list(base_branch_name, @name, :oneline => true, :num_revs => 1) != '')
     end
 
 
+    #
+    # Delete this branch
+    #
+    # @param [Boolean] force should this force removal even if the branch has not been fully merged?
+    #
+    # @return [String] the output of running the git command
     def delete!(force = false)
       if local?
         @lib.branch(@name, :force => force, :delete => true)

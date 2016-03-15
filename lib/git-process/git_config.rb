@@ -47,10 +47,12 @@ module GitProc
     end
 
 
+    # @param key [String] the key for the Git configuration, as would be passed to `git config --get`
+    # @return [String] the value of the configuration; nil if not found
     def [](key)
       value = config_hash[key]
       unless value
-        value = @lib.command(:config, ['--get', key])
+        value = gitlib.command(:config, ['--get', key])
         value = nil if value.empty?
         config_hash[key] = value unless config_hash.empty?
       end
@@ -58,20 +60,27 @@ module GitProc
     end
 
 
+    # Sets to configuration value for this repository.
+    #
+    # @param key [String] the key for the Git configuration
+    # @param value [String] the value for the local configuration
+    #
+    # @return [String] the value
     def []=(key, value)
-      @lib.command(:config, [key, value])
+      gitlib.command(:config, [key, value])
       config_hash[key] = value unless config_hash.empty?
       value
     end
 
 
     def set_global(key, value)
-      @lib.command(:config, ['--global', key, value])
+      gitlib.command(:config, ['--global', key, value])
       config_hash[key] = value unless config_hash.empty?
       value
     end
 
 
+    # @return [GitLib] the GitLib this was initialized with
     def gitlib
       @lib
     end
@@ -82,8 +91,7 @@ module GitProc
     end
 
 
-    #
-    # @return true if no value has been set; the value of the config otherwise
+    # @return [Boolean] true if no value has been set; the value of the config otherwise
     def default_rebase_sync?
       val = self['gitProcess.defaultRebaseSync']
       val.nil? or val.to_boolean
@@ -104,18 +112,20 @@ module GitProc
     end
 
 
+    # @return [String] the name of the integration branch; defaults to 'master'
     def master_branch
       @master_branch ||= self['gitProcess.integrationBranch'] || 'master'
     end
 
 
+    # @deprecated use {GitProc::GitRemote#master_branch_name} instead
     def remote_master_branch
       remote.master_branch_name
     end
 
 
     def integration_branch
-      remote.exists? ? remote_master_branch : self.master_branch
+      remote.exists? ? remote.master_branch_name : self.master_branch
     end
 
 

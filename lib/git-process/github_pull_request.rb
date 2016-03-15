@@ -51,7 +51,7 @@ module GitHub
         else
           logger.warn { "UnprocessableEntity: #{exp}" }
         end
-        pull
+        return pull
       end
     end
 

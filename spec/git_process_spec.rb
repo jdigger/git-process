@@ -43,13 +43,13 @@ describe GitProc::Process do
     end
 
 
-    it "should call 'cleanup' even if there's an error" do
+    it 'should call "cleanup" even if there is an error' do
       proc = GitProc::Process.new(gitlib)
       proc.should_receive(:verify_preconditions)
-      proc.should_receive(:runner).and_raise(GitProc::GitProcessError.new("Error!"))
+      proc.should_receive(:runner).and_raise(GitProc::GitProcessError.new('Error!'))
       proc.should_receive(:cleanup)
       proc.should_receive(:exit)
-      proc.should_receive(:puts).with("Error!")
+      proc.should_receive(:puts).with('Error!')
 
       proc.run
     end
@@ -57,9 +57,9 @@ describe GitProc::Process do
   end
 
 
-  describe "validate local integration branch" do
+  describe 'validate local integration branch' do
 
-    it "should use remove the int-branch if not on it and not blocked" do
+    it 'should use remove the int-branch if not on it and not blocked' do
       clone_repo('master') do |gl|
         gl.checkout('fb', :new_branch => 'master')
 
@@ -68,12 +68,12 @@ describe GitProc::Process do
 
         gp.verify_preconditions
 
-        gl.branches.include?('master').should be_false
+        gl.branches.include?('master').should be false
       end
     end
 
 
-    it "should ask use remove the int-branch if not on it and not blocked" do
+    it 'should ask to remove the int-branch if not on it and not blocked' do
       clone_repo('master') do |gl|
         gl.checkout('fb', :new_branch => 'master')
 
@@ -82,12 +82,12 @@ describe GitProc::Process do
 
         gp.verify_preconditions
 
-        gl.branches.include?('master').should be_false
+        gl.branches.include?('master').should be false
       end
     end
 
 
-    it "should ask use remove the int-branch if not on it and not blocked and not remove if answered no" do
+    it 'should ask to remove the int-branch if not on it and not blocked and not remove if answered no' do
       clone_repo('master') do |gl|
         gl.checkout('fb', :new_branch => 'master')
 
@@ -96,22 +96,22 @@ describe GitProc::Process do
 
         gp.verify_preconditions
 
-        gl.branches.include?('master').should be_true
+        gl.branches.include?('master').should be true
       end
     end
 
 
-    it "should not remove the int-branch if on it" do
+    it 'should not remove the int-branch if on it' do
       clone_repo('master') do |gl|
         gp = GitProc::Process.new(gl)
         gp.verify_preconditions
 
-        gl.branches.include?('master').should be_true
+        gl.branches.include?('master').should be true
       end
     end
 
 
-    it "should not remove the int-branch if blocked" do
+    it 'should not remove the int-branch if blocked' do
       clone_repo('master') do |gl|
         gl.config['gitProcess.keepLocalIntegrationBranch'] = 'true'
         gl.checkout('fb', :new_branch => 'master')
@@ -119,12 +119,12 @@ describe GitProc::Process do
         gp = GitProc::Process.new(gl)
         gp.verify_preconditions
 
-        gl.branches.include?('master').should be_true
+        gl.branches.include?('master').should be true
       end
     end
 
 
-    describe "local vs remote branch status" do
+    describe 'local vs remote branch status' do
 
       before(:each) do
         change_file_and_commit('a.txt', 'a content', gitlib)
@@ -132,7 +132,7 @@ describe GitProc::Process do
       end
 
 
-      it "should not remove if both have changes" do
+      it 'should not remove if both have changes' do
         clone_repo('master') do |gl|
           change_file_and_commit('c.txt', 'c on origin/master', gitlib)
           change_file_and_commit('d.txt', 'd on master', gl)
@@ -144,12 +144,12 @@ describe GitProc::Process do
           gp = GitProc::Process.new(gl)
           gp.verify_preconditions
 
-          gl.branches.include?('master').should be_true
+          gl.branches.include?('master').should be true
         end
       end
 
 
-      it "should remove if server changed but not local" do
+      it 'should remove if server changed but not local' do
         clone_repo('master') do |gl|
           gp = GitProc::Process.new(gl)
           gp.stub(:ask_about_removing_master).and_return(true)
@@ -162,12 +162,12 @@ describe GitProc::Process do
 
           gp.verify_preconditions
 
-          gl.branches.include?('master').should be_false
+          gl.branches.include?('master').should be false
         end
       end
 
 
-      it "should not remove if server did not change but local did" do
+      it 'should not remove if server did not change but local did' do
         clone_repo('master') do |gl|
           change_file_and_commit('c.txt', 'c on master', gl)
 
@@ -178,12 +178,12 @@ describe GitProc::Process do
           gp = GitProc::Process.new(gl)
           gp.verify_preconditions
 
-          gl.branches.include?('master').should be_true
+          gl.branches.include?('master').should be true
         end
       end
 
 
-      it "should remove if server and local are the same" do
+      it 'should remove if server and local are the same' do
         change_file_and_commit('c.txt', 'c on origin/master', gitlib)
 
         clone_repo('master') do |gl|
@@ -194,21 +194,21 @@ describe GitProc::Process do
           gl.fetch
           gp.verify_preconditions
 
-          gl.branches.include?('master').should be_false
+          gl.branches.include?('master').should be false
         end
       end
 
     end
 
 
-    it "should not remove the int-branch if not a clone" do
+    it 'should not remove the int-branch if not a clone' do
       gitlib.config['gitProcess.keepLocalIntegrationBranch'] = 'false'
       gitlib.checkout('fb', :new_branch => 'master')
 
       gitprocess = GitProc::Process.new(gitlib)
       gitprocess.verify_preconditions
 
-      gitlib.branches.include?('master').should be_true
+      gitlib.branches.include?('master').should be true
     end
 
   end

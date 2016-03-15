@@ -30,55 +30,77 @@ module GitProc
   #noinspection RubyTooManyMethodsInspection
   class GitLib
 
-    # @param [Dir] dir
-    def initialize(dir, opts)
-      self.log_level = GitLib.log_level(opts)
+    # @param [Dir] dir the work dir
+    # @param [Hash] logging_opts see {log_level}
+    def initialize(dir, logging_opts)
+      self.log_level = GitLib.log_level(logging_opts)
       self.workdir = dir
     end
 
 
+    # @return [GitLogger] the logger to use
     def logger
       if @logger.nil?
         @logger = GitLogger.new(log_level)
       end
-      @logger
+      return @logger
     end
 
 
+    #
+    # Decodes the [Hash] to determine what logging level to use
+    #
+    # @option opts [Fixnum] :log_level the log level from {Logger}
+    # @option opts :quiet {Logger::ERROR}
+    # @option opts :verbose {Logger::DEBUG}
+    #
+    # @return [Fixnum] the log level from Logger; defaults to {Logger::INFO}
+    #
     def self.log_level(opts)
       if opts[:log_level]
-        opts[:log_level]
+        return opts[:log_level]
       elsif opts[:quiet]
-        Logger::ERROR
+        return Logger::ERROR
       elsif opts[:verbose]
-        Logger::DEBUG
+        return Logger::DEBUG
       else
-        Logger::INFO
+        return Logger::INFO
       end
     end
 
 
+    # @return [Fixnum] the logging level to use; defaults to {Logger::WARN}
     def log_level
       @log_level || Logger::WARN
     end
 
 
+    # @param [Fixnum] lvl the logging level to use. See {Logger}
+    # @return [void]
     def log_level=(lvl)
       @log_level = lvl
     end
 
 
+    # @return [Dir] the working directory
     def workdir
       @workdir
     end
 
 
+    #
+    # Sets the working directory to use for the (non-bare) repository.
+    #
+    # If the directory is *not* part of an existing repository, a new repository is created. (i.e., "git init")
+    #
+    # @param [Dir] dir the working directory
+    # @return [void]
     def workdir=(dir)
       workdir = GitLib.find_workdir(dir)
       if workdir.nil?
         @workdir = dir
         logger.info { "Initializing new repository at #{dir}" }
-        command(:init)
+        return command(:init)
       else
         @workdir = workdir
         logger.debug { "Opening existing repository at #{dir}" }
@@ -88,15 +110,16 @@ module GitProc
 
     def self.find_workdir(dir)
       if dir == File::SEPARATOR
-        nil
+        return nil
       elsif File.directory?(File.join(dir, '.git'))
-        dir
+        return dir
       else
-        find_workdir(File.expand_path("#{dir}#{File::SEPARATOR}.."))
+        return find_workdir(File.expand_path("#{dir}#{File::SEPARATOR}.."))
       end
     end
 
 
+    # @return [void]
     def fetch_remote_changes(remote_name = nil)
       if remote.exists?
         fetch(remote_name || remote.name)
@@ -106,25 +129,37 @@ module GitProc
     end
 
 
+    #
+    # Executes a rebase, but translates any {GitExecuteError} to a {RebaseError}
+    #
+    # @param (see #rebase)
+    # @option (see #rebase)
+    # @raise [RebaseError] if there is a problem executing the rebase
     def proc_rebase(base, opts = {})
       begin
-        rebase(base, opts)
+        return rebase(base, opts)
       rescue GitExecuteError => rebase_error
         raise RebaseError.new(rebase_error.message, self)
       end
     end
 
 
+    #
+    # Executes a merge, but translates any {GitExecuteError} to a {MergeError}
+    #
+    # @param (see #merge)
+    # @option (see #merge)
+    # @raise [MergeError] if there is a problem executing the merge
     def proc_merge(base, opts = {})
       begin
-        merge(base, opts)
+        return merge(base, opts)
       rescue GitExecuteError => merge_error
         raise MergeError.new(merge_error.message, self)
       end
     end
 
 
-    # @return [String] the previous remote sha ONLY IF it is not the same as the new remote sha; otherwise nil
+    # @return [String, nil] the previous remote sha ONLY IF it is not the same as the new remote sha; otherwise nil
     def previous_remote_sha(current_branch, remote_branch)
       return nil unless has_a_remote?
       return nil unless remote_branches.include?(remote_branch)
@@ -136,26 +171,38 @@ module GitProc
 
       if old_sha != new_sha
         logger.info('The remote branch has changed since the last time')
-        old_sha
+        return old_sha
       else
         logger.debug 'The remote branch has not changed since the last time'
-        nil
+        return nil
       end
     end
 
 
     def remote_branch_sha(remote_branch)
-      logger.debug {"getting sha for remotes/#{remote_branch}"}
-      rev_parse("remotes/#{remote_branch}") rescue ''
+      logger.debug { "getting sha for remotes/#{remote_branch}" }
+      return rev_parse("remotes/#{remote_branch}") rescue ''
     end
 
 
+    # @return [Boolean] is the current branch the "_parked_" branch?
     def is_parked?
       mybranches = self.branches()
-      mybranches.parking == mybranches.current
+      return mybranches.parking == mybranches.current
     end
 
-
+    # Push the repository to the server.
+    #
+    # @param local_branch [String] the name of the local branch to push from
+    # @param remote_branch [String] the name of the remote branch to push to
+    #
+    # @option opts [Boolean] :local should this do nothing because it is in local-only mode?
+    # @option opts [Boolean] :force should it force the push even if it can not fast-forward?
+    # @option opts [Proc] :prepush a block to call before doing the push
+    # @option opts [Proc] :postpush a block to call after doing the push
+    #
+    # @return [void]
+    #
     def push_to_server(local_branch, remote_branch, opts = {})
       if opts[:local]
         logger.debug('Not pushing to the server because the user selected local-only.')
@@ -173,19 +220,21 @@ module GitProc
     end
 
 
+    # @return [GitConfig] the git configuration
     def config
       if @config.nil?
         @config = GitConfig.new(self)
       end
-      @config
+      return @config
     end
 
 
+    # @return [GitRemote] the git remote configuration
     def remote
       if @remote.nil?
         @remote = GitProc::GitRemote.new(config)
       end
-      @remote
+      return @remote
     end
 
 
@@ -195,18 +244,36 @@ module GitProc
     end
 
 
+    #
+    # `git add`
+    #
+    # @param [String] file the name of the file to add to the index
+    # @return [String] the output of 'git add'
     def add(file)
       logger.info { "Adding #{[*file].join(', ')}" }
-      command(:add, ['--', file])
+      return command(:add, ['--', file])
     end
 
 
+    #
+    # `git commit`
+    #
+    # @param [String] msg the commit message
+    # @return [String] the output of 'git commit'
     def commit(msg = nil)
       logger.info 'Committing changes'
-      command(:commit, msg.nil? ? nil : ['-m', msg])
+      return command(:commit, msg.nil? ? nil : ['-m', msg])
     end
 
 
+    #
+    # `git rebase`
+    #
+    # @param [String] upstream the commit-ish to rebase against
+    # @option opts :interactive do an interactive rebase
+    # @option opts [String] :oldbase the old base to rebase from
+    #
+    # @return [String] the output of 'git rebase'
     def rebase(upstream, opts = {})
       args = []
       if opts[:interactive]
@@ -220,42 +287,38 @@ module GitProc
         logger.info { "Rebasing #{branches.current.name} against #{upstream}" }
         args << upstream
       end
-      command('rebase', args)
+      return command('rebase', args)
     end
 
 
+    #
+    # `git merge`
+    #
+    # @return [String] the output of 'git merge'
     def merge(base, opts= {})
       logger.info { "Merging #{branches.current.name} with #{base}" }
       args = []
       args << '-s' << opts[:merge_strategy] if opts[:merge_strategy]
       args << base
-      command(:merge, args)
+      return command(:merge, args)
     end
 
 
+    #
+    # `git fetch`
+    #
+    # @return [String] the output of 'git fetch'
     def fetch(name = remote.name)
       logger.info 'Fetching the latest changes from the server'
       output = self.command(:fetch, ['-p', name])
 
       log_fetch_changes(fetch_changes(output))
 
-      output
+      return output
     end
 
 
-    # @param [Hash] changes a hash of the changes that were made
-    #
-    # @return [void]
-    def log_fetch_changes(changes)
-      changes.each do |key, v|
-        unless v.empty?
-          logger.info { "  #{key.to_s.sub(/_/, ' ')}: #{v.join(', ')}" }
-        end
-      end
-    end
-
-
-    # @return [Hash]
+    # @return [Hash] with lists for each of :new_branch, :new_tag, :force_updated, :deleted, :updated
     def fetch_changes(output)
       changed = output.split("\n")
 
@@ -290,11 +353,13 @@ module GitProc
     end
 
 
+    # @return [GitBranches]
     def branches
       GitProc::GitBranches.new(self)
     end
 
 
+    # @return [GitBranches]
     def remote_branches
       GitProc::GitBranches.new(self, :remote => true)
     end
@@ -311,26 +376,28 @@ module GitProc
     # @option opts [Boolean] :no_color force not using any ANSI color codes
     # @option opts [String]  :rename the new name for the branch
     # @option opts [String]  :upstream the new branch to track
-    # @option opts [String]  :base_branch the branch to base the new branch off of;
-    #   defaults to 'master'
+    # @option opts [String]  :base_branch ('master') the branch to base the new branch off of
     #
     # @return [String] the output of running the git command
     def branch(branch_name, opts = {})
-      if opts[:delete]
-        delete_branch(branch_name, opts[:force])
-      elsif opts[:rename]
-        rename_branch(branch_name, opts[:rename])
-      elsif opts[:upstream]
-        set_upstream_branch(branch_name, opts[:upstream])
-      elsif branch_name
-        if opts[:force]
-          change_branch(branch_name, opts[:base_branch])
+      if branch_name
+        if opts[:delete]
+          return delete_branch(branch_name, opts[:force])
+        elsif opts[:rename]
+          return rename_branch(branch_name, opts[:rename])
+        elsif opts[:upstream]
+          return set_upstream_branch(branch_name, opts[:upstream])
         else
-          create_branch(branch_name, opts[:base_branch])
+          base_branch = opts[:base_branch] || 'master'
+          if opts[:force]
+            return change_branch(branch_name, base_branch)
+          else
+            return create_branch(branch_name, base_branch)
+          end
         end
       else
         #list_branches(opts)
-        list_branches(opts[:all], opts[:remote], opts[:no_color])
+        return list_branches(opts[:all], opts[:remote], opts[:no_color])
       end
     end
 
@@ -343,68 +410,120 @@ module GitProc
     # @param [String] remote_branch the name of the branch to push to; nil -> same as local_branch
     #
     # @option opts [Boolean, String] :delete delete the remote branch
-    # @option opts [Boolean] :force force the update, even if not a fast-forward
+    # @option opts [Boolean] :force force the update, even if not a fast-forward?
     #
-    # @return [void]
+    # @return [String] the output of the push command
     #
     # @raise [ArgumentError] if :delete is true, but no branch name is given
+    #
     def push(remote_name, local_branch, remote_branch, opts = {})
+      if opts[:delete]
+        return push_delete(remote_branch || local_branch, remote_name, opts)
+      else
+        return push_to_remote(local_branch, remote_branch, remote_name, opts)
+      end
+    end
+
+
+    #
+    # Pushes the given branch to the server.
+    #
+    # @param [String] remote_name the repository name; nil -> 'origin'
+    # @param [String] local_branch the local branch to push; nil -> the current branch
+    # @param [String] remote_branch the name of the branch to push to; nil -> same as local_branch
+    #
+    # @option opts [Boolean] :force force the update, even if not a fast-forward?
+    #
+    # @return [String] the output of the push command
+    #
+    def push_to_remote(local_branch, remote_branch, remote_name, opts)
       remote_name ||= 'origin'
 
       args = [remote_name]
 
-      if opts[:delete]
-        if remote_branch
-          rb = remote_branch
-        elsif local_branch
-          rb = local_branch
-        elsif !(opts[:delete].is_a? TrueClass)
-          rb = opts[:delete]
+      local_branch ||= branches.current
+      remote_branch ||= local_branch
+      args << '-f' if opts[:force]
+
+      logger.info do
+        if local_branch == remote_branch
+          "Pushing to '#{remote_branch}' on '#{remote_name}'."
         else
-          raise ArgumentError.new('Need a branch name to delete.')
+          "Pushing #{local_branch} to '#{remote_branch}' on '#{remote_name}'."
         end
-
-        int_branch = config.master_branch
-        if rb == int_branch
-          raise GitProc::GitProcessError.new("Can not delete the integration branch '#{int_branch}'")
-        end
-
-        logger.info { "Deleting remote branch '#{rb}' on '#{remote_name}'." }
-        args << '--delete' << rb
-      else
-        local_branch ||= branches.current
-        remote_branch ||= local_branch
-        args << '-f' if opts[:force]
-
-        logger.info do
-          if local_branch == remote_branch
-            "Pushing to '#{remote_branch}' on '#{remote_name}'."
-          else
-            "Pushing #{local_branch} to '#{remote_branch}' on '#{remote_name}'."
-          end
-        end
-
-        args << "#{local_branch}:#{remote_branch}"
       end
-      command(:push, args)
+
+      args << "#{local_branch}:#{remote_branch}"
+      return command(:push, args)
     end
 
 
+    #
+    # Pushes the given branch to the server.
+    #
+    # @param [String] remote_name the repository name; nil -> 'origin'
+    # @param [String] branch_name the name of the branch to push to
+    #
+    # @option opts [Boolean, String] :delete if a String it is the branch name
+    #
+    # @return [String] the output of the push command
+    #
+    # @raise [ArgumentError] no branch name is given
+    # @raise [raise GitProc::GitProcessError] trying to delete the integration branch
+    #
+    # @todo remove the opts param
+    #
+    def push_delete(branch_name, remote_name, opts)
+      remote_name ||= 'origin'
+
+      args = [remote_name]
+
+      if branch_name
+        rb = branch_name
+      elsif !(opts[:delete].is_a? TrueClass)
+        rb = opts[:delete]
+      else
+        raise ArgumentError.new('Need a branch name to delete.')
+      end
+
+      int_branch = config.master_branch
+      if rb == int_branch
+        raise GitProc::GitProcessError.new("Can not delete the integration branch '#{int_branch}'")
+      end
+
+      logger.info { "Deleting remote branch '#{rb}' on '#{remote_name}'." }
+      args << '--delete' << rb
+      return command(:push, args)
+    end
+
+
+    # `git rebase --continue`
+    #
+    # @return [String] the output of the git command
     def rebase_continue
       command(:rebase, '--continue')
     end
 
 
+    # `git stash --save`
+    #
+    # @return [String] the output of the git command
     def stash_save
       command(:stash, %w(save))
     end
 
 
+    # `git stash --pop`
+    #
+    # @return [String] the output of the git command
     def stash_pop
       command(:stash, %w(pop))
     end
 
 
+    # `git show`
+    #
+    # @return [String] the output of the git command
     def show(refspec)
       command(:show, refspec)
     end
@@ -436,11 +555,19 @@ module GitProc
     end
 
 
+    # @return [int] the number of commits that exist in the current branch
     def log_count
       command(:log, '--oneline').split(/\n/).length
     end
 
 
+    # Remove the files from the Index
+    #
+    # @param [Array<String>] files the file names to remove from the Index
+    #
+    # @option opts :force if exists and not false, will force the removal of the files
+    #
+    # @return [String] the output of the git command
     def remove(files, opts = {})
       args = []
       args << '-f' if opts[:force]
@@ -464,6 +591,13 @@ module GitProc
     end
 
 
+    #
+    # Resets the Index/Working Directory to the given revision
+    #
+    # @param [String] rev_name the revision name (commit-ish) to go back to
+    #
+    # @option opts :hard should the working directory be changed? If {false} or missing, will only update the Index
+    #
     def reset(rev_name, opts = {})
       args = []
       args << '--hard' if opts[:hard]
@@ -489,10 +623,20 @@ module GitProc
     end
 
 
-    alias sha rev_parse
+    alias :sha :rev_parse
 
 
-    # @return [String]
+    #
+    # Executes the given git command
+    #
+    # @param [Symbol, String] cmd the command to run (e.g., :commit)
+    # @param [Array<String, Symbol>] opts the arguments to pass to the command
+    # @param [Boolean] chdir should the shell change to the top of the working dir before executing the command?
+    # @param [String] redirect ???????
+    # @yield the block to run in the context of running the command
+    #
+    # @return [String] the output of the git command
+    #
     def command(cmd, opts = [], chdir = true, redirect = '', &block)
       ENV['GIT_INDEX_FILE'] = File.join(workdir, '.git', 'index')
       ENV['GIT_DIR'] = File.join(workdir, '.git')
@@ -512,6 +656,11 @@ module GitProc
     end
 
 
+    #
+    # Writes the current SHA-1 for the tip of the branch to the "sync control file"
+    #
+    # @return [void]
+    # @see GitLib#read_sync_control_file
     def write_sync_control_file(branch_name)
       latest_sha = rev_parse(branch_name)
       filename = sync_control_filename(branch_name)
@@ -520,6 +669,8 @@ module GitProc
     end
 
 
+    # @return [String, nil] the SHA-1 of the latest sync performed for the branch, or nil if none is recorded
+    # @see GitLib#write_sync_control_file
     def read_sync_control_file(branch_name)
       filename = sync_control_filename(branch_name)
       if File.exists?(filename)
@@ -535,10 +686,16 @@ module GitProc
     end
 
 
+    #
+    # Delete the sync control file for the branch
+    #
+    # @return [void]
+    # @see GitLib#write_sync_control_file
     def delete_sync_control_file!(branch_name)
       filename = sync_control_filename(branch_name)
       logger.debug { "Deleting sync control file, #{filename}" }
 
+      # on some systems, especially Windows, the file may be locked. wait for it to unlock
       counter = 10
       while counter > 0
         begin
@@ -552,6 +709,8 @@ module GitProc
     end
 
 
+    # @return [Boolean] does the sync control file exist?
+    # @see GitLib#write_sync_control_file
     def sync_control_file_exists?(branch_name)
       filename = sync_control_filename(branch_name)
       File.exist?(filename)
@@ -584,12 +743,31 @@ module GitProc
     private
 
 
+    #
+    # Create the CLI for the git command
+    #
+    # @param [Symbol, String] cmd the command to run (e.g., :commit)
+    # @param [Array<String, Symbol>] opts the arguments to pass to the command
+    # @param [String] redirect ???????
+    #
+    # @return [String] the command line to run
+    #
     def create_git_command(cmd, opts, redirect)
       opts = [opts].flatten.map { |s| escape(s) }.join(' ')
-      "git #{cmd} #{opts} #{redirect} 2>&1"
+      return "git #{cmd} #{opts} #{redirect} 2>&1"
     end
 
 
+    #
+    # Executes the given git command
+    #
+    # @param [String] path the directory to run the command in
+    # @param [String] git_cmd the CLI command to execute
+    # @param [Boolean] chdir should the shell change to the top of the working dir before executing the command?
+    # @param [Proc] block the block to run in the context of running the command
+    #
+    # @return [String] the output of the git command
+    #
     def command_git_cmd(path, git_cmd, chdir, block)
       out = nil
       if chdir and (Dir.getwd != path)
@@ -597,7 +775,7 @@ module GitProc
       else
         out = run_command(git_cmd, &block)
       end
-      out
+      return out
     end
 
 
@@ -608,25 +786,35 @@ module GitProc
           raise GitProc::GitExecuteError.new(git_cmd + ':' + out.to_s)
         end
       end
-      out
+      return out
     end
 
 
+    #
+    # Executes the given git command
+    #
+    # @param [String] git_cmd the CLI command to execute
+    # @yield the block to run in the context of running the command. See {IO#popen}
+    #
+    # @return [String] the output of the git command
+    #
     def run_command(git_cmd, &block)
       if block_given?
-        IO.popen(git_cmd, &block)
+        return IO.popen(git_cmd, &block)
       else
-        `#{git_cmd}`.chomp
+        return `#{git_cmd}`.chomp
       end
     end
 
 
+    # @return [String]
     def escape(s)
       escaped = s.to_s.gsub('\'', '\'\\\'\'')
       %Q{"#{escaped}"}
     end
 
 
+    # @return [String]
     def change_branch(branch_name, base_branch)
       raise ArgumentError.new('Need :base_branch when using :force for a branch.') unless base_branch
       logger.info { "Changing branch '#{branch_name}' to point to '#{base_branch}'." }
@@ -635,6 +823,7 @@ module GitProc
     end
 
 
+    # @return [String]
     def create_branch(branch_name, base_branch)
       logger.info { "Creating new branch '#{branch_name}' based on '#{base_branch}'." }
 
@@ -642,6 +831,7 @@ module GitProc
     end
 
 
+    # @return [String]
     def list_branches(all_branches, remote_branches, no_color)
       args = []
       args << '-a' if all_branches
@@ -651,6 +841,7 @@ module GitProc
     end
 
 
+    # @return [String]
     def delete_branch(branch_name, force)
       logger.info { "Deleting local branch '#{branch_name}'." } unless branch_name == '_parking_'
 
@@ -658,6 +849,7 @@ module GitProc
     end
 
 
+    # @return [String]
     def rename_branch(branch_name, new_name)
       logger.info { "Renaming branch '#{branch_name}' to '#{new_name}'." }
 
@@ -665,10 +857,23 @@ module GitProc
     end
 
 
+    # @return [String]
     def sync_control_filename(branch_name)
       normalized_branch_name = branch_name.to_s.gsub(/[\/]/, "-")
-      
-      File.join(File.join(workdir, '.git'), "gitprocess-sync-#{remote.name}--#{normalized_branch_name}")
+
+      return File.join(File.join(workdir, '.git'), "gitprocess-sync-#{remote.name}--#{normalized_branch_name}")
+    end
+
+
+    # @param [Hash] changes a hash of the changes that were made
+    #
+    # @return [void]
+    def log_fetch_changes(changes)
+      changes.each do |key, v|
+        unless v.empty?
+          logger.info { "  #{key.to_s.sub(/_/, ' ')}: #{v.join(', ')}" }
+        end
+      end
     end
 
   end

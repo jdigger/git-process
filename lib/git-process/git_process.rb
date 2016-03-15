@@ -107,13 +107,20 @@ module GitProc
     end
 
 
+    # noinspection RubyLocalVariableNamingConvention
     def should_remove_master?
-      my_branches = gitlib.branches()
-      gitlib.has_a_remote? and
-          my_branches.include?(config.master_branch) and
-          my_branches.current.name != config.master_branch and
-          !keep_local_integration_branch? and
-          my_branches[config.integration_branch].contains_all_of(config.master_branch)
+      has_a_remote = gitlib.has_a_remote?
+      my_branches = gitlib.branches
+      includes_master_branch = my_branches.include?(config.master_branch)
+      current_branch_is_not_master = my_branches.current.name != config.master_branch
+      do_not_keep_integration_branch = !keep_local_integration_branch?
+      integration_branch_contains_all_of_master = my_branches[config.integration_branch].contains_all_of(config.master_branch)
+
+      return (has_a_remote and
+          includes_master_branch and
+          current_branch_is_not_master and
+          do_not_keep_integration_branch and
+          integration_branch_contains_all_of_master)
     end
 
 

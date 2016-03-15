@@ -251,7 +251,7 @@ module GitHubService
     end
 
 
-    # @return [String]
+    # @return [String] the OAuth token, or nil if not found
     def get_config_auth_token
       c_auth_token = gitlib.config['gitProcess.github.authToken']
       (c_auth_token.nil? or c_auth_token.empty?) ? nil : c_auth_token

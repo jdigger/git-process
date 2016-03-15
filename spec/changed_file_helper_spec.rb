@@ -110,7 +110,7 @@ describe ChangeFileHelper, :git_repo_helper do
 
         change_file_helper.offer_to_help_uncommitted_changes
 
-        gitlib.status.clean?.should be_true
+        gitlib.status.clean?.should be true
 
         gitlib.stash_pop
 

@@ -19,7 +19,7 @@ describe GitHubService::Configuration, :git_repo_helper do
 
   describe 'create_authorization' do
 
-    it "should return an auth_token for a good request" do
+    it 'should return an auth_token for a good request' do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
       stub_post('https://tu:dfsdf@api.github.com/authorizations', :send => auth_json,
                 :body => {:token => test_token})
@@ -39,9 +39,9 @@ describe GitHubService::Configuration, :git_repo_helper do
   end
 
 
-  describe "auth_token no username or password" do
+  describe 'auth_token no username or password' do
 
-    it "should get the token from config if it exists" do
+    it 'should get the token from config if it exists' do
       gitlib.config['github.user'] = 'test_user'
       gitlib.config['gitProcess.github.authToken'] = test_token
 
