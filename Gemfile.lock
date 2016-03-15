@@ -1,7 +1,7 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    addressable (2.4.0)
+    addressable (2.3.8)
     crack (0.4.3)
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
@@ -9,9 +9,8 @@ GEM
       multipart-post (~> 1.2.0)
     faraday_middleware (0.10.0)
       faraday (>= 0.7.4, < 0.10)
-    hashdiff (0.3.0)
     hashie (2.1.2)
-    highline (1.6.13)
+    highline (1.7.8)
     json (1.8.3)
     multi_json (1.11.2)
     multipart-post (1.2.0)
@@ -23,8 +22,8 @@ GEM
       hashie (~> 2.0)
       multi_json (~> 1.3)
       netrc (~> 0.7.7)
-    rake (0.9.6)
-    redcarpet (2.3.0)
+    rake (11.1.1)
+    redcarpet (3.3.4)
     rspec (2.99.0)
       rspec-core (~> 2.99.0)
       rspec-expectations (~> 2.99.0)
@@ -35,29 +34,29 @@ GEM
     rspec-mocks (2.99.4)
     rugged (0.18.0.gh.de28323)
     safe_yaml (1.0.4)
-    trollop (1.16.2)
-    webmock (1.24.2)
+    trollop (2.1.2)
+    webmock (1.19.0)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
-      hashdiff
     yard (0.8.7.6)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  addressable (~> 2.3)
+  addressable (~> 2.3.5)
   faraday (= 0.8.9)
-  highline (= 1.6.13)
+  highline (~> 1.7)
   json (~> 1.8)
+  netrc (~> 0.7.7)
   octokit (~> 1.24)
-  rake (~> 0.9)
-  redcarpet (~> 2)
+  rake
+  redcarpet
   rspec (~> 2.99)
   rugged (~> 0.18.0.gh.de28323)
-  trollop (~> 1.16)
-  webmock (~> 1)
-  yard (~> 0.8)
+  trollop (~> 2.1)
+  webmock (~> 1.17, < 1.20)
+  yard
 
 BUNDLED WITH
    1.10.6
