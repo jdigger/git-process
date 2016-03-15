@@ -22,4 +22,5 @@ group :test do
   gem 'rspec', '~> 2.99'
   gem 'webmock', '~> 1.17', '< 1.20' # network mocking. 1.20 changes the API
   gem 'rugged', '~> 0.18.0.gh.de28323'
+  gem 'climate_control', '~> 0.0.3'
 end
