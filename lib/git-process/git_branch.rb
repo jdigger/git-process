@@ -85,7 +85,15 @@ module GitProc
     #                              otherwise the names are compared
     # @return [int, nil] -1, 0, 1 or nil per {Object#<=>}
     def <=>(other)
-      self.name <=> other.name
+      if other.nil?
+        return nil
+      elsif other.is_a? String
+        return self.name <=> other
+      elsif other.respond_to? :name
+        return self.name <=> other.name
+      else
+        return nil
+      end
     end
 
 
