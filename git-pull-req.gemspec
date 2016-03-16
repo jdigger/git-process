@@ -1,20 +1,20 @@
 require File.expand_path('../lib/git-process/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors = ["Jim Moore"]
+  gem.authors = ['Jim Moore']
   gem.email = %w(moore.jim@gmail.com)
   gem.description = %q{Fetches the latest repository from the server, rebases/merges the current branch against the changes in the integration branch, then pushes the result up to a branch on the server of the same name. (Unless told not to.)}
   gem.summary = %q{Gets the latest changes that have happened on the integration branch, then pushes your changes to a feature branch on the server.}
-  gem.homepage = "http://jdigger.github.com/git-process/"
-  gem.license = 'ASL2'
+  gem.homepage = 'http://jdigger.github.com/git-process/'
+  gem.license = 'Apache-2.0'
 
-  gem.add_dependency "git-process-lib", GitProc::Version::STRING
+  gem.add_dependency 'git-process-lib', GitProc::Version::STRING
 
-  gem.files = %w(README.md LICENSE CHANGELOG.md bin/git-pull-req)
+  gem.files = %w(README.adoc LICENSE CHANGELOG.md bin/git-pull-req)
   gem.files << 'man/git-pull-req.1'
   gem.executables = ['git-pull-req']
-  gem.name = "git-pull-req"
+  gem.name = 'git-pull-req'
   gem.version = GitProc::Version::STRING
   gem.platform = Gem::Platform::RUBY
-  gem.required_ruby_version = '>= 1.8.7'
+  gem.required_ruby_version = '>= 2.0'
 end

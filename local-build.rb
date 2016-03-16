@@ -10,8 +10,8 @@ for gem in gems.reverse
 end
 
 for gem in gems
-  puts %x(a2x -f manpage -D man docs/#{gem}.1.adoc)
-  SystemExit.new($?) if $?.exitstatus
+  # puts %x(a2x -f manpage -D man docs/#{gem}.1.adoc)
+  # SystemExit.new($?) if $?.exitstatus
 
   %x[gem build #{gem}.gemspec]
   SystemExit.new($?) if $?.exitstatus
