@@ -46,18 +46,41 @@ describe GitLib, :git_repo_helper do
   end
 
 
+  describe 'rev_parse' do
+
+    it 'parses a known branch name' do
+      expect(gitlib.rev_parse('master')).not_to be_empty
+    end
+
+
+    it 'does not try to parse a file name as a revision name' do
+      file = gitlib.workdir + '/fooble.txt'
+      FileUtils.touch(file, :verbose => false)
+      gitlib.add file
+      gitlib.commit 'test'
+      expect(gitlib.rev_parse('fooble.txt')).to be_nil
+    end
+
+
+    it 'empty for an unknown branch name' do
+      expect(gitlib.rev_parse('skdfklsjhdfklerouwh')).to be_nil
+    end
+
+  end
+
+
   describe 'set_upstream_branch' do
     include GitRepoHelper
 
     it 'updates for remote branch' do
-        gitlib.branch('ba/bb', :base_branch => 'master')
-        clone_repo do |gl|
-           gl.checkout('new_branch', :new_branch => 'origin/master')
-           gl.set_upstream_branch('new_branch', 'origin/ba/bb')
+      gitlib.branch('ba/bb', :base_branch => 'master')
+      clone_repo do |gl|
+        gl.checkout('new_branch', :new_branch => 'origin/master')
+        gl.set_upstream_branch('new_branch', 'origin/ba/bb')
 
-           gl.config['branch.new_branch.remote'].should == 'origin'
-           gl.config['branch.new_branch.merge'].should == 'refs/heads/ba/bb'
-        end
+        gl.config['branch.new_branch.remote'].should == 'origin'
+        gl.config['branch.new_branch.merge'].should == 'refs/heads/ba/bb'
+      end
     end
 
 
@@ -86,7 +109,7 @@ describe GitLib, :git_repo_helper do
   describe 'fetch' do
 
     it 'parse the list of changes' do
-      output = '''
+      output = '' '
 remote: Counting objects: 1028, done.
 remote: Compressing objects: 100% (301/301), done.
 remote: Total 699 (delta 306), reused 654 (delta 273)
@@ -111,7 +134,7 @@ From remote.system.com:tuser/test-proj
    b9797f8..dd24a9f  webcms-2135 -> origin/webcms-2135
  * [new branch]      webcms-831-faq-web-service -> origin/webcms-831-faq-web-service
  x [deleted]         (none)     -> origin/webcms-1315-masthead
-'''
+' ''
       changes = gitlib.fetch_changes(output)
 
       changes[:new_branch].size().should == 6

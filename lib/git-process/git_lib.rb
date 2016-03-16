@@ -618,8 +618,14 @@ module GitProc
     end
 
 
+    #
+    # Translate the commit-ish name to the SHA-1 hash value
+    #
+    # @return [String, nil] the SHA-1 value, or nil if the revision name is unknown
+    #
     def rev_parse(name)
-      command('rev-parse', name)
+      sha = command('rev-parse', ['--revs-only', name])
+      return sha.empty? ? nil : sha
     end
 
 
