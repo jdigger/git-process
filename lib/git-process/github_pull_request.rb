@@ -18,7 +18,7 @@ require 'octokit/repository'
 module GitHub
 
   class PullRequest
-    attr_reader :gitlib, :repo, :remote_name, :client, :configuration
+    attr_reader :gitlib, :repo, :remote_name, :configuration
 
     MAX_RESEND = 5
 
@@ -26,17 +26,22 @@ module GitHub
       @gitlib = lib
       @repo = repo
       @remote_name = remote_name
-      @configuration = GitHubService::Configuration.new(gitlib.config, :user => opts[:user], :password => opts[:password])
+      @configuration = GitHubService::Configuration.new(
+          gitlib.config,
+          :user => opts[:user],
+          :password => opts[:password],
+          :remote_name => remote_name
+      )
     end
 
 
     def client
-      @client ||= @configuration.create_client
+      @configuration.client
     end
 
 
     def pull_requests(opts = {})
-      @pull_requests ||= client.pull_requests(repo, opts)
+      @pull_requests ||= sym_hash_JSON(client.pull_requests(repo, opts))
     end
 
 
@@ -50,14 +55,14 @@ module GitHub
     # @param head [String] The branch (or git ref) where your changes are implemented.
     # @param title [String] Title for the pull request
     # @param body [String] The body for the pull request (optional). Supports GFM.
-    # @return [Sawyer::Resource] The newly created pull request
+    # @return [Hash] The newly created pull request
     # @example
     #   @client.create_pull_request("master", "feature-branch",
     #     "Pull Request title", "Pull Request body")
     def create(base, head, title, body)
       logger.info { "Creating a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
       begin
-        return client.create_pull_request(repo, base, head, title, body)
+        return sym_hash_JSON(client.create_pull_request(repo, base, head, title, body))
       rescue Octokit::UnprocessableEntity => exp
         pull = pull_requests.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
         if pull
@@ -76,7 +81,7 @@ module GitHub
 
 
     def pull_request(pr_number)
-      client.pull_request(repo, pr_number)
+      sym_hash_JSON(client.pull_request(repo, pr_number))
     end
 
 
@@ -108,7 +113,9 @@ module GitHub
       logger.info { "Looking for a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
 
       json = pull_requests
-      pr = json.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
+      pr = json.find do |p|
+        p[:head][:ref] == head and p[:base][:ref] == base
+      end
 
       raise NotFoundError.new(base, head, repo, json) if error_if_missing && pr.nil?
 
@@ -161,10 +168,36 @@ module GitHub
 
     private
 
+    #
+    # @param [String, Sawyer::Resource] str the String to parse as JSON, or a {Sawyer::Resource} to simply pass-tru
+    #
+    # @return [Array, Hash, Sawyer::Resource, nil] an Array/Hash where all the hash keys are Symbols
+    #
+    def sym_hash_JSON(str)
+      return nil if str.nil?
+      return str if str.is_a? Sawyer::Resource
+      to_sym_hash(JSON.parse(str))
+    end
 
+
+    def to_sym_hash(source)
+      if source.is_a? Hash
+        Hash[source.map { |k, v|
+               [k.to_sym, to_sym_hash(v)]
+             }]
+      elsif source.is_a? Array
+        source.map { |e| to_sym_hash(e) }
+      else
+        source
+        # raise "Don't know what to do with #{source.class} - #{source}"
+      end
+    end
+
+
+    # @return [Sawyer::Resource]
     def send_close_req(pull_number, count)
       begin
-        client.patch("repos/#{Octokit::Repository.new(repo)}/pulls/#{pull_number}", {:state => 'closed'})
+        sym_hash_JSON(client.patch("repos/#{Octokit::Repository.new(repo)}/pulls/#{pull_number}", {:state => 'closed'}))
       rescue Octokit::UnprocessableEntity => exp
         if count > MAX_RESEND
           raise exp

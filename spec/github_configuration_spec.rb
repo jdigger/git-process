@@ -1,7 +1,7 @@
 require 'git-process/github_configuration'
 require 'json'
 require 'github_test_helper'
-
+# require 'vcr'
 
 describe GitHubService::Configuration, :git_repo_helper do
   include GitHubTestHelper
@@ -22,7 +22,7 @@ describe GitHubService::Configuration, :git_repo_helper do
     it 'should return an auth_token for a good request' do
       gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
       stub_post('https://tu:dfsdf@api.github.com/authorizations', :send => auth_json,
-                :body => {:token => test_token})
+                :body => JSON({:token => test_token}).to_s)
 
       ghc.create_authorization().should == test_token
     end
@@ -34,6 +34,56 @@ describe GitHubService::Configuration, :git_repo_helper do
                 :status => 401)
 
       expect { ghc.create_authorization() }.to raise_error Octokit::Unauthorized
+    end
+
+
+    it 'should 401 for needing two-factor authentication' do
+      gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
+
+      stub_request(:post, 'https://tu:dfsdf@api.github.com/authorizations').to_return do |request|
+        # noinspection RubyStringKeysInHashInspection
+        if request.headers.has_key? 'x-github-otp'
+          {
+              :body => JSON({:token => test_token}).to_s,
+              :headers => {'Content-Type' => 'application/json'},
+              :status => 200
+          }
+        else
+          {
+              :body => '',
+              :status => 401,
+              :headers => {'X-GitHub-OTP' => 'required; app'}
+          }
+        end
+      end
+      GitHubService::Configuration.stub(:ask_for_two_factor).and_return('572269')
+
+      ghc.create_authorization().should == test_token
+    end
+
+
+    it 'should 422 if two-factor authorization already exists' do
+      gitlib.remote.add('origin', 'git@github.com:jdigger/git-process.git')
+
+      stub_request(:post, 'https://tu:dfsdf@api.github.com/authorizations').to_return do |request|
+        # noinspection RubyStringKeysInHashInspection
+        if request.headers.has_key? 'x-github-otp'
+          {
+              :body => JSON({errors: [{:resource => 'OauthAccess', :code => 'already_exists'}]}).to_s,
+              :headers => {'Content-Type' => 'application/json'},
+              :status => 422
+          }
+        else
+          {
+              :body => '',
+              :status => 401,
+              :headers => {'X-GitHub-OTP' => 'required; app'}
+          }
+        end
+      end
+      GitHubService::Configuration.stub(:ask_for_two_factor).and_return('572269')
+
+      expect { ghc.create_authorization() }.to raise_error GitHubService::TokenAlreadyExists
     end
 
   end
@@ -64,7 +114,7 @@ describe GitHubService::Configuration, :git_repo_helper do
       gitlib.config['gitProcess.github.authToken'] = ''
 
       stub_post('https://test_user:dfsdf@api.github.com/authorizations', :send => auth_json,
-                :body => {:token => test_token})
+                :body => JSON({:token => test_token}).to_s)
 
       ghc.auth_token.should == test_token
     end
@@ -86,7 +136,7 @@ describe GitHubService::Configuration, :git_repo_helper do
     end
 
 
-    it "should prompt the user and store it in the config" do
+    it 'should prompt the user and store it in the config' do
       gitlib.config['github.user'] = ''
 
       GitHubService::Configuration.stub(:ask_for_user).and_return('test_user')
@@ -96,34 +146,34 @@ describe GitHubService::Configuration, :git_repo_helper do
   end
 
 
-  describe "using GHE instead of GitHub.com" do
+  describe 'using GHE instead of GitHub.com' do
 
-    it "should use the correct server and path for a non-GitHub.com site" do
+    it 'should use the correct server and path for a non-GitHub.com site' do
       gitlib.remote.add('origin', 'git@myco.com:jdigger/git-process.git')
 
       stub_post('https://tu:dfsdf@myco.com/api/v3/authorizations',
                 :send => auth_json,
-                :body => {:token => test_token})
+                :body => JSON({:token => test_token}).to_s)
 
       ghc.create_authorization().should == test_token
     end
 
 
-    it "site should raise an error if remote.origin.url not set" do
+    it 'site should raise an error if remote.origin.url not set' do
       gitlib.config['remote.origin.url'] = ''
 
       expect { ghc.base_github_api_url_for_remote }.to raise_error GitHubService::NoRemoteRepository
     end
 
 
-    it "site should not work for a garbage url address" do
+    it 'site should not work for a garbage url address' do
       gitlib.remote.add('origin', 'garbage')
 
       expect { ghc.base_github_api_url_for_remote }.to raise_error URI::InvalidURIError
     end
 
 
-    it "site should work for an ssh-configured url address" do
+    it 'site should work for an ssh-configured url address' do
       gitlib.remote.add('origin', 'git@github.myco.com:fooble')
 
       ghc.base_github_api_url_for_remote.should == 'https://github.myco.com'
@@ -132,7 +182,7 @@ describe GitHubService::Configuration, :git_repo_helper do
   end
 
 
-  it "#url_to_base_github_api_url" do
+  it '#url_to_base_github_api_url' do
     c = GitHubService::Configuration
 
     c.url_to_base_github_api_url('ssh://git@github.myco.com/fooble').should == 'https://github.myco.com'
@@ -145,8 +195,9 @@ describe GitHubService::Configuration, :git_repo_helper do
 
 
   def auth_json
-    JSON({:note_url => 'http://jdigger.github.com/git-process',
-          :scopes => %w(repo user gist), :note => "Git-Process"})
+    JSON({:scopes => %w(repo user gist),
+          :note => 'Git-Process',
+          :note_url => 'http://jdigger.github.com/git-process'}).to_s
   end
 
 end

@@ -65,11 +65,12 @@ describe GitHub::PullRequest, :git_repo_helper do
       stub_get('https://api.github.com/repos/tester/test_repo/pulls', :body => [
                                                                         {:number => 1, :state => 'open', :html_url => 'test_url', :head => {:ref => 'test_head'},
                                                                          :base => {:ref => 'test_base'}}])
-      stub_patch('https://api.github.com/repos/tester/test_repo/pulls/1', :send => JSON({:state => 'closed'}),
+      stub_patch('https://api.github.com/repos/tester/test_repo/pulls/1', :send => {:state => 'closed'},
                  :body => {:number => 1, :state => 'closed', :html_url => 'test_url', :head => {:ref => 'test_head'},
                            :base => {:ref => 'test_base'}})
 
-      pull_request.close('test_base', 'test_head')[:state].should == 'closed'
+      close_result = pull_request.close('test_base', 'test_head')
+      close_result[:state].should == 'closed'
     end
 
 
@@ -91,8 +92,8 @@ describe GitHub::PullRequest, :git_repo_helper do
           to_raise(Octokit::UnprocessableEntity.new).then.
           to_raise(Octokit::UnprocessableEntity.new).then.
           to_raise(Octokit::UnprocessableEntity.new).then.
-          to_return(:status => 200, :body => {:number => 1, :state => 'closed', :html_url => 'test_url',
-                                              :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}})
+          to_return(:status => 200, :body => JSON({:number => 1, :state => 'closed', :html_url => 'test_url',
+                                              :head => {:ref => 'test_head'}, :base => {:ref => 'test_base'}}).to_s)
 
       pull_request.close(1)[:state].should == 'closed'
     end

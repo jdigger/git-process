@@ -15,26 +15,26 @@ require 'highline/import'
 require 'octokit'
 require 'octokit/default'
 require 'uri'
+require 'faraday'
 
 
-#
-# Provides methods related to GitHub configuration
-#
 module GitHubService
 
+  #
+  # Provides methods related to GitHub configuration
+  #
   class Configuration
-
-    attr_reader :git_config
-
 
     #
     # @param [GitProc::GitConfig] git_config
     # @param [Hash] opts
-    # @option opts [String] :remote_name (#remote_name) The "remote" name to use (e.g., 'origin')
+    # @option opts [String] :remote_name (Configuration#remote_name) The "remote" name to use (e.g., 'origin')
     # @option opts [String] :user the username to authenticate with
-    # @option opts [String] :password (#password) the password to authenticate with
+    # @option opts [String] :password (Configuration#password) the password to authenticate with
     #
     # @return [String] the OAuth token
+    #
+    # @todo pass in {GitLib} instead of {GitConfig}
     #
     def initialize(git_config, opts = {})
       @git_config = git_config
@@ -44,7 +44,15 @@ module GitHubService
     end
 
 
-    # @return [String]
+    # @return [GitProc::GitConfig]
+    def git_config
+      @git_config
+    end
+
+
+    # @return [String] the "remote name" (e.g., origin) for GitHub
+    #
+    # @see GitProc::GitRemote#remote_name
     def remote_name
       unless @remote_name
         @remote_name = gitlib.remote.name
@@ -54,21 +62,21 @@ module GitHubService
     end
 
 
-    # @return [String]
+    # @return [String] the user name for GitHub
     def user
       @user ||= Configuration.ask_for_user(gitlib)
     end
 
 
-    # @return [String]
+    # @return [String] the password for GitHub
     def password
       @password ||= Configuration.ask_for_password
     end
 
 
-    # @return [Octokit::Client]
+    # @return [Octokit::Client] the client for communicating with GitHub using {Configuration#user} and {Configuration#auth_token}
     def client
-      create_client
+      @client ||= create_client
     end
 
 
@@ -78,34 +86,27 @@ module GitHubService
     end
 
 
-    # @return [Octokit::Client]
-    def create_client(opts = {})
-      logger.debug { "Creating GitHub client for user #{user} using token '#{auth_token}'" }
-
-      base_url = opts[:base_url] || base_github_api_url_for_remote
-
-      configure_octokit(:base_url => base_url)
-
-      Octokit::Client.new(:login => user, :oauth_token => auth_token)
-    end
-
-
     #
     # Configures Octokit to use the appropriate URLs for GitHub server.
     #
-    # @param [Hash] opts the options to create a message with
-    # @option opts [String] :base_url The base URL to use for the GitHub server
+    # @option opts [String] :base_url The base URL to use for the GitHub server; defaults to {#base_github_api_url_for_remote}
     #
     # @return [void]
+    #
+    # @todo remove opts and pass in base_url directly
     #
     def configure_octokit(opts = {})
       base_url = opts[:base_url] || base_github_api_url_for_remote
       Octokit.configure do |c|
         c.api_endpoint = api_endpoint(base_url)
         c.web_endpoint = web_endpoint(base_url)
-        # c.faraday_config do |f|
-        #   #f.response :logger
-        # end
+      end
+      if logger.level < GitLogger::INFO
+        Octokit.middleware = Faraday::Builder.new do |builder|
+          builder.response :logger
+          builder.use Octokit::Response::RaiseError
+          builder.adapter Faraday.default_adapter
+        end
       end
     end
 
@@ -168,17 +169,24 @@ module GitHubService
     # @param url [String] the URL to translate
     # @return [String] the base GitHub API URL
     #
+    # @example
+    #   url_to_base_github_api_url('git@github.com:jdigger/git-process.git') #=> 'https://api.github.com'
+    #
+    #   url_to_base_github_api_url('http://ghe.myco.com/jdigger/git-process.git') #=> 'http://ghe.myco.com'
+    #
+    # @todo use Octokit's improved ability to determine this
+    #
     def self.url_to_base_github_api_url(url)
       uri = URI.parse(url)
       host = uri.host
 
       if /github.com$/ =~ host
-        'https://api.github.com'
+        return 'https://api.github.com'
       else
         scheme = uri.scheme
         scheme = 'https' unless scheme.start_with?('http')
         host = 'unknown-host' unless host
-        "#{scheme}://#{host}"
+        return "#{scheme}://#{host}"
       end
     end
 
@@ -193,11 +201,14 @@ module GitHubService
     # @option opts [String] :user the username to authenticate with
     # @option opts [String] :password (#password) the password to authenticate with
     #
+    # @return [Octokit::Client] the Octokit client for communicating with GitHub
+    #
     def create_pw_client(opts = {})
       usr = opts[:user] || user()
       pw = opts[:password] || password()
+      remote = opts[:remote_name] || self.remote_name
 
-      logger.debug { "Creating GitHub client for user #{usr} using BasicAuth w/ password" }
+      logger.info("Authorizing #{usr} to work with #{remote}.")
 
       configure_octokit(opts)
 
@@ -225,35 +236,72 @@ module GitHubService
     #
     # Connects to GitHub to get an OAuth token.
     #
-    # @param [Hash] opts
     # @option opts [String] :base_url The base URL to use for the GitHub server
-    # @option opts [String] :remote_name (#remote_name) The "remote" name to use (e.g., 'origin')
+    # @option opts [String] :remote_name (Configuration#remote_name) The "remote" name to use (e.g., 'origin')
     # @option opts [String] :user the username to authenticate with
     # @option opts [String] :password (#password) the password to authenticate with
+    # @option opts [String] :two_factor (#password) the password to authenticate with
     #
     # @return [String] the OAuth token
     #
+    # noinspection RubyStringKeysInHashInspection
     def create_authorization(opts = {})
-      username = opts[:user] || self.user
-      remote = opts[:remote_name] || self.remote_name
-      logger.info("Authorizing #{username} to work with #{remote}.")
+      client = opts[:client] || create_pw_client(opts)
 
-      client = create_pw_client(opts)
-      auth = client.create_authorization(
-          :scopes => %w(repo user gist),
-          :note => 'Git-Process',
-          :note_url => 'http://jdigger.github.com/git-process')
+      return create_authorization_token(client, opts[:two_factor])
+    end
+
+
+    def create_authorization_token(client, two_factor)
+      begin
+        # noinspection RubyStringKeysInHashInspection
+        headers = two_factor ? {'X-GitHub-OTP' => two_factor} : nil
+        auth = client.create_authorization(
+            :scopes => %w(repo user gist),
+            :note => 'Git-Process',
+            :note_url => 'http://jdigger.github.com/git-process',
+            :headers => headers
+        )
+      rescue Octokit::OneTimePasswordRequired
+        return create_2f_authorization(client)
+      rescue Octokit::UnprocessableEntity => exp
+        return unprocessable_authorization(exp)
+      end
 
       config_auth_token = auth[:token]
 
       # remember it for next time
       gitlib.config['gitProcess.github.authToken'] = config_auth_token
 
-      config_auth_token
+      return config_auth_token
     end
 
 
-    # @return [String] the OAuth token, or nil if not found
+    #
+    # Connects to GitHub to get an OAuth token.
+    #
+    # @option opts [String] :base_url The base URL to use for the GitHub server
+    # @option opts [String] :remote_name (Configuration#remote_name) The "remote" name to use (e.g., 'origin')
+    # @option opts [String] :user the username to authenticate with
+    # @option opts [String] :password (#password) the password to authenticate with
+    # @option opts [String] :two_factor (#password) the password to authenticate with
+    #
+    # @return [String] the OAuth token
+    #
+    # noinspection RubyStringKeysInHashInspection
+    def create_2f_authorization(client)
+      two_factor = Configuration.ask_for_two_factor
+
+      create_authorization_token(client, two_factor)
+    end
+
+
+    def two_factor_auth(authorization_count, opts)
+      return create_authorization(opts.merge(:two_factor => two_factor, :authorization_count => authorization_count + 1))
+    end
+
+
+    # @return [String, nil] the OAuth token, or nil if not found
     def get_config_auth_token
       c_auth_token = gitlib.config['gitProcess.github.authToken']
       (c_auth_token.nil? or c_auth_token.empty?) ? nil : c_auth_token
@@ -266,6 +314,24 @@ module GitHubService
 
 
     private
+
+
+    #
+    # Create a client for communicating with GitHub using {Configuration#user} and {Configuration#auth_token}
+    #
+    # @return [Octokit::Client]
+    #
+    # @todo have the params passed in explicitly instead of via opts
+    #
+    def create_client(opts = {})
+      logger.debug { "Creating GitHub client for user #{user} using token '#{auth_token}'" }
+
+      base_url = opts[:base_url] || base_github_api_url_for_remote
+
+      configure_octokit(:base_url => base_url)
+
+      Octokit::Client.new(:access_token => auth_token)
+    end
 
 
     def self.ask_for_user(gitlib)
@@ -287,6 +353,42 @@ module GitHubService
       end
     end
 
+
+    def self.ask_for_two_factor
+      ask("Your <%= color('GitHub', [:bold, :blue]) %> two-factor code: ") do |q|
+        q.validate = /^\w\w+$/
+      end
+    end
+
+
+    # @todo implement https://github.com/jdigger/git-process/issues/142
+    def ask_about_resetting_authorization
+      raise TokenAlreadyExists.new("The token already exists. Please check your OAuth settings for your account.")
+    end
+
+
+    #
+    # Tries to more gracefully handle the token already existing. See
+    #
+    # @return [String] the OAuth token
+    #
+    # @raise [TokenAlreadyExists] the token already exists
+    # @raise [Octokit::UnprocessableEntity] there was another problem
+    def unprocessable_authorization(exp)
+      errors = exp.errors
+      if not (errors.nil? or errors.empty?)
+        error_hash = errors[0]
+        if error_hash[:resource] == 'OauthAccess'
+          # error_hash[:code]
+          return ask_about_resetting_authorization
+        else
+          raise exp
+        end
+      else
+        raise exp
+      end
+    end
+
   end
 
 
@@ -295,6 +397,9 @@ module GitHubService
 
 
   class NoRemoteRepository < Error
+  end
+
+  class TokenAlreadyExists < Error
   end
 
 end
