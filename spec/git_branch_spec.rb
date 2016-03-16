@@ -21,6 +21,41 @@ describe GitProc::GitBranch do
   end
 
 
+  describe 'comparison' do
+
+    it 'should handle another branch' do
+      base_branch = gitlib.branches.current
+      current = gitlib.branches.current
+      gitlib.checkout('fb', :new_branch => base_branch.name)
+      fb = gitlib.branches['fb']
+      expect( current <=> fb ).to eq(1)
+      expect( fb <=> current ).to eq(-1)
+    end
+
+
+    it 'should handle a String' do
+      current = gitlib.branches.current
+      expect( current <=> 'fb' ).to eq(1)
+      expect( 'fb' <=> current ).to eq(-1)
+    end
+
+
+    it 'should handle a nil' do
+      current = gitlib.branches.current
+      expect( current <=> nil ).to be_nil
+      expect( nil <=> current ).to be_nil
+    end
+
+
+    it 'should handle an unknown' do
+      current = gitlib.branches.current
+      expect( current <=> {} ).to be_nil
+      expect( {} <=> current ).to be_nil
+    end
+
+  end
+
+
   describe 'contains_all_of' do
 
     it 'should handle the trivial case' do
