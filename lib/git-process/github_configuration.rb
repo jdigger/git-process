@@ -10,9 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'git-process/git_lib'
+require File.dirname(__FILE__) + '/git_lib'
 require 'highline/import'
 require 'octokit'
+require 'octokit/default'
 require 'uri'
 
 
@@ -102,9 +103,9 @@ module GitHubService
       Octokit.configure do |c|
         c.api_endpoint = api_endpoint(base_url)
         c.web_endpoint = web_endpoint(base_url)
-        c.faraday_config do |f|
-          #f.response :logger
-        end
+        # c.faraday_config do |f|
+        #   #f.response :logger
+        # end
       end
     end
 
@@ -124,7 +125,7 @@ module GitHubService
       if /github.com/ !~ base_url
         "#{base_url}/api/v3"
       else
-        Octokit::Configuration::DEFAULT_API_ENDPOINT
+        Octokit::Default::API_ENDPOINT
       end
     end
 
@@ -144,7 +145,7 @@ module GitHubService
       if /github.com/ !~ base_url
         base_url
       else
-        Octokit::Configuration::DEFAULT_WEB_ENDPOINT
+        Octokit::Default::WEB_ENDPOINT
       end
     end
 
@@ -237,12 +238,13 @@ module GitHubService
       remote = opts[:remote_name] || self.remote_name
       logger.info("Authorizing #{username} to work with #{remote}.")
 
-      auth = create_pw_client(opts).create_authorization(
+      client = create_pw_client(opts)
+      auth = client.create_authorization(
           :scopes => %w(repo user gist),
           :note => 'Git-Process',
           :note_url => 'http://jdigger.github.com/git-process')
 
-      config_auth_token = auth['token']
+      config_auth_token = auth[:token]
 
       # remember it for next time
       gitlib.config['gitProcess.github.authToken'] = config_auth_token

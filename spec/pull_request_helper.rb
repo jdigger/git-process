@@ -3,8 +3,8 @@ module PullRequestHelper
   def create_pull_request(opts = {})
     v = {
         :head_remote => 'testrepo',
-        :head_repo => 'test_repo',
-        :base_repo => 'test_repo',
+        :head_repo => 'tester/test_repo',
+        :base_repo => 'tester/test_repo',
         :head_branch => 'test_branch',
         :base_branch => 'source_branch',
         :api_url => 'https://api.github.com',

@@ -1,8 +1,8 @@
 source 'http://rubygems.org'
 
 group :default do
-  gem 'octokit', '~> 1.24' # GitHub API
-  gem 'netrc', '~> 0.7.7'
+  gem 'octokit', '~> 4.3' # GitHub API
+  gem 'netrc', '~> 0.11'
   gem 'json', '~> 1.8'
   gem 'trollop', '~> 2.1' # CLI options parser
   gem 'highline', '~> 1.7' # user CLI interaction

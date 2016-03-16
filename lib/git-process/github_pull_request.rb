@@ -35,15 +35,29 @@ module GitHub
     end
 
 
-    def pull_requests(state = 'open', opts = {})
-      @pull_requests ||= client.pull_requests(repo, state, opts)
+    def pull_requests(opts = {})
+      @pull_requests ||= client.pull_requests(repo, opts)
     end
 
 
+    # Create a pull request
+    #
+    # @see https://developer.github.com/v3/pulls/#create-a-pull-request
+    # @param base [String] The branch (or git ref) you want your changes
+    #                      pulled into. This should be an existing branch on the current
+    #                      repository. You cannot submit a pull request to one repo that requests
+    #                      a merge to a base of another repo.
+    # @param head [String] The branch (or git ref) where your changes are implemented.
+    # @param title [String] Title for the pull request
+    # @param body [String] The body for the pull request (optional). Supports GFM.
+    # @return [Sawyer::Resource] The newly created pull request
+    # @example
+    #   @client.create_pull_request("master", "feature-branch",
+    #     "Pull Request title", "Pull Request body")
     def create(base, head, title, body)
       logger.info { "Creating a pull request asking for '#{head}' to be merged into '#{base}' on #{repo}." }
       begin
-        client.create_pull_request(repo, base, head, title, body)
+        return client.create_pull_request(repo, base, head, title, body)
       rescue Octokit::UnprocessableEntity => exp
         pull = pull_requests.find { |p| p[:head][:ref] == head and p[:base][:ref] == base }
         if pull
