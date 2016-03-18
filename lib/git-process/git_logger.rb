@@ -33,8 +33,14 @@ module GitProc
       end
       @logger.level = log_level.nil? ? GitLogger::WARN : log_level
       @logger.datetime_format = '%Y-%m-%d %H:%M:%S'
-      @logger.formatter = proc do |_, _, _, msg|
-        "#{msg}\n"
+      @logger.formatter = proc do |severity, datetime, progname, msg|
+        if progname.nil?
+          m = "#{msg}\n"
+        else
+          m = "#{progname} => #{msg}\n"
+        end
+
+        @logger.debug? ? "[#{'%-5.5s' % severity}] #{datetime} - #{m}" : m
       end
     end
 
@@ -45,38 +51,27 @@ module GitProc
 
 
     def debug(msg = nil, &block)
-      if msg.nil?
-        @logger.debug(&block)
-      else
-        @logger.debug(msg)
-      end
+      @logger.debug(msg, &block)
     end
 
 
     def info(msg = nil, &block)
-      if msg.nil?
-        @logger.info(&block)
-      else
-        @logger.info(msg)
-      end
+      @logger.info(msg, &block)
     end
 
 
     def warn(msg = nil, &block)
-      if msg.nil?
-        @logger.send(:warn, &block)
-      else
-        @logger.send(:warn, msg)
-      end
+      @logger.warn(msg, &block)
     end
 
 
     def error(msg = nil, &block)
-      if msg.nil?
-        @logger.error(&block)
-      else
-        @logger.error(msg)
-      end
+      @logger.error(msg, &block)
+    end
+
+
+    def fatal(msg = nil, &block)
+      @logger.fatal(msg, &block)
     end
 
   end
