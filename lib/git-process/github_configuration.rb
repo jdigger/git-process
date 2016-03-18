@@ -17,6 +17,7 @@ require 'octokit'
 require 'octokit/default'
 require 'uri'
 require 'faraday'
+require 'faraday/response/logger'
 
 
 module GitHubService
@@ -102,9 +103,9 @@ module GitHubService
         c.api_endpoint = api_endpoint(base_url)
         c.web_endpoint = web_endpoint(base_url)
       end
-      if logger.level < GitLogger::INFO
-        Octokit.middleware = Faraday::Builder.new do |builder|
-          builder.response :logger
+      if logger.level < ::GitProc::GitLogger::INFO
+        Octokit.middleware = Faraday::RackBuilder.new do |builder|
+          builder.response :logger, logger
           builder.use Octokit::Response::RaiseError
           builder.adapter Faraday.default_adapter
         end
