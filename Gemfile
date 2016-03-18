@@ -7,9 +7,6 @@ group :default do
   gem 'trollop', '~> 2.1' # CLI options parser
   gem 'highline', '~> 1.7' # user CLI interaction
   gem 'addressable', '~> 2.3.5' # URI processing. 2.4 Changes URI parsing
-
-  # lock down external dependency
-  gem 'faraday', '0.8.9'
 end
 
 group :development do
