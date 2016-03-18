@@ -11,6 +11,7 @@
 # limitations under the License.
 
 require File.dirname(__FILE__) + '/git_lib'
+require File.dirname(__FILE__) + '/git_logger'
 require 'highline/import'
 require 'octokit'
 require 'octokit/default'
