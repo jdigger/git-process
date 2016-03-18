@@ -169,14 +169,21 @@ module GitHub
     private
 
     #
-    # @param [String, Sawyer::Resource] str the String to parse as JSON, or a {Sawyer::Resource} to simply pass-tru
+    # @param [String, Sawyer::Resource] str the String to parse as JSON, or a simple pass through
     #
     # @return [Array, Hash, Sawyer::Resource, nil] an Array/Hash where all the hash keys are Symbols
     #
     def sym_hash_JSON(str)
       return nil if str.nil?
-      return str if str.is_a? Sawyer::Resource
-      to_sym_hash(JSON.parse(str))
+      case str
+        when String
+          raise ArgumentError.new('Can not parse an empty JSON string') if str.empty?
+          to_sym_hash(JSON.parse(str))
+        when Array, Hash
+          to_sym_hash(str)
+        else
+          str
+      end
     end
 
 
