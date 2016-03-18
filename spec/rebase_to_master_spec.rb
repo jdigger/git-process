@@ -292,7 +292,7 @@ describe RebaseToMaster do
       stub_fetch(:base, gl)
 
       stub_get("https://api.github.com/repos/#{head_repo_name}/pulls/#{pull_request_number}", :body => pull_request)
-      stub_patch("https://api.github.com/repos/#{head_repo_name}/pulls/#{pull_request_number}")
+      stub_patch("https://api.github.com/repos/#{head_repo_name}/pulls/#{pull_request_number}", :body => pull_request)
     end
 
 
