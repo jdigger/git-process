@@ -1,4 +1,14 @@
-# CHANGELOG - 2.0.5 #
+# CHANGELOG - 3.0.0 #
+
+### Since 2.0.5 ###
+
+* Updated Ruby support to 2.x ([GH-140](https://github.com/jdigger/git-process/issues/140))
+    * Fixed a number of comparability issues with Ruby 2.x, such as [GH-139](https://github.com/jdigger/git-process/issues/139) and [GH-132](https://github.com/jdigger/git-process/issues/132)
+    * Ruby < 2.0 is no longer supported
+* Updated Gem libraries to latest versions (2016-03-18)
+    * Most notably, upgraded to Octokit 4.3 for support of the latest GitHub APIs
+* Implemented support for GitHub two-factor authentication ([GH-141](https://github.com/jdigger/git-process/issues/141))
+* Added Faraday logging to help debug issues when communicating with GitHub
 
 ### Since 2.0.4 ###
 
