@@ -1,4 +1,8 @@
-# CHANGELOG - 3.0.0 #
+# CHANGELOG - 3.0.1 #
+
+### Since 3.0.0 ###
+
+* Fixed "ambiguous arguments" problem ([GH-145](https://github.com/jdigger/git-process/issues/145))
 
 ### Since 2.0.5 ###
 

@@ -219,6 +219,35 @@ describe Sync do
           expect { when_sync_is_run }.to raise_error(RebaseError, /'a' was modified in both branches/)
         end
 
+
+        #         i
+        #        /
+        # - A - C - B1
+        #           /
+        #         l,r
+        it 'should work with no local master branch (GH-145)' do
+          Given do
+            rcreate_commit_on_new_branch :origin, 'fb', 'master', :b
+            rfetch local_repo, 'origin'
+            local_repo.create_branch('fb', 'origin/fb')
+            @local.checkout('fb')
+            Rugged::Branch.lookup(local_repo, 'master').delete!
+            @local.config['gitProcess.keepLocalIntegrationBranch'] = true
+            @local.write_sync_control_file('fb')
+            rcreate_commit :origin, 'master', :c
+          end
+
+          sync = create_process(@local)
+          sync.verify_preconditions
+          sync.runner
+
+          Then do
+            local_and_remote_are_same
+            parent(l_sha).should == @c_sha
+            check_file_content :b
+          end
+        end
+
       end
 
       #         i

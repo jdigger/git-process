@@ -142,6 +142,7 @@ describe GitProc::Process do
           gl.fetch
 
           gp = GitProc::Process.new(gl)
+          gp.stub(:ask_about_removing_master).and_return(false)
           gp.verify_preconditions
 
           gl.branches.include?('master').should be true
@@ -176,6 +177,7 @@ describe GitProc::Process do
           gl.fetch
 
           gp = GitProc::Process.new(gl)
+          gp.stub(:ask_about_removing_master).and_return(false)
           gp.verify_preconditions
 
           gl.branches.include?('master').should be true
